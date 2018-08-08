@@ -4,10 +4,10 @@ import (
 	"testing"
 
 	"code.cloudfoundry.org/cli/cf/errors"
-	"github.com/springernature/halfpipe-cf-plugin/plan"
+	"github.com/springernature/halfpipe-deploy-resource/plan"
 	"github.com/stretchr/testify/assert"
-	"github.com/springernature/halfpipe-cf-plugin/config"
-	"github.com/springernature/halfpipe-cf-plugin/manifest"
+	"github.com/springernature/halfpipe-deploy-resource/config"
+	"github.com/springernature/halfpipe-deploy-resource/manifest"
 )
 
 type mockPlanner struct {

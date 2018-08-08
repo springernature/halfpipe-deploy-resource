@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/spf13/afero"
-	"github.com/springernature/halfpipe-cf-plugin/config"
-	"github.com/springernature/halfpipe-cf-plugin/manifest"
-	"github.com/springernature/halfpipe-cf-plugin/plan"
-	"github.com/springernature/halfpipe-cf-plugin/plan/resource"
+	"github.com/springernature/halfpipe-deploy-resource/config"
+	"github.com/springernature/halfpipe-deploy-resource/manifest"
+	"github.com/springernature/halfpipe-deploy-resource/plan"
+	"github.com/springernature/halfpipe-deploy-resource/plan/resource"
 )
 
 func main() {

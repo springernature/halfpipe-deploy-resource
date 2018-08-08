@@ -3,11 +3,11 @@ package plugin
 import (
 	"testing"
 
-	"github.com/springernature/halfpipe-cf-plugin/plan"
+	"github.com/springernature/halfpipe-deploy-resource/plan"
 	"github.com/stretchr/testify/assert"
 	"code.cloudfoundry.org/cli/plugin/models"
 	"errors"
-	"github.com/springernature/halfpipe-cf-plugin/manifest"
+	"github.com/springernature/halfpipe-deploy-resource/manifest"
 )
 
 type mockAppGetter struct {

@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/springernature/halfpipe-cf-plugin/config"
+	"github.com/springernature/halfpipe-deploy-resource/config"
 	"github.com/spf13/afero"
-	"github.com/springernature/halfpipe-cf-plugin/manifest"
+	"github.com/springernature/halfpipe-deploy-resource/manifest"
 	"errors"
 	"path"
 )

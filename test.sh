@@ -10,7 +10,7 @@ if [ ! -z "${RUNNING_IN_CI}" ]; then
     export PATH=$PATH:$TMPDIR
 
     echo "Copying this repo into gopath, uuuugly."
-    PATH_IN_GOPATH=${GOPATH}/src/github.com/springernature/halfpipe-cf-plugin
+    PATH_IN_GOPATH=${GOPATH}/src/github.com/springernature/halfpipe-deploy-resource
     mkdir -p ${PATH_IN_GOPATH}
     cp -r * ${PATH_IN_GOPATH}
 

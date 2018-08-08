@@ -43,7 +43,7 @@ jobs:
           export CONCOURSE_ROOT=$PWD
           export GOPATH=$PWD
           export ARTIFACTS=$PWD/artifacts
-          cd src/github.com/springernature/halfpipe-cf-plugin/
+          cd src/github.com/springernature/halfpipe-deploy-resource/
 
           echo go test
           go test -cover ./...
@@ -69,7 +69,7 @@ jobs:
           CGO_ENABLED=0 GOARCH=amd64 GOOS=windows go build -o $ARTIFACTS/halfpipe_cf_plugin_windows.exe cmd/plugin/plugin.go
       inputs:
       - name: git
-        path: src/github.com/springernature/halfpipe-cf-plugin/
+        path: src/github.com/springernature/halfpipe-deploy-resource/
       outputs:
       - name: artifacts
   - put: version

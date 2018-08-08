@@ -5,8 +5,8 @@ import (
 	"testing"
 	"github.com/stretchr/testify/assert"
 	"errors"
-	"github.com/springernature/halfpipe-cf-plugin/manifest"
-	"github.com/springernature/halfpipe-cf-plugin/plan"
+	"github.com/springernature/halfpipe-deploy-resource/manifest"
+	"github.com/springernature/halfpipe-deploy-resource/plan"
 	"fmt"
 )
 

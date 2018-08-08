@@ -1,8 +1,8 @@
 package plugin
 
 import (
-	"github.com/springernature/halfpipe-cf-plugin/plan"
-	"github.com/springernature/halfpipe-cf-plugin/manifest"
+	"github.com/springernature/halfpipe-deploy-resource/plan"
+	"github.com/springernature/halfpipe-deploy-resource/manifest"
 	"code.cloudfoundry.org/cli/cf/errors"
 	"code.cloudfoundry.org/cli/plugin/models"
 	"fmt"

@@ -1,8 +1,8 @@
 package plugin
 
 import (
-	"github.com/springernature/halfpipe-cf-plugin/manifest"
-	"github.com/springernature/halfpipe-cf-plugin/plan"
+	"github.com/springernature/halfpipe-deploy-resource/manifest"
+	"github.com/springernature/halfpipe-deploy-resource/plan"
 )
 
 type push struct {

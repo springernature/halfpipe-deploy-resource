@@ -4,7 +4,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/springernature/halfpipe-cf-plugin/plan"
+	"github.com/springernature/halfpipe-deploy-resource/plan"
 )
 
 type cfCLIExecutor struct {

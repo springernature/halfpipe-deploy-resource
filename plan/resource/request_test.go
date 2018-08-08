@@ -2,9 +2,9 @@ package resource_test
 
 import (
 	"testing"
-	"github.com/springernature/halfpipe-cf-plugin/plan/resource"
+	"github.com/springernature/halfpipe-deploy-resource/plan/resource"
 	"github.com/stretchr/testify/assert"
-	"github.com/springernature/halfpipe-cf-plugin/config"
+	"github.com/springernature/halfpipe-deploy-resource/config"
 )
 
 func TestVerifyErrorsIfNotAllSourceFieldsAreFilledOut(t *testing.T) {

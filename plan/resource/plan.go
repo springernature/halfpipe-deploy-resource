@@ -3,11 +3,11 @@ package resource
 import (
 	"path"
 
-	"github.com/springernature/halfpipe-cf-plugin/plan"
-	"github.com/springernature/halfpipe-cf-plugin/config"
+	"github.com/springernature/halfpipe-deploy-resource/plan"
+	"github.com/springernature/halfpipe-deploy-resource/config"
 	"github.com/spf13/afero"
 	"strings"
-	"github.com/springernature/halfpipe-cf-plugin/manifest"
+	"github.com/springernature/halfpipe-deploy-resource/manifest"
 )
 
 type Plan interface {
