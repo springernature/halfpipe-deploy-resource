@@ -104,8 +104,8 @@ func loginToCF() {
 func makeSureSpaceIsCleaned() {
 	fmt.Println("==== CLEANING SPACE ====")
 	for _, app := range getApps() {
-		delete := exec.Command("cf", "delete", app.Name, "-f")
-		output, err := delete.Output()
+		deleteCmd := exec.Command("cf", "delete", app.Name, "-f")
+		output, err := deleteCmd.Output()
 		if err != nil {
 			fmt.Println(string(output))
 			panic(err)

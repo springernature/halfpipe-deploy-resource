@@ -14,11 +14,11 @@ type ResourcePlan interface {
 }
 
 type planner struct {
-	manifestReaderWrite manifest.ManifestReaderWriter
+	manifestReaderWrite manifest.ReaderWriter
 	fs                  afero.Afero
 }
 
-func NewPlanner(manifestReaderWrite manifest.ManifestReaderWriter, fs afero.Afero) ResourcePlan {
+func NewPlanner(manifestReaderWrite manifest.ReaderWriter, fs afero.Afero) ResourcePlan {
 	return planner{
 		manifestReaderWrite: manifestReaderWrite,
 		fs:                  fs,
