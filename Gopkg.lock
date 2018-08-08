@@ -21,8 +21,6 @@
     "cf/i18n",
     "command/translatableerror",
     "i18n/resources",
-    "plugin",
-    "plugin/models",
     "types",
     "util",
     "util/clissh/ssherror",
@@ -251,6 +249,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "12593e6f20c331d9005d92d862d1dc4386a4583081b2027fc9e50a4a3fe21cc7"
+  inputs-digest = "ee3ac910b9711f21510f848df8afb0e63a2ea7979ff016beb3442cd6d12bb66e"
   solver-name = "gps-cdcl"
   solver-version = 1
