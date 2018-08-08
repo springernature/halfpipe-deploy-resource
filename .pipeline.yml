@@ -22,7 +22,7 @@ resources:
   type: docker-image
   source:
     password: ((docker-hub-pe.password))
-    repository: platformengineering/cf-resource-stable
+    repository: platformengineering/cf-resource
     tag: stable
     username: platformengineering
 - name: cf
