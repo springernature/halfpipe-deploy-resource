@@ -16,6 +16,8 @@ resource_types:
     tag: stable
 ```
 
+If you want to use a specific version of the halfpipe-push command simply set `version` to a tag version [from here](https://github.com/springernature/halfpipe-cf-plugin/releases)
+
 # Source Configuration
 
 * `api`: _required_. The CF API you wish to deploy to.
