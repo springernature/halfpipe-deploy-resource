@@ -3,7 +3,7 @@ resources:
   type: git
   source:
     private_key: ((github.private_key))
-    uri: git@github.com:springernature/halfpipe-cf-plugin.git
+    uri: git@github.com:springernature/halfpipe-deploy-resource.git
 
 - name: cf-plugin-release
   type: github-release

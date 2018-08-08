@@ -3,14 +3,11 @@ FROM golang:alpine as builder
 COPY . /go/src/github.com/springernature/halfpipe-deploy-resource
 WORKDIR /go/src/github.com/springernature/halfpipe-deploy-resource
 
-ENV CGO_ENABLED 0
-RUN go build -ldflags "-X github.com/springernature/halfpipe-deploy-resource/config.SHA=`cat .git/ref`" cmd/plugin/plugin.go
-
 ENV CF_TAR_URL "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=6.37.0&source=github-rel"
 RUN wget -qO- ${CF_TAR_URL} | tar xvz -C /bin > /dev/null
 
 COPY . ../cf-plugin-release/halfpipe_cf_plugin_linux
-RUN cf install-plugin plugin -f
+RUN cf install-plugin halfpipe_cf_plugin_linux -f
 
 RUN go build -o /opt/resource/check cmd/check/check.go
 RUN go build -o /opt/resource/out cmd/out/out.go
