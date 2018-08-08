@@ -9,6 +9,7 @@ RUN go build -ldflags "-X github.com/springernature/halfpipe-deploy-resource/con
 ENV CF_TAR_URL "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=6.37.0&source=github-rel"
 RUN wget -qO- ${CF_TAR_URL} | tar xvz -C /bin > /dev/null
 
+COPY . ../cf-plugin-release/halfpipe_cf_plugin_linux
 RUN cf install-plugin plugin -f
 
 RUN go build -o /opt/resource/check cmd/check/check.go
