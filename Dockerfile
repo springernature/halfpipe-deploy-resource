@@ -1,15 +1,13 @@
 FROM golang:alpine as builder
 
-# We are executing docker build from concourse root.
-COPY git /go/src/github.com/springernature/halfpipe-deploy-resource
-COPY cf-plugin-release/halfpipe_cf_plugin_linux /go/src/github.com/springernature/halfpipe_cf_plugin_linux
-
+COPY . /go/src/github.com/springernature/halfpipe-deploy-resource
 WORKDIR /go/src/github.com/springernature/halfpipe-deploy-resource
 
 ENV CF_TAR_URL "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=6.37.0&source=github-rel"
 RUN wget -qO- ${CF_TAR_URL} | tar xvz -C /bin > /dev/null
 
-COPY . ../cf-plugin-release/halfpipe_cf_plugin_linux
+# This is present as we create a build environment in the Concourse task
+# 'Create temp folder with both resource src and plugin from release'
 RUN cf install-plugin halfpipe_cf_plugin_linux -f
 
 RUN go build -o /opt/resource/check cmd/check/check.go

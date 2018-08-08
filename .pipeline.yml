@@ -28,8 +28,28 @@ jobs:
     trigger: true
   - get: cf-plugin-release
     trigger: true
+  - task: Create temp folder with both resource src and plugin from release
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: alpine
+      run:
+        path: /bin/sh
+        args:
+        - -ec
+        - |
+          cp -r git build
+          cp cf-plugin-release/cf-plugin-release build/cf-plugin-release
+        dir: git
+      inputs:
+      - name: git
+      - name: cf-plugin-release
+      outputs:
+      - name: build
   - put: docker-registry-image-dev
     params:
-      dockerfile: git/Dockerfile
+      build: build
       tag_file: git/.docker-dev-tag
       additional_tags: cf-plugin-release/tag
