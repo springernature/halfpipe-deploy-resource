@@ -69,7 +69,6 @@ jobs:
       - name: build
   - put: docker-registry-image-dev
     params:
-      additional_tags: cf-plugin-release/tag
       build: build
       tag_file: git/.docker-dev-tag
 - name: Test resource
