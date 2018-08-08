@@ -30,6 +30,6 @@ jobs:
     trigger: true
   - put: docker-registry-image-dev
     params:
-      build: git
+      dockerfile: git/Dockerfile
       tag_file: git/.docker-dev-tag
       additional_tags: cf-plugin-release/tag

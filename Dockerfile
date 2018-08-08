@@ -1,6 +1,9 @@
 FROM golang:alpine as builder
 
-COPY . /go/src/github.com/springernature/halfpipe-deploy-resource
+# We are executing docker build from concourse root.
+COPY git /go/src/github.com/springernature/halfpipe-deploy-resource
+COPY cf-plugin-release/halfpipe_cf_plugin_linux /go/src/github.com/springernature/halfpipe_cf_plugin_linux
+
 WORKDIR /go/src/github.com/springernature/halfpipe-deploy-resource
 
 ENV CF_TAR_URL "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=6.37.0&source=github-rel"
