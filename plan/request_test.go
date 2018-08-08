@@ -1,14 +1,13 @@
-package resource_test
+package plan
 
 import (
 	"testing"
-	"github.com/springernature/halfpipe-deploy-resource/plan/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/springernature/halfpipe-deploy-resource/config"
 )
 
 func TestVerifyErrorsIfNotAllSourceFieldsAreFilledOut(t *testing.T) {
-	invalidSourceRequests := []resource.Source{
+	invalidSourceRequests := []Source{
 		{
 			API:      "",
 			Org:      "",
@@ -51,10 +50,10 @@ func TestVerifyErrorsIfNotAllSourceFieldsAreFilledOut(t *testing.T) {
 	}
 
 	for _, source := range invalidSourceRequests {
-		assert.Error(t, resource.VerifyRequestSource(source))
+		assert.Error(t, VerifyRequestSource(source))
 	}
 
-	validSource := resource.Source{
+	validSource := Source{
 		API:      "a",
 		Org:      "a",
 		Space:    "a",
@@ -62,77 +61,77 @@ func TestVerifyErrorsIfNotAllSourceFieldsAreFilledOut(t *testing.T) {
 		Password: "c",
 	}
 
-	assert.Nil(t, resource.VerifyRequestSource(validSource))
+	assert.Nil(t, VerifyRequestSource(validSource))
 }
 
 func TestVerifyErrorsIfNotAllRequiredParamsFieldsAreFilledOut(t *testing.T) {
-	missingCommand := resource.Params{
+	missingCommand := Params{
 		Command: "",
 	}
-	assert.Equal(t, resource.ParamsMissingError("command"), resource.VerifyRequestParams(missingCommand))
+	assert.Equal(t, ParamsMissingError("command"), VerifyRequestParams(missingCommand))
 
-	missingManifestPath := resource.Params{
+	missingManifestPath := Params{
 		Command: "Something",
 	}
-	assert.Equal(t, resource.ParamsMissingError("manifestPath"), resource.VerifyRequestParams(missingManifestPath))
+	assert.Equal(t, ParamsMissingError("manifestPath"), VerifyRequestParams(missingManifestPath))
 
 }
 
 func TestVerifyErrorsIfNotAllRequiredParamsFieldsForPushFilledOut(t *testing.T) {
-	missingTestDomain := resource.Params{
+	missingTestDomain := Params{
 		Command:      config.PUSH,
 		ManifestPath: "path",
 		TestDomain:   "",
 	}
-	assert.Equal(t, resource.ParamsMissingError("testDomain"), resource.VerifyRequestParams(missingTestDomain))
+	assert.Equal(t, ParamsMissingError("testDomain"), VerifyRequestParams(missingTestDomain))
 
-	missingAppPath := resource.Params{
+	missingAppPath := Params{
 		Command:      config.PUSH,
 		ManifestPath: "path",
 		TestDomain:   "test.com",
 		AppPath:      "",
 	}
-	assert.Equal(t, resource.ParamsMissingError("appPath"), resource.VerifyRequestParams(missingAppPath))
+	assert.Equal(t, ParamsMissingError("appPath"), VerifyRequestParams(missingAppPath))
 
-	missingGitRefPath := resource.Params{
+	missingGitRefPath := Params{
 		Command:      config.PUSH,
 		ManifestPath: "path",
 		TestDomain:   "test.com",
 		AppPath:      "path",
 		GitRefPath:   "",
 	}
-	assert.Equal(t, resource.ParamsMissingError("gitRefPath"), resource.VerifyRequestParams(missingGitRefPath))
+	assert.Equal(t, ParamsMissingError("gitRefPath"), VerifyRequestParams(missingGitRefPath))
 
-	allesOk := resource.Params{
+	allesOk := Params{
 		Command:      config.PUSH,
 		ManifestPath: "path",
 		TestDomain:   "test.com",
 		AppPath:      "path",
 		GitRefPath:   "path",
 	}
-	assert.Nil(t, resource.VerifyRequestParams(allesOk))
+	assert.Nil(t, VerifyRequestParams(allesOk))
 }
 
 func TestVerifyErrorsIfNotAllRequiredParamsFieldsForPromoteFilledOut(t *testing.T) {
-	missingTestDomain := resource.Params{
+	missingTestDomain := Params{
 		Command:      config.PROMOTE,
 		ManifestPath: "path",
 		TestDomain:   "",
 	}
-	assert.Equal(t, resource.ParamsMissingError("testDomain"), resource.VerifyRequestParams(missingTestDomain))
+	assert.Equal(t, ParamsMissingError("testDomain"), VerifyRequestParams(missingTestDomain))
 
-	allesOk := resource.Params{
+	allesOk := Params{
 		Command:      config.PROMOTE,
 		ManifestPath: "path",
 		TestDomain:   "test.com",
 	}
-	assert.Nil(t, resource.VerifyRequestParams(allesOk))
+	assert.Nil(t, VerifyRequestParams(allesOk))
 }
 
 func TestVerifyErrorsIfNotAllRequiredParamsFieldsForCleanupFilledOut(t *testing.T) {
-	allesOk := resource.Params{
+	allesOk := Params{
 		Command:      config.CLEANUP,
 		ManifestPath: "path",
 	}
-	assert.Nil(t, resource.VerifyRequestParams(allesOk))
+	assert.Nil(t, VerifyRequestParams(allesOk))
 }

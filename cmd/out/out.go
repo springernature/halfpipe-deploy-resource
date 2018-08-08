@@ -13,7 +13,6 @@ import (
 	"github.com/springernature/halfpipe-deploy-resource/config"
 	"github.com/springernature/halfpipe-deploy-resource/manifest"
 	"github.com/springernature/halfpipe-deploy-resource/plan"
-	"github.com/springernature/halfpipe-deploy-resource/plan/resource"
 )
 
 func main() {
@@ -29,7 +28,7 @@ func main() {
 		syscall.Exit(1)
 	}
 
-	request := resource.Request{}
+	request := plan.Request{}
 	err = json.Unmarshal(data, &request)
 	if err != nil {
 		logger.Println(err)
@@ -42,11 +41,11 @@ func main() {
 		panic("params.command must not be empty")
 	case config.PUSH, config.PROMOTE, config.DELETE, config.CLEANUP:
 		fs := afero.Afero{Fs: afero.NewOsFs()}
-		if err = resource.VerifyRequest(request); err != nil {
+		if err = plan.VerifyRequest(request); err != nil {
 			break
 		}
 
-		p, err = resource.NewPlanner(
+		p, err = plan.NewPlanner(
 			manifest.NewManifestReadWrite(fs),
 			fs,
 		).Plan(request, concourseRoot)
@@ -59,9 +58,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	metrics := resource.NewMetrics(request)
+	metrics := plan.NewMetrics(request)
 
-	if err = p.Execute(resource.NewCFCliExecutor(), logger); err != nil {
+	if err = p.Execute(plan.NewCFCliExecutor(), logger); err != nil {
 		if err = metrics.Failure(); err != nil {
 			logger.Println(err)
 		}
@@ -74,11 +73,11 @@ func main() {
 
 	finished := time.Now()
 
-	response := resource.Response{
-		Version: resource.Version{
+	response := plan.Response{
+		Version: plan.Version{
 			Timestamp: finished,
 		},
-		Metadata: []resource.MetadataPair{
+		Metadata: []plan.MetadataPair{
 			{Name: "Api", Value: request.Source.API},
 			{Name: "Org", Value: request.Source.Org},
 			{Name: "Space", Value: request.Source.Space},

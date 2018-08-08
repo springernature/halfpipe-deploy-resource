@@ -1,17 +1,16 @@
-package resource
+package plan
 
 import (
 	"path"
 
-	"github.com/springernature/halfpipe-deploy-resource/plan"
 	"github.com/springernature/halfpipe-deploy-resource/config"
 	"github.com/spf13/afero"
 	"strings"
 	"github.com/springernature/halfpipe-deploy-resource/manifest"
 )
 
-type Plan interface {
-	Plan(request Request, concourseRoot string) (plan plan.Plan, err error)
+type ResourcePlan interface {
+	Plan(request Request, concourseRoot string) (plan Plan, err error)
 }
 
 type planner struct {
@@ -19,14 +18,14 @@ type planner struct {
 	fs                  afero.Afero
 }
 
-func NewPlanner(manifestReaderWrite manifest.ManifestReaderWriter, fs afero.Afero) Plan {
+func NewPlanner(manifestReaderWrite manifest.ManifestReaderWriter, fs afero.Afero) ResourcePlan {
 	return planner{
 		manifestReaderWrite: manifestReaderWrite,
 		fs:                  fs,
 	}
 }
 
-func (p planner) Plan(request Request, concourseRoot string) (pl plan.Plan, err error) {
+func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error) {
 	// Here we assume that the request is complete.
 	// It has already been verified in out.go with the help of requests.VerifyRequest.
 
@@ -43,8 +42,8 @@ func (p planner) Plan(request Request, concourseRoot string) (pl plan.Plan, err 
 		}
 	}
 
-	pl = plan.Plan{
-		plan.NewCfCommand("login",
+	pl = Plan{
+		NewCfCommand("login",
 			"-a", request.Source.API,
 			"-u", request.Source.Username,
 			"-p", request.Source.Password,
@@ -54,20 +53,20 @@ func (p planner) Plan(request Request, concourseRoot string) (pl plan.Plan, err 
 
 	switch request.Params.Command {
 	case config.PUSH:
-		pl = append(pl, plan.NewCfCommand(request.Params.Command,
+		pl = append(pl, NewCfCommand(request.Params.Command,
 			"-manifestPath", fullManifestPath,
 			"-appPath", path.Join(concourseRoot, request.Params.AppPath),
 			"-testDomain", request.Params.TestDomain,
 			"-space", request.Source.Space,
 		))
 	case config.PROMOTE:
-		pl = append(pl, plan.NewCfCommand(request.Params.Command,
+		pl = append(pl, NewCfCommand(request.Params.Command,
 			"-manifestPath", fullManifestPath,
 			"-testDomain", request.Params.TestDomain,
 			"-space", request.Source.Space,
 		))
 	case config.CLEANUP, config.DELETE:
-		pl = append(pl, plan.NewCfCommand(request.Params.Command,
+		pl = append(pl, NewCfCommand(request.Params.Command,
 			"-manifestPath", fullManifestPath,
 		))
 	}
