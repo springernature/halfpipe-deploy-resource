@@ -61,6 +61,7 @@ Deploys app to cf
 * `space`: _required for halfpipe-push and halfpipe-promte_. Space will be used when constructing the candidate test route. 
 * `vars`: _optional_. Hash map containing environment variables that should be set on the application.
 * `gitRefPath`: _optional_. Path to the `.git/ref` file. If this is set the app will get the environment variable `GIT_REVISION` set
+* `timeout`: _optional_. Timeout for each of the commands that the halfpipe cf plugin will execute
  
 ### Example
 ```
@@ -85,6 +86,7 @@ jobs:
         manifestPath: my-apps-git-repo/manifest.yml
         testDomain: some.random.domain.com
         space: dev
+        timeout: 10m
     - put: cf-resource
       params:
         command: halfpipe-delete

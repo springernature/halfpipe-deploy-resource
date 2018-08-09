@@ -42,34 +42,39 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 		}
 	}
 
-	pl = Plan{
-		NewCfCommand("login",
+	pl = append(pl, NewCfCommand("login",
 			"-a", request.Source.API,
 			"-u", request.Source.Username,
 			"-p", request.Source.Password,
 			"-o", request.Source.Org,
-			"-s", request.Source.Space),
-	}
+			"-s", request.Source.Space))
 
+	var halfpipeCommand Command
 	switch request.Params.Command {
 	case config.PUSH:
-		pl = append(pl, NewCfCommand(request.Params.Command,
+		halfpipeCommand = NewCfCommand(request.Params.Command,
 			"-manifestPath", fullManifestPath,
 			"-appPath", path.Join(concourseRoot, request.Params.AppPath),
 			"-testDomain", request.Params.TestDomain,
 			"-space", request.Source.Space,
-		))
+		)
 	case config.PROMOTE:
-		pl = append(pl, NewCfCommand(request.Params.Command,
+		halfpipeCommand = NewCfCommand(request.Params.Command,
 			"-manifestPath", fullManifestPath,
 			"-testDomain", request.Params.TestDomain,
 			"-space", request.Source.Space,
-		))
+		)
 	case config.CLEANUP, config.DELETE:
-		pl = append(pl, NewCfCommand(request.Params.Command,
+		halfpipeCommand = NewCfCommand(request.Params.Command,
 			"-manifestPath", fullManifestPath,
-		))
+		)
 	}
+
+	if request.Params.Timeout != "" {
+		halfpipeCommand = halfpipeCommand.AddToArgs("-timeout", request.Params.Timeout)
+	}
+
+	pl = append(pl, halfpipeCommand)
 
 	return
 }

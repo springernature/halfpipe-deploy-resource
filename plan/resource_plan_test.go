@@ -260,3 +260,37 @@ func TestPutsGitRefInTheManifest(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, stub.savedManifest.Applications[0].EnvironmentVariables["GIT_REVISION"], "wiiiie")
 }
+
+func TestAddsTimoutIfSpecified(t *testing.T) {
+	fs := afero.Afero{Fs: afero.NewMemMapFs()}
+
+	var requestWithTimeout = Request{
+		Source: Source{
+			Space: "dev",
+		},
+		Params: Params{
+			Command:      config.PUSH,
+			ManifestPath: "manifest.yml",
+			AppPath:      ".",
+			TestDomain:   "domain.com",
+			Timeout:      "1m",
+		},
+	}
+
+	applicationManifest := manifest.Manifest{
+		Applications: []manifest.Application{
+			{Name: "MyApp"},
+		},
+	}
+
+	manifestReadWrite := &ManifestReadWriteStub{manifest: applicationManifest}
+
+	push := NewPlanner(manifestReadWrite, fs)
+
+	p, err := push.Plan(requestWithTimeout, "")
+
+	assert.Nil(t, err)
+	assert.Len(t, p, 2)
+	assert.Contains(t, p[0].String(), "cf login")
+	assert.Equal(t, "cf halfpipe-push -manifestPath manifest.yml -appPath . -testDomain domain.com -space dev -timeout 1m", p[1].String())
+}

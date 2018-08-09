@@ -9,6 +9,7 @@ import (
 type Command interface {
 	fmt.Stringer
 	Args() []string
+	AddToArgs(args ...string) Command
 }
 
 type cfCommand struct {
@@ -25,6 +26,11 @@ func NewCfCommand(args ...string) Command {
 
 func (c cfCommand) Args() []string {
 	return c.args
+}
+
+func (c cfCommand) AddToArgs(args ...string) Command {
+	c.args = append(c.args, args...)
+	return c
 }
 
 func (c cfCommand) String() string {

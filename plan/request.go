@@ -28,6 +28,7 @@ type Params struct {
 	TestDomain   string
 	Vars         map[string]string
 	GitRefPath   string
+	Timeout      string
 }
 
 func SourceMissingError(field string) error {
