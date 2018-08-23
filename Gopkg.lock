@@ -25,12 +25,13 @@
     "util",
     "util/clissh/ssherror",
     "util/configv3",
+    "util/download",
     "util/manifest",
     "util/ui",
     "version"
   ]
-  revision = "a400097531d46b877badee63790d847655cdf595"
-  version = "v6.37.0"
+  revision = "9048c6b553bb90bdd92d4156d7e6a54b82a45e72"
+  version = "v6.38.0"
 
 [[projects]]
   name = "github.com/SermoDigital/jose"
@@ -241,6 +242,12 @@
   revision = "cb6730876b985e110843c1842a7a63a63677cf08"
 
 [[projects]]
+  name = "gopkg.in/cheggaaa/pb.v1"
+  packages = ["."]
+  revision = "2af8bbdea9e99e83b3ac400d8f6b6d1b8cbbf338"
+  version = "v1.0.25"
+
+[[projects]]
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
@@ -249,6 +256,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ee3ac910b9711f21510f848df8afb0e63a2ea7979ff016beb3442cd6d12bb66e"
+  inputs-digest = "f69b63517dfb86d75b4d3c341ae327c232f3b01149ff5a3bc3370bf1cf0023c9"
   solver-name = "gps-cdcl"
   solver-version = 1
