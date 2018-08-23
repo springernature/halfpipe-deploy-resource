@@ -90,12 +90,12 @@ jobs:
       command: halfpipe-push
       gitRefPath: git/.git/ref
       manifestPath: git/.integration_test/manifest.yml
-      testDomain: apps.public.gcp.springernature.io
+      testDomain: springernature.app
   - put: cf
     params:
       command: halfpipe-promote
       manifestPath: git/.integration_test/manifest.yml
-      testDomain: apps.public.gcp.springernature.io
+      testDomain: springernature.app
   ensure:
     put: cf
     params:
