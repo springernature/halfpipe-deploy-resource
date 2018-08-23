@@ -292,5 +292,5 @@ func TestAddsTimoutIfSpecified(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Len(t, p, 2)
 	assert.Contains(t, p[0].String(), "cf login")
-	assert.Equal(t, "cf halfpipe-push -manifestPath manifest.yml -appPath . -testDomain domain.com -space dev -timeout 1m", p[1].String())
+	assert.Equal(t, "cf halfpipe-push -manifestPath manifest.yml -appPath . -testDomain domain.com -timeout 1m", p[1].String())
 }
