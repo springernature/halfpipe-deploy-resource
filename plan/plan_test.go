@@ -6,8 +6,8 @@ import (
 	"io/ioutil"
 	"log"
 
-	"code.cloudfoundry.org/cli/cf/errors"
 	"github.com/stretchr/testify/assert"
+	"errors"
 )
 
 var DevNullWriter = log.New(ioutil.Discard, "", 0)
@@ -50,7 +50,7 @@ func TestPlan_String(t *testing.T) {
 }
 
 func TestPlan_ExecutePassesOnError(t *testing.T) {
-	expectedError := errors.New("Expected error")
+	expectedError := errors.New("expected error")
 
 	p := Plan{
 		NewCfCommand("error"),
@@ -62,7 +62,7 @@ func TestPlan_ExecutePassesOnError(t *testing.T) {
 }
 
 func TestPlan_ExecutePassesOnErrorIfItHappensInTheMiddleOfThePlan(t *testing.T) {
-	expectedError := errors.New("Expected error")
+	expectedError := errors.New("expected error")
 	var numberOfCalls int
 
 	p := Plan{
