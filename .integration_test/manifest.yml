@@ -2,6 +2,6 @@ applications:
 - name: integration-test-app
   buildpack: staticfile_buildpack
   routes:
-  - route: integration-test-app1.apps.public.gcp.springernature.io
-  - route: integration-test-app2.apps.public.gcp.springernature.io
-  - route: integration-test-app2.apps.public.gcp.springernature.io/hello
+  - route: integration-test-app1.springernature.app
+  - route: integration-test-app2.springernature.app
+  - route: integration-test-app2.springernature.app/hello

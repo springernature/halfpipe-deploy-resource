@@ -28,7 +28,7 @@ resources:
 - name: cf
   type: cf-resource
   source:
-    api: ((cloudfoundry.api-gcp))
+    api: ((cloudfoundry.api-snpaas))
     org: engineering-enablement
     password: ((cloudfoundry.password))
     space: integration_test
