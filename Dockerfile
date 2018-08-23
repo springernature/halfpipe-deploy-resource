@@ -3,7 +3,7 @@ FROM golang:alpine as builder
 COPY . /go/src/github.com/springernature/halfpipe-deploy-resource
 WORKDIR /go/src/github.com/springernature/halfpipe-deploy-resource
 
-ENV CF_TAR_URL "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=6.37.0&source=github-rel"
+ENV CF_TAR_URL "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=6.38.0&source=github-rel"
 RUN wget -qO- ${CF_TAR_URL} | tar xvz -C /bin > /dev/null
 
 # This is present as we create a build environment in the Concourse task
