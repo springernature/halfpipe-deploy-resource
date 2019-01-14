@@ -25,7 +25,6 @@ If you want to use a specific version of the halfpipe-push command simply set `v
 * `space`: _required_. The Space the app should be deployed into.
 * `username`: _required_. The username for the user to use when deploying.
 * `password`: _required_. The password for the user to use when deploying.
-* `prometheusGatewayURL`: _optional_. If this is set metrics will be sent to Prometheus
 
 ### Example
 ```

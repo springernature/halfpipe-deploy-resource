@@ -58,17 +58,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	metrics := plan.NewMetrics(request)
-
 	if err = p.Execute(plan.NewCFCliExecutor(), logger); err != nil {
-		if err = metrics.Failure(); err != nil {
-			logger.Println(err)
-		}
 		os.Exit(1)
-	}
-
-	if err = metrics.Success(); err != nil {
-		logger.Println(err)
 	}
 
 	finished := time.Now()
