@@ -15,7 +15,7 @@ RUN go build -o /opt/resource/check cmd/check/check.go
 RUN go build -o /opt/resource/out cmd/out/out.go
 RUN go build -o /opt/resource/in cmd/in/in.go
 
-RUN chmox +x /opt/resource/*
+RUN chmod +x /opt/resource/*
 
 FROM golang:alpine AS resource
 RUN apk add --no-cache bash tzdata ca-certificates jq
