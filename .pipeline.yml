@@ -14,11 +14,18 @@ resources:
 - name: docker-registry-image-dev
   type: docker-image
   source:
-    password: ((docker-hub-pe.password))
-    repository: platformengineering/cf-resource
+    repository: eu.gcr.io/halfpipe-io/cf-resource
     tag: dev
-    username: platformengineering
+    password: ((gcr.private_key))
+    username: _json_key
 - name: docker-registry-image-stable
+  type: docker-image
+  source:
+    repository: eu.gcr.io/halfpipe-io/cf-resource
+    tag: stable
+    password: ((gcr.private_key))
+    username: _json_key
+- name: docker-registry-image-stable-legacy
   type: docker-image
   source:
     password: ((docker-hub-pe.password))
@@ -38,7 +45,7 @@ resource_types:
 - name: cf-resource
   type: docker-image
   source:
-    repository: platformengineering/cf-resource
+    repository: eu.gcr.io/halfpipe-io/cf-resource
     tag: dev
 jobs:
 - name: Create test docker image
@@ -132,6 +139,11 @@ jobs:
       outputs:
       - name: build
   - put: docker-registry-image-stable
+    params:
+      additional_tags: cf-plugin-release/tag
+      build: build
+      tag_file: git/.docker-stable-tag
+  - put: docker-registry-image-stable-legacy
     params:
       additional_tags: cf-plugin-release/tag
       build: build
