@@ -3,11 +3,11 @@ package plan
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/springernature/halfpipe-deploy-resource/config"
-	"github.com/spf13/afero"
-	"github.com/springernature/halfpipe-deploy-resource/manifest"
 	"errors"
+	"github.com/spf13/afero"
+	"github.com/springernature/halfpipe-deploy-resource/config"
+	"github.com/springernature/halfpipe-deploy-resource/manifest"
+	"github.com/stretchr/testify/assert"
 	"path"
 )
 
@@ -42,7 +42,7 @@ func (m *ManifestReadWriteStub) ReadManifest(path string) (manifest.Manifest, er
 	return m.manifest, m.readError
 }
 
-func (m *ManifestReadWriteStub) WriteManifest(path string, application manifest.Application) (error) {
+func (m *ManifestReadWriteStub) WriteManifest(path string, application manifest.Application) error {
 	m.savedManifest = manifest.Manifest{
 		Applications: []manifest.Application{application},
 	}

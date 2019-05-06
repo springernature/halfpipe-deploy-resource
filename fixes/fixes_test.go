@@ -9,9 +9,9 @@ import (
 func TestFixForNotAuthorizedToPerformAction(t *testing.T) {
 	r := plan.Request{
 		Source: plan.Source{
-			Org:                  "myOrg",
-			Space:                "mySpace",
-			Username:             "myUser",
+			Org:      "myOrg",
+			Space:    "mySpace",
+			Username: "myUser",
 		},
 	}
 

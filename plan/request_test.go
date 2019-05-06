@@ -1,9 +1,9 @@
 package plan
 
 import (
-	"testing"
-	"github.com/stretchr/testify/assert"
 	"github.com/springernature/halfpipe-deploy-resource/config"
+	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestVerifyErrorsIfNotAllSourceFieldsAreFilledOut(t *testing.T) {

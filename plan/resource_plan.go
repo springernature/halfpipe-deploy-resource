@@ -3,10 +3,10 @@ package plan
 import (
 	"path"
 
-	"github.com/springernature/halfpipe-deploy-resource/config"
 	"github.com/spf13/afero"
-	"strings"
+	"github.com/springernature/halfpipe-deploy-resource/config"
 	"github.com/springernature/halfpipe-deploy-resource/manifest"
+	"strings"
 )
 
 type ResourcePlan interface {
@@ -43,11 +43,11 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 	}
 
 	pl = append(pl, NewCfCommand("login",
-			"-a", request.Source.API,
-			"-u", request.Source.Username,
-			"-p", request.Source.Password,
-			"-o", request.Source.Org,
-			"-s", request.Source.Space))
+		"-a", request.Source.API,
+		"-u", request.Source.Username,
+		"-p", request.Source.Password,
+		"-o", request.Source.Org,
+		"-s", request.Source.Space))
 
 	var halfpipeCommand Command
 	switch request.Params.Command {

@@ -7,7 +7,7 @@ import (
 
 type ReaderWriter interface {
 	ReadManifest(path string) (Manifest, error)
-	WriteManifest(path string, application Application) (error)
+	WriteManifest(path string, application Application) error
 }
 
 type manifestReadWrite struct {
