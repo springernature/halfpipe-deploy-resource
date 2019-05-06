@@ -1,16 +1,13 @@
 package plan
 
 import (
+	"github.com/springernature/halfpipe-deploy-resource/logger"
 	"testing"
 
-	"io/ioutil"
-	"log"
-
-	"github.com/stretchr/testify/assert"
 	"errors"
+	"github.com/stretchr/testify/assert"
+	"io/ioutil"
 )
-
-var DevNullWriter = log.New(ioutil.Discard, "", 0)
 
 type mockExecutor struct {
 	err error
@@ -56,7 +53,7 @@ func TestPlan_ExecutePassesOnError(t *testing.T) {
 		NewCfCommand("error"),
 	}
 
-	err := p.Execute(newMockExecutorWithError(expectedError), DevNullWriter)
+	err := p.Execute(newMockExecutorWithError(expectedError), logger.NewLogger(ioutil.Discard))
 
 	assert.Equal(t, expectedError, err)
 }
@@ -78,7 +75,7 @@ func TestPlan_ExecutePassesOnErrorIfItHappensInTheMiddleOfThePlan(t *testing.T) 
 			return []string{}, expectedError
 		}
 		return []string{}, nil
-	}), DevNullWriter)
+	}), logger.NewLogger(ioutil.Discard))
 
 	assert.Equal(t, 3, numberOfCalls)
 	assert.Equal(t, expectedError, err)
@@ -97,7 +94,7 @@ func TestPlan_Execute(t *testing.T) {
 	err := p.Execute(newMockExecutorWithFunction(func(args ...string) ([]string, error) {
 		numberOfCalls++
 		return []string{}, nil
-	}), DevNullWriter)
+	}), logger.NewLogger(ioutil.Discard))
 
 	assert.Nil(t, err)
 	assert.Equal(t, 4, numberOfCalls)

@@ -3,8 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/springernature/halfpipe-deploy-resource/fixes"
+	"github.com/springernature/halfpipe-deploy-resource/logger"
 	"io/ioutil"
-	"log"
 	"os"
 	"syscall"
 	"time"
@@ -20,7 +21,7 @@ func main() {
 
 	started := time.Now()
 
-	logger := log.New(os.Stderr, "", 0)
+	logger := logger.NewLogger(os.Stderr)
 
 	data, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
@@ -58,7 +59,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = p.Execute(plan.NewCFCliExecutor(), logger); err != nil {
+	if err = p.Execute(plan.NewCFCliExecutor(&logger), logger); err != nil {
+		logger.Println(err)
+		logger.Println("")
+		for _, fix := range fixes.SuggestFix(logger.BytesWritten, request) {
+			logger.Println(fix)
+		}
+
 		os.Exit(1)
 	}
 

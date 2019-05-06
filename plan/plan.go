@@ -2,7 +2,7 @@ package plan
 
 import (
 	"fmt"
-	"log"
+	"github.com/springernature/halfpipe-deploy-resource/logger"
 )
 
 type Plan []Command
@@ -20,7 +20,7 @@ func (p Plan) String() (s string) {
 	return
 }
 
-func (p Plan) Execute(executor Executor, logger *log.Logger) (err error) {
+func (p Plan) Execute(executor Executor, logger logger.CapturingWriter) (err error) {
 	for _, command := range p {
 		logger.Println(fmt.Sprintf("$ %s", command))
 		_, err = executor.CliCommand(command.Args()...)
