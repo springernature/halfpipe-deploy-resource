@@ -7,7 +7,7 @@ import (
 )
 
 var suggestDeveloperSpaceRole = func(log []byte, request plan.Request) (err error) {
-	if strings.Contains(string(log), "") {
+	if strings.Contains(string(log), "You are not authorized to perform the requested action") {
 		errorMsg := `'%s' does not have 'SpaceDeveloper' permissions on org/space '%s/%s'
 To fix ask your org admin to run 'cf set-space-role %s %s %s SpaceDeveloper'`
 		err = fmt.Errorf(errorMsg,

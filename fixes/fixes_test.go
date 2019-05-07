@@ -34,3 +34,20 @@ exit status 1
 	assert.Len(t, fixes, 1)
 	assert.Contains(t, fixes, suggestDeveloperSpaceRole(errorLog, r))
 }
+
+func TestNoFixWhenLogDoesntContainATrigger(t *testing.T) {
+	r := plan.Request{
+		Source: plan.Source{
+			Org:      "myOrg",
+			Space:    "mySpace",
+			Username: "myUser",
+		},
+	}
+
+	errorLog := []byte(`Getting app info...
+Meehp meehp I am CF log.
+`)
+
+	fixes := SuggestFix(errorLog, r)
+	assert.Len(t, fixes, 0)
+}
