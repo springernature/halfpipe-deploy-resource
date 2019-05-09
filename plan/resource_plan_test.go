@@ -261,6 +261,57 @@ func TestPutsGitRefInTheManifest(t *testing.T) {
 	assert.Equal(t, stub.savedManifest.Applications[0].EnvironmentVariables["GIT_REVISION"], "wiiiie")
 }
 
+func TestPutsBuildVersionInTheManifest(t *testing.T) {
+	fs := afero.Afero{Fs: afero.NewMemMapFs()}
+	concourseRoot := "/some/path"
+	gitRefPath := "git/.git/ref"
+	buildVersionPath := "version/version"
+	gitRef := "wiiiie\n"
+	buildVersion := "1.1.0\n"
+	fs.WriteFile(path.Join(concourseRoot, gitRefPath), []byte(gitRef), 0700)
+	fs.WriteFile(path.Join(concourseRoot, buildVersionPath), []byte(buildVersion), 0700)
+
+	applicationManifest := manifest.Manifest{
+		Applications: []manifest.Application{
+			{
+				Name: "MyApp",
+				EnvironmentVariables: map[string]string{
+					"VAR1": "a",
+					"VAR2": "b",
+					"VAR3": "c",
+				},
+			},
+		},
+	}
+
+	stub := ManifestReadWriteStub{manifest: applicationManifest}
+	push := NewPlanner(&stub, fs)
+
+	request := Request{
+		Source: Source{
+			API:      "a",
+			Org:      "b",
+			Space:    "c",
+			Username: "d",
+			Password: "e",
+		},
+		Params: Params{
+			ManifestPath: "manifest.yml",
+			GitRefPath:   gitRefPath,
+			BuildVersionPath: buildVersionPath,
+			AppPath:      "",
+			TestDomain:   "kehe.com",
+			Command:      config.PUSH,
+		},
+	}
+
+	_, err := push.Plan(request, concourseRoot)
+
+	assert.Nil(t, err)
+	assert.Equal(t, stub.savedManifest.Applications[0].EnvironmentVariables["GIT_REVISION"], "wiiiie")
+	assert.Equal(t, stub.savedManifest.Applications[0].EnvironmentVariables["BUILD_VERSION"], "1.1.0")
+}
+
 func TestAddsTimoutIfSpecified(t *testing.T) {
 	fs := afero.Afero{Fs: afero.NewMemMapFs()}
 

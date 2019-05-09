@@ -36,8 +36,12 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 		if request.Params.GitRefPath != "" {
 			fullGitRefPath = path.Join(concourseRoot, request.Params.GitRefPath)
 		}
+		fullBuildVersionPath := ""
+		if request.Params.BuildVersionPath != "" {
+			fullBuildVersionPath = path.Join(concourseRoot, request.Params.BuildVersionPath)
+		}
 
-		if err = p.updateManifestWithVars(fullManifestPath, fullGitRefPath, request.Params.Vars); err != nil {
+		if err = p.updateManifestWithVars(fullManifestPath, fullGitRefPath, request.Params.Vars, fullBuildVersionPath); err != nil {
 			return
 		}
 	}
@@ -77,7 +81,7 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 	return
 }
 
-func (p planner) updateManifestWithVars(manifestPath string, gitRefPath string, vars map[string]string) (err error) {
+func (p planner) updateManifestWithVars(manifestPath string, gitRefPath string, vars map[string]string, buildVersionPath string) (err error) {
 	if len(vars) > 0 || gitRefPath != "" {
 		apps, e := p.manifestReaderWrite.ReadManifest(manifestPath)
 		if e != nil {
@@ -97,12 +101,21 @@ func (p planner) updateManifestWithVars(manifestPath string, gitRefPath string, 
 		}
 
 		if gitRefPath != "" {
-			ref, errRead := p.readGitRef(gitRefPath)
+			ref, errRead := p.readFile(gitRefPath)
 			if errRead != nil {
 				err = errRead
 				return
 			}
 			app.EnvironmentVariables["GIT_REVISION"] = ref
+		}
+
+		if buildVersionPath != "" {
+			version, errRead := p.readFile(buildVersionPath)
+			if errRead != nil {
+				err = errRead
+				return
+			}
+			app.EnvironmentVariables["BUILD_VERSION"] = version
 		}
 
 		if err = p.manifestReaderWrite.WriteManifest(manifestPath, app); err != nil {
@@ -112,7 +125,7 @@ func (p planner) updateManifestWithVars(manifestPath string, gitRefPath string, 
 	return
 }
 
-func (p planner) readGitRef(gitRefPath string) (ref string, err error) {
+func (p planner) readFile(gitRefPath string) (ref string, err error) {
 	bytes, err := p.fs.ReadFile(gitRefPath)
 	if err != nil {
 		return

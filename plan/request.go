@@ -22,13 +22,14 @@ type Source struct {
 }
 
 type Params struct {
-	Command      string
-	ManifestPath string
-	AppPath      string
-	TestDomain   string
-	Vars         map[string]string
-	GitRefPath   string
-	Timeout      string
+	Command          string
+	ManifestPath     string
+	AppPath          string
+	TestDomain       string
+	Vars             map[string]string
+	GitRefPath       string
+	Timeout          string
+	BuildVersionPath string
 }
 
 func SourceMissingError(field string) error {
