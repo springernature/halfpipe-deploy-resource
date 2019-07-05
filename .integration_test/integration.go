@@ -1,18 +1,18 @@
 package main
 
 import (
-	"os/exec"
-	"fmt"
-	"strings"
-	"os"
-	"encoding/json"
-	"io/ioutil"
-	"io"
 	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
+	"os/exec"
+	"strings"
 )
 
 const appName = "integration-test-app"
-const testDomain = "apps.public.gcp.springernature.io"
+const testDomain = "public.springernature.app"
 
 var workingDir = os.Args[1]
 
@@ -26,16 +26,19 @@ func main() {
 
 	// Run 1
 	push()
+	check()
 	promote()
 	cleanup()
 
 	// Run 2
 	push()
+	check()
 	promote()
 	cleanup()
 
 	// Run 3
 	push()
+	check()
 	promote()
 	cleanup()
 }
@@ -46,6 +49,10 @@ func cleanup() {
 
 func push() {
 	runOutWithCommand("halfpipe-push")
+}
+
+func check() {
+	runOutWithCommand("halfpipe-check")
 }
 
 func promote() {
@@ -87,11 +94,11 @@ func runOutWithCommand(command string) {
 func loginToCF() {
 	fmt.Println("==== LOGGING IN ====")
 	login := exec.Command("cf", "login",
-		"-a", os.Getenv("API"),
-		"-u", os.Getenv("USERNAME"),
-		"-p", os.Getenv("PASSWORD"),
-		"-o", os.Getenv("ORG"),
-		"-s", os.Getenv("SPACE"),
+		"-a", os.Getenv("CF_API"),
+		"-u", os.Getenv("CF_USERNAME"),
+		"-p", os.Getenv("CF_PASSWORD"),
+		"-o", os.Getenv("CF_ORG"),
+		"-s", os.Getenv("CF_SPACE"),
 	)
 
 	output, err := login.Output()
@@ -151,17 +158,18 @@ func getApps() (apps []App) {
 func createRequest(command string) (pathToRequest string) {
 	r := Request{
 		Source: Source{
-			API:      os.Getenv("API"),
-			Org:      os.Getenv("ORG"),
-			Space:    os.Getenv("SPACE"),
-			Username: os.Getenv("USERNAME"),
-			Password: os.Getenv("PASSWORD"),
+			API:      os.Getenv("CF_API"),
+			Org:      os.Getenv("CF_ORG"),
+			Space:    os.Getenv("CF_SPACE"),
+			Username: os.Getenv("CF_USERNAME"),
+			Password: os.Getenv("CF_PASSWORD"),
 		},
 		Params: Params{
 			Command:      command,
 			ManifestPath: ".integration_test/manifest.yml",
 			AppPath:      ".integration_test",
 			TestDomain:   testDomain,
+			GitRefPath:   ".integration_test/gitRef",
 		},
 	}
 
@@ -206,4 +214,5 @@ type Params struct {
 	ManifestPath string `json:"manifestPath"`
 	AppPath      string `json:"appPath"`
 	TestDomain   string `json:"testDomain"`
+	GitRefPath   string `json:gitRefPath`
 }
