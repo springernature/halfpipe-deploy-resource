@@ -40,7 +40,7 @@ func main() {
 	switch request.Params.Command {
 	case "":
 		panic("params.command must not be empty")
-	case config.PUSH, config.PROMOTE, config.DELETE, config.CLEANUP:
+	case config.PUSH, config.CHECK, config.PROMOTE, config.DELETE, config.CLEANUP:
 		fs := afero.Afero{Fs: afero.NewOsFs()}
 		if err = plan.VerifyRequest(request); err != nil {
 			break

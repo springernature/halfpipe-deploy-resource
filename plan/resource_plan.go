@@ -66,7 +66,7 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 			"-manifestPath", fullManifestPath,
 			"-testDomain", request.Params.TestDomain,
 		)
-	case config.CLEANUP, config.DELETE:
+	case config.CHECK, config.CLEANUP, config.DELETE:
 		halfpipeCommand = NewCfCommand(request.Params.Command,
 			"-manifestPath", fullManifestPath,
 		)
