@@ -20,11 +20,31 @@ func (p Plan) String() (s string) {
 	return
 }
 
-func (p Plan) Execute(executor Executor, logger logger.CapturingWriter) (err error) {
-	for _, command := range p {
-		logger.Println(fmt.Sprintf("$ %s", command))
+func (p Plan) Execute(executor Executor, logger *logger.CapturingWriter) (err error) {
+	for _, c := range p {
+		logger.Println(fmt.Sprintf("$ %s", c))
+
+		var command Command
+		var onFailure Command
+		var shouldExecuteOnFailure ShouldExecute
+
+		switch cmd := c.(type) {
+		case compoundCommand:
+			command = cmd.left
+			onFailure = cmd.right
+			shouldExecuteOnFailure = cmd.shouldExecute
+		case Command:
+			command = cmd
+		}
+
 		_, err = executor.CliCommand(command.Args()...)
 		if err != nil {
+			if shouldExecuteOnFailure != nil && shouldExecuteOnFailure(logger.BytesWritten) {
+				logger.Println("")
+				logger.Println("Failed to push/start application")
+				logger.Println(fmt.Sprintf("$ %s", onFailure))
+				executor.CliCommand(onFailure.Args()...)
+			}
 			return
 		}
 		logger.Println()

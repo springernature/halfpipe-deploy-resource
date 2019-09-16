@@ -9,6 +9,8 @@ import (
 	"io/ioutil"
 )
 
+var discardLogger = logger.NewLogger(ioutil.Discard)
+
 type mockExecutor struct {
 	err error
 	f   func(args ...string) ([]string, error)
@@ -53,7 +55,7 @@ func TestPlan_ExecutePassesOnError(t *testing.T) {
 		NewCfCommand("error"),
 	}
 
-	err := p.Execute(newMockExecutorWithError(expectedError), logger.NewLogger(ioutil.Discard))
+	err := p.Execute(newMockExecutorWithError(expectedError), &discardLogger)
 
 	assert.Equal(t, expectedError, err)
 }
@@ -75,7 +77,7 @@ func TestPlan_ExecutePassesOnErrorIfItHappensInTheMiddleOfThePlan(t *testing.T) 
 			return []string{}, expectedError
 		}
 		return []string{}, nil
-	}), logger.NewLogger(ioutil.Discard))
+	}), &discardLogger)
 
 	assert.Equal(t, 3, numberOfCalls)
 	assert.Equal(t, expectedError, err)
@@ -94,7 +96,7 @@ func TestPlan_Execute(t *testing.T) {
 	err := p.Execute(newMockExecutorWithFunction(func(args ...string) ([]string, error) {
 		numberOfCalls++
 		return []string{}, nil
-	}), logger.NewLogger(ioutil.Discard))
+	}), &discardLogger)
 
 	assert.Nil(t, err)
 	assert.Equal(t, 4, numberOfCalls)

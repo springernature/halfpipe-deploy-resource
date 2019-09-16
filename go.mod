@@ -8,3 +8,5 @@ require (
 	golang.org/x/text v0.0.0-20180805044716-cb6730876b98 // indirect
 	gopkg.in/yaml.v2 v2.2.1
 )
+
+go 1.13

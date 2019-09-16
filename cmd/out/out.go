@@ -59,7 +59,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = p.Execute(plan.NewCFCliExecutor(&logger), logger); err != nil {
+	if err = p.Execute(plan.NewCFCliExecutor(&logger), &logger); err != nil {
 		logger.Println(err)
 		logger.Println("")
 		for _, fix := range fixes.SuggestFix(logger.BytesWritten, request) {

@@ -1,6 +1,7 @@
 package plan
 
 import (
+	"fmt"
 	"path"
 
 	"github.com/spf13/afero"
@@ -56,11 +57,25 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 	var halfpipeCommand Command
 	switch request.Params.Command {
 	case config.PUSH:
-		halfpipeCommand = NewCfCommand(request.Params.Command,
-			"-manifestPath", fullManifestPath,
-			"-appPath", path.Join(concourseRoot, request.Params.AppPath),
-			"-testDomain", request.Params.TestDomain,
-		)
+		candidateAppName, e := p.getCandidateName(fullManifestPath)
+		if e != nil {
+			err = e
+			return
+		}
+		halfpipeCommand = NewCompoundCommand(
+			NewCfCommand(request.Params.Command,
+				"-manifestPath", fullManifestPath,
+				"-appPath", path.Join(concourseRoot, request.Params.AppPath),
+				"-testDomain", request.Params.TestDomain,
+			),
+			NewCfCommand("logs",
+				candidateAppName,
+				"--recent",
+			),
+			func(log []byte) bool {
+				return strings.Contains(string(log), `TIP: use 'cf logs`)
+			})
+
 	case config.PROMOTE:
 		halfpipeCommand = NewCfCommand(request.Params.Command,
 			"-manifestPath", fullManifestPath,
@@ -81,9 +96,26 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 	return
 }
 
+func (p planner) getCandidateName(manifestPath string) (candidateName string, err error) {
+	apps, err := p.readManifest(manifestPath)
+	if err != nil {
+		return
+	}
+
+	// We just assume the first app in the manifest is the app under deployment.
+	// We lint that this is the case in the halfpipe linter.
+	app := apps.Applications[0]
+	candidateName = fmt.Sprintf("%s-CANDIDATE", app.Name)
+	return
+}
+
+func (p planner) readManifest(manifestPath string) (manifest.Manifest, error) {
+	return p.manifestReaderWrite.ReadManifest(manifestPath)
+}
+
 func (p planner) updateManifestWithVars(manifestPath string, gitRefPath string, vars map[string]string, buildVersionPath string) (err error) {
 	if len(vars) > 0 || gitRefPath != "" {
-		apps, e := p.manifestReaderWrite.ReadManifest(manifestPath)
+		apps, e := p.readManifest(manifestPath)
 		if e != nil {
 			err = e
 			return

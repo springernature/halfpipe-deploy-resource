@@ -23,7 +23,6 @@ func NewCfCommand(args ...string) Command {
 		args:    args,
 	}
 }
-
 func (c cfCommand) Args() []string {
 	return c.args
 }
