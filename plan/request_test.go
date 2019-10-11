@@ -135,3 +135,33 @@ func TestVerifyErrorsIfNotAllRequiredParamsFieldsForCleanupFilledOut(t *testing.
 	}
 	assert.Nil(t, VerifyRequestParams(allesOk))
 }
+
+func TestPreStartCommandForPush(t *testing.T) {
+	t.Run("Invalid preStartCommand", func(t *testing.T) {
+		invalidParams := Params{
+			Command:         config.PUSH,
+			ManifestPath:    "path",
+			TestDomain:      "test.com",
+			AppPath:         "path",
+			GitRefPath:      "path",
+			PreStartCommand: "something bad",
+		}
+
+		expectedError := PreStartCommandError("something bad")
+
+		assert.Equal(t, expectedError, VerifyRequestParams(invalidParams))
+	})
+
+	t.Run("Valid preStartCommand", func(t *testing.T) {
+		allesOk := Params{
+			Command:         config.PUSH,
+			ManifestPath:    "path",
+			TestDomain:      "test.com",
+			AppPath:         "path",
+			GitRefPath:      "path",
+			PreStartCommand: "cf something good",
+		}
+
+		assert.NoError(t, VerifyRequestParams(allesOk))
+	})
+}

@@ -62,12 +62,21 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 			err = e
 			return
 		}
+
+		pushCommand := NewCfCommand(
+			request.Params.Command,
+			"-manifestPath", fullManifestPath,
+			"-appPath", path.Join(concourseRoot, request.Params.AppPath),
+			"-testDomain", request.Params.TestDomain,
+		)
+
+		if request.Params.PreStartCommand != "" {
+			quotedCommand := fmt.Sprintf(`"%s"`, strings.ReplaceAll(request.Params.PreStartCommand, `"`, `\"`))
+			pushCommand = pushCommand.AddToArgs("-preStartCommand", quotedCommand)
+		}
+
 		halfpipeCommand = NewCompoundCommand(
-			NewCfCommand(request.Params.Command,
-				"-manifestPath", fullManifestPath,
-				"-appPath", path.Join(concourseRoot, request.Params.AppPath),
-				"-testDomain", request.Params.TestDomain,
-			),
+			pushCommand,
 			NewCfCommand("logs",
 				candidateAppName,
 				"--recent",

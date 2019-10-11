@@ -296,12 +296,12 @@ func TestPutsBuildVersionInTheManifest(t *testing.T) {
 			Password: "e",
 		},
 		Params: Params{
-			ManifestPath: "manifest.yml",
-			GitRefPath:   gitRefPath,
+			ManifestPath:     "manifest.yml",
+			GitRefPath:       gitRefPath,
 			BuildVersionPath: buildVersionPath,
-			AppPath:      "",
-			TestDomain:   "kehe.com",
-			Command:      config.PUSH,
+			AppPath:          "",
+			TestDomain:       "kehe.com",
+			Command:          config.PUSH,
 		},
 	}
 
@@ -344,4 +344,39 @@ func TestAddsTimoutIfSpecified(t *testing.T) {
 	assert.Len(t, p, 2)
 	assert.Contains(t, p[0].String(), "cf login")
 	assert.Equal(t, "cf halfpipe-push -manifestPath manifest.yml -appPath . -testDomain domain.com -timeout 1m || cf logs MyApp-CANDIDATE --recent", p[1].String())
+}
+
+func TestAddsPreStartCommandIfSpecified(t *testing.T) {
+	fs := afero.Afero{Fs: afero.NewMemMapFs()}
+
+	var requestWithPreStartCommand = Request{
+		Source: Source{
+			Space: "dev",
+		},
+		Params: Params{
+			Command:         config.PUSH,
+			ManifestPath:    "manifest.yml",
+			AppPath:         ".",
+			TestDomain:      "domain.com",
+			Timeout:         "1m",
+			PreStartCommand: "cf something \"or other\"",
+		},
+	}
+
+	applicationManifest := manifest.Manifest{
+		Applications: []manifest.Application{
+			{Name: "MyApp"},
+		},
+	}
+
+	manifestReadWrite := &ManifestReadWriteStub{manifest: applicationManifest}
+
+	push := NewPlanner(manifestReadWrite, fs)
+
+	p, err := push.Plan(requestWithPreStartCommand, "")
+
+	assert.Nil(t, err)
+	assert.Len(t, p, 2)
+	assert.Contains(t, p[0].String(), "cf login")
+	assert.Equal(t, `cf halfpipe-push -manifestPath manifest.yml -appPath . -testDomain domain.com -preStartCommand "cf something \"or other\"" -timeout 1m || cf logs MyApp-CANDIDATE --recent`, p[1].String())
 }

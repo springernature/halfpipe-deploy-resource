@@ -165,11 +165,12 @@ func createRequest(command string) (pathToRequest string) {
 			Password: os.Getenv("CF_PASSWORD"),
 		},
 		Params: Params{
-			Command:      command,
-			ManifestPath: ".integration_test/manifest.yml",
-			AppPath:      ".integration_test",
-			TestDomain:   testDomain,
-			GitRefPath:   ".integration_test/gitRef",
+			Command:         command,
+			ManifestPath:    ".integration_test/manifest.yml",
+			AppPath:         ".integration_test",
+			TestDomain:      testDomain,
+			GitRefPath:      ".integration_test/gitRef",
+			PreStartCommand: "cf events integration-test-app-CANDIDATE",
 		},
 	}
 
@@ -210,9 +211,10 @@ type Source struct {
 }
 
 type Params struct {
-	Command      string `json:"command"`
-	ManifestPath string `json:"manifestPath"`
-	AppPath      string `json:"appPath"`
-	TestDomain   string `json:"testDomain"`
-	GitRefPath   string `json:gitRefPath`
+	Command         string `json:"command"`
+	ManifestPath    string `json:"manifestPath"`
+	AppPath         string `json:"appPath"`
+	TestDomain      string `json:"testDomain"`
+	GitRefPath      string `json:gitRefPath`
+	PreStartCommand string `json:preStartCommand`
 }

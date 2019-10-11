@@ -3,6 +3,7 @@ package plan
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/springernature/halfpipe-deploy-resource/config"
 )
@@ -30,6 +31,7 @@ type Params struct {
 	GitRefPath       string
 	BuildVersionPath string
 	Timeout          string
+	PreStartCommand  string
 }
 
 func SourceMissingError(field string) error {
@@ -38,6 +40,10 @@ func SourceMissingError(field string) error {
 
 func ParamsMissingError(field string) error {
 	return errors.New(fmt.Sprintf("Params config must contain %s", field))
+}
+
+func PreStartCommandError(preStartCommand string) error {
+	return errors.New(fmt.Sprintf("invalid preStartCommand - only cf commands are allowed: '%s'", preStartCommand))
 }
 
 func VerifyRequest(request Request) error {
@@ -97,6 +103,10 @@ func VerifyRequestParams(params Params) error {
 
 		if params.GitRefPath == "" {
 			return ParamsMissingError("gitRefPath")
+		}
+
+		if len(params.PreStartCommand) > 0 && !strings.HasPrefix(params.PreStartCommand, "cf ") {
+			return PreStartCommandError(params.PreStartCommand)
 		}
 	case config.PROMOTE:
 		if params.TestDomain == "" {
