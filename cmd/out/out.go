@@ -17,6 +17,7 @@ import (
 )
 
 func main() {
+	fmt.Println("WARNING! YOU ARE RUNNING WITH CF CLI 7 WHICH IS IN BETA!")
 	concourseRoot := os.Args[1]
 
 	started := time.Now()

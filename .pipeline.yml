@@ -5,7 +5,7 @@ resources:
   source:
     private_key: ((halfpipe-github.private_key))
     uri: git@github.com:springernature/halfpipe-deploy-resource.git
-  check_every: 10m
+    branch: v7
 - name: cf-plugin-release
   type: github-release
   source:
@@ -15,14 +15,14 @@ resources:
 - name: docker-registry-image-dev
   type: docker-image
   source:
-    repository: eu.gcr.io/halfpipe-io/cf-resource
+    repository: eu.gcr.io/halfpipe-io/cf-resource-v7
     tag: dev
     password: ((halfpipe-gcr.private_key))
     username: _json_key
 - name: docker-registry-image-stable
   type: docker-image
   source:
-    repository: eu.gcr.io/halfpipe-io/cf-resource
+    repository: eu.gcr.io/halfpipe-io/cf-resource-v7
     tag: stable
     password: ((halfpipe-gcr.private_key))
     username: _json_key
@@ -30,7 +30,7 @@ resources:
   type: docker-image
   source:
     password: ((docker-hub-pe.password))
-    repository: platformengineering/cf-resource
+    repository: platformengineering/cf-resource-v7
     tag: stable
     username: platformengineering
 - name: cf
@@ -46,7 +46,7 @@ resource_types:
 - name: cf-resource
   type: registry-image
   source:
-    repository: eu.gcr.io/halfpipe-io/cf-resource
+    repository: eu.gcr.io/halfpipe-io/cf-resource-v7
     tag: dev
     password: ((halfpipe-gcr.private_key))
     username: _json_key

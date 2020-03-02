@@ -3,8 +3,9 @@ FROM golang:1.13-buster as builder
 COPY . /build
 WORKDIR /build
 
-ENV CF_TAR_URL "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=6.38.0&source=github-rel"
+ENV CF_TAR_URL "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=7.0.0-beta.30&source=github-rel"
 RUN wget -qO- ${CF_TAR_URL} | tar xvz -C /bin > /dev/null
+RUN mv /bin/cf7 /bin/cf
 
 # This is present as we create a build environment in the Concourse task
 # 'Create temp folder with both resource src and plugin from release'
