@@ -17,12 +17,12 @@ import (
 )
 
 func main() {
-	fmt.Println("WARNING! YOU ARE RUNNING WITH CF CLI 7 WHICH IS IN BETA!")
 	concourseRoot := os.Args[1]
 
 	started := time.Now()
 
 	logger := logger.NewLogger(os.Stderr)
+	logger.Println("WARNING! YOU ARE RUNNING WITH CF CLI 7 WHICH IS IN BETA!")
 
 	data, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
