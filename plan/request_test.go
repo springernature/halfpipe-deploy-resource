@@ -173,7 +173,7 @@ func TestRollingCommands(t *testing.T) {
 				Command: config.DEPLOY_ROLLING,
 				ManifestPath: "something",
 			}
-			assert.Equal(t, ParamsMissingError("testDomain"), VerifyRequestParams(missingCommand))
+			assert.Equal(t, ParamsMissingError("appPath"), VerifyRequestParams(missingCommand))
 		})
 
 		t.Run("All required params", func(t *testing.T) {

@@ -96,7 +96,7 @@ func VerifyRequestParams(params Params) error {
 	}
 
 	switch params.Command {
-	case config.PUSH, config.DEPLOY_ROLLING:
+	case config.PUSH:
 		if params.TestDomain == "" {
 			return ParamsMissingError("testDomain")
 		}
@@ -113,6 +113,14 @@ func VerifyRequestParams(params Params) error {
 
 		if len(params.PreStartCommand) > 0 && !strings.HasPrefix(params.PreStartCommand, "cf ") {
 			return PreStartCommandError(params.PreStartCommand)
+		}
+	case config.DEPLOY_ROLLING:
+		if params.AppPath == "" {
+			return ParamsMissingError("appPath")
+		}
+
+		if params.GitRefPath == "" {
+			return ParamsMissingError("gitRefPath")
 		}
 	case config.PROMOTE:
 		if params.TestDomain == "" {
