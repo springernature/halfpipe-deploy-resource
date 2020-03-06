@@ -35,6 +35,7 @@ type Params struct {
 	DockerUsername   string
 	DockerPassword   string
 	DockerTag        string
+	Instances        string
 }
 
 func SourceMissingError(field string) error {
@@ -95,7 +96,7 @@ func VerifyRequestParams(params Params) error {
 	}
 
 	switch params.Command {
-	case config.PUSH:
+	case config.PUSH, config.DEPLOY_ROLLING:
 		if params.TestDomain == "" {
 			return ParamsMissingError("testDomain")
 		}

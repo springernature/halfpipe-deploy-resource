@@ -61,6 +61,7 @@ Deploys app to cf
 * `gitRefPath`: _optional_. Path to the `.git/ref` file. If this is set the app will get the environment variable `GIT_REVISION` set
 * `timeout`: _optional_. Timeout for each of the commands that the halfpipe cf plugin will execute
 * `preStartCommand`: _optional_. A CF command to run immediately before `cf start` in the `halfpipe-push` command. e.g. `cf events <app-name>`.
+* `instances`: _optional_. Number of instances to push.
  
 ### Example
 ```

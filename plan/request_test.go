@@ -166,6 +166,48 @@ func TestPreStartCommandForPush(t *testing.T) {
 	})
 }
 
+func TestRollingCommands(t *testing.T) {
+	t.Run("DEPLOY_ROLLING", func(t *testing.T) {
+		t.Run("Missing params", func(t *testing.T) {
+			missingCommand := Params{
+				Command: config.DEPLOY_ROLLING,
+				ManifestPath: "something",
+			}
+			assert.Equal(t, ParamsMissingError("testDomain"), VerifyRequestParams(missingCommand))
+		})
+
+		t.Run("All required params", func(t *testing.T) {
+			complete := Params{
+				Command: config.DEPLOY_ROLLING,
+				ManifestPath: "something",
+				TestDomain: "blah",
+				AppPath: "blah",
+				GitRefPath: "blah",
+			}
+			assert.NoError(t, VerifyRequestParams(complete))
+
+		})
+	})
+
+	t.Run("DELETE_TEST", func(t *testing.T) {
+		t.Run("Missing params", func(t *testing.T) {
+			missingCommand := Params{
+				Command: config.DELETE_TEST,
+			}
+			assert.Equal(t, ParamsMissingError("manifestPath"), VerifyRequestParams(missingCommand))
+		})
+
+		t.Run("All required params", func(t *testing.T) {
+			complete := Params{
+				Command: config.DELETE_TEST,
+				ManifestPath: "something",
+			}
+			assert.NoError(t, VerifyRequestParams(complete))
+		})
+	})
+
+}
+
 func TestVerifyItDoesntErrorIfAppPathIsEmptyButDockerSpecified(t *testing.T) {
 	allesOk := Params{
 		Command:        config.PUSH,

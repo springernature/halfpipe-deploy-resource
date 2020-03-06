@@ -97,6 +97,10 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 			pushCommand = pushCommand.AddToArgs("-preStartCommand", quotedCommand)
 		}
 
+		if request.Params.Instances != "" {
+			pushCommand = pushCommand.AddToArgs("-instances", request.Params.Instances)
+		}
+
 		halfpipeCommand = NewCompoundCommand(
 			pushCommand,
 			NewCfCommand("logs",

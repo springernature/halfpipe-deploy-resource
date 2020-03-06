@@ -504,3 +504,45 @@ func TestAddsPreStartCommandIfSpecified(t *testing.T) {
 	assert.Contains(t, p[0].String(), "cf login")
 	assert.Equal(t, `cf halfpipe-push -manifestPath manifest.yml -testDomain domain.com -appPath . -preStartCommand "cf something \"or other\"" -timeout 1m || cf logs MyApp-CANDIDATE --recent`, p[1].String())
 }
+
+func TestGivesACorrectPlanWhenInstanesIsSet(t *testing.T) {
+	request := Request{
+		Source: Source{
+			API:      "a",
+			Org:      "b",
+			Space:    "c",
+			Username: "d",
+			Password: "e",
+		},
+		Params: Params{
+			ManifestPath: "manifest.yml",
+			AppPath:      "",
+			TestDomain:   "kehe.com",
+			Command:      config.PUSH,
+			Instances:    "1337",
+		},
+	}
+
+	fs := afero.Afero{Fs: afero.NewMemMapFs()}
+
+	applicationManifest := manifest.Manifest{
+		Applications: []manifest.Application{
+			{Name: "MyApp"},
+		},
+	}
+
+	manifestReadWrite := &ManifestReadWriteStub{manifest: applicationManifest}
+
+	push := NewPlanner(manifestReadWrite, fs)
+
+	p, err := push.Plan(request, "")
+
+	assert.Nil(t, err)
+	assert.Len(t, p, 2)
+	assert.Contains(t, p[0].String(), "cf login")
+	assert.Contains(t, p[1].String(), "cf halfpipe-push")
+	assert.Contains(t, p[1].String(), "-instances 1337")
+}
+
+func TestRolling(t *testing.T) {
+}
