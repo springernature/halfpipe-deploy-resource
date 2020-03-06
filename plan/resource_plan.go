@@ -120,9 +120,16 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 		halfpipeCommand = NewCfCommand(request.Params.Command,
 			"-manifestPath", fullManifestPath,
 		)
+	case config.DEPLOY_ROLLING:
+		halfpipeCommand = NewCfCommand(
+			"push",
+			"--manifest", fullManifestPath,
+			"--path", path.Join(concourseRoot, request.Params.AppPath),
+			"--strategy rolling",
+		)
 	}
 
-	if request.Params.Timeout != "" {
+	if request.Params.Timeout != "" && request.Params.Command != config.DEPLOY_ROLLING {
 		halfpipeCommand = halfpipeCommand.AddToArgs("-timeout", request.Params.Timeout)
 	}
 
