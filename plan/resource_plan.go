@@ -125,7 +125,7 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 			"push",
 			"--manifest", fullManifestPath,
 			"--path", path.Join(concourseRoot, request.Params.AppPath),
-			"--strategy rolling",
+			"--strategy", "rolling",
 		)
 	}
 
