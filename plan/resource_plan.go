@@ -127,6 +127,16 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 			"--path", path.Join(concourseRoot, request.Params.AppPath),
 			"--strategy", "rolling",
 		)
+	case config.DELETE_TEST:
+		candidateAppName, e := p.getCandidateName(fullManifestPath)
+		if e != nil {
+			err = e
+			return
+		}
+
+		halfpipeCommand = NewCfCommand(
+			"delete",
+			"-f", candidateAppName)
 	}
 
 	if request.Params.Timeout != "" && request.Params.Command != config.DEPLOY_ROLLING {
