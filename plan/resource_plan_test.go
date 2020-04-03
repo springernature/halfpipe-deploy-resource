@@ -188,6 +188,55 @@ func TestGivesACorrectPlanThatAlsoOverridesVariablesInManifest(t *testing.T) {
 	assert.Contains(t, p[1].String(), "cf halfpipe-push")
 }
 
+func TestGivesACorrectPlanWhenDockerImageSpecifiedInManifest(t *testing.T) {
+	fs := afero.Afero{Fs: afero.NewMemMapFs()}
+
+	applicationManifest := manifest.Manifest{
+		Applications: []manifest.Application{
+			{
+				Name: "MyApp",
+				EnvironmentVariables: map[string]string{
+					"VAR1": "a",
+					"VAR2": "b",
+					"VAR3": "c",
+				},
+				Docker: manifest.DockerInfo {
+					Image: "someCool/image:whoo",
+				},
+			},
+		},
+	}
+
+	expectedManifest := manifest.Manifest{
+		Applications: []manifest.Application{
+			{
+				Name: "MyApp",
+				EnvironmentVariables: map[string]string{
+					"VAR1": "a",
+					"VAR2": "bb",
+					"VAR3": "c",
+					"VAR4": "cc",
+				},
+				Docker: manifest.DockerInfo {
+					Image: "someCool/image:whoo",
+				},
+			},
+		},
+	}
+
+	manifestReaderWriter := ManifestReadWriteStub{manifest: applicationManifest}
+	push := NewPlanner(&manifestReaderWriter, fs)
+
+	p, err := push.Plan(validRequest, "")
+
+	assert.Nil(t, err)
+	assert.Equal(t, expectedManifest, manifestReaderWriter.savedManifest)
+	assert.Len(t, p, 2)
+	assert.Contains(t, p[0].String(), "cf login")
+	assert.Contains(t, p[1].String(), "cf halfpipe-push")
+	assert.NotContains(t, p[1].String(), "appPath")
+}
+
 func TestErrorsIfTheGitRefPathIsSpecifiedButDoesntExist(t *testing.T) {
 	fs := afero.Afero{Fs: afero.NewMemMapFs()}
 
@@ -343,7 +392,7 @@ func TestAddsTimoutIfSpecified(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Len(t, p, 2)
 	assert.Contains(t, p[0].String(), "cf login")
-	assert.Equal(t, "cf halfpipe-push -manifestPath manifest.yml -appPath . -testDomain domain.com -timeout 1m || cf logs MyApp-CANDIDATE --recent", p[1].String())
+	assert.Equal(t, "cf halfpipe-push -manifestPath manifest.yml -testDomain domain.com -appPath . -timeout 1m || cf logs MyApp-CANDIDATE --recent", p[1].String())
 }
 
 func TestAddsPreStartCommandIfSpecified(t *testing.T) {
@@ -378,5 +427,5 @@ func TestAddsPreStartCommandIfSpecified(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Len(t, p, 2)
 	assert.Contains(t, p[0].String(), "cf login")
-	assert.Equal(t, `cf halfpipe-push -manifestPath manifest.yml -appPath . -testDomain domain.com -preStartCommand "cf something \"or other\"" -timeout 1m || cf logs MyApp-CANDIDATE --recent`, p[1].String())
+	assert.Equal(t, `cf halfpipe-push -manifestPath manifest.yml -testDomain domain.com -appPath . -preStartCommand "cf something \"or other\"" -timeout 1m || cf logs MyApp-CANDIDATE --recent`, p[1].String())
 }
