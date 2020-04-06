@@ -165,3 +165,15 @@ func TestPreStartCommandForPush(t *testing.T) {
 		assert.NoError(t, VerifyRequestParams(allesOk))
 	})
 }
+
+func TestVerifyItDoesntErrorIfAppPathIsEmptyButDockerSpecified(t *testing.T) {
+	allesOk := Params{
+		Command:        config.PUSH,
+		ManifestPath:   "path",
+		TestDomain:     "test.com",
+		GitRefPath:     "path",
+		DockerUsername: "asd",
+		DockerPassword: "asd",
+	}
+	assert.Nil(t, VerifyRequestParams(allesOk))
+}

@@ -29,6 +29,11 @@ func main() {
 		syscall.Exit(1)
 	}
 
+	if err := ioutil.WriteFile("/tmp/request", data, 0777); err != nil {
+		logger.Println(err)
+		syscall.Exit(1)
+	}
+
 	request := plan.Request{}
 	err = json.Unmarshal(data, &request)
 	if err != nil {

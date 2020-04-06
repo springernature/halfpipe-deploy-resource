@@ -32,6 +32,8 @@ type Params struct {
 	BuildVersionPath string
 	Timeout          string
 	PreStartCommand  string
+	DockerUsername   string
+	DockerPassword   string
 }
 
 func SourceMissingError(field string) error {
@@ -98,7 +100,9 @@ func VerifyRequestParams(params Params) error {
 		}
 
 		if params.AppPath == "" {
-			return ParamsMissingError("appPath")
+			if params.DockerPassword == "" && params.DockerUsername == "" {
+				return ParamsMissingError("appPath")
+			}
 		}
 
 		if params.GitRefPath == "" {
