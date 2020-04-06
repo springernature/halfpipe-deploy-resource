@@ -23,10 +23,18 @@ func (c compoundCommand) String() string {
 }
 
 func (c compoundCommand) Args() []string {
-	panic("should never be used")
+	panic("Args in compoundCommand should never be used")
+}
+
+func (c compoundCommand) Env() []string {
+	return append(c.left.Env(), c.right.Env()...)
 }
 
 func (c compoundCommand) AddToArgs(args ...string) Command {
 	c.left = c.left.AddToArgs(args...)
 	return c
+}
+
+func (c compoundCommand) AddToEnv(env ...string) Command {
+	panic("AddToEnv in compoundCommand should never be used")
 }

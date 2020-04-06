@@ -6,7 +6,7 @@ import (
 )
 
 type Executor interface {
-	CliCommand(args ...string) ([]string, error)
+	CliCommand(command Command) ([]string, error)
 }
 
 type cfCLIExecutor struct {
@@ -21,10 +21,11 @@ func NewCFCliExecutor(logger *logger.CapturingWriter) Executor {
 	}
 }
 
-func (c cfCLIExecutor) CliCommand(args ...string) (out []string, err error) {
-	execCmd := exec.Command("cf", args...) // #nosec disables the gas warning for this line.
+func (c cfCLIExecutor) CliCommand(command Command) (out []string, err error) {
+	execCmd := exec.Command("cf", command.Args()...) // #nosec disables the gas warning for this line.
 	execCmd.Stdout = c.logger
 	execCmd.Stderr = c.logger
+	execCmd.Env = append(execCmd.Env, command.Env()...)
 
 	if err = execCmd.Start(); err != nil {
 		return

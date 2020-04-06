@@ -37,13 +37,13 @@ func (p Plan) Execute(executor Executor, logger *logger.CapturingWriter) (err er
 			command = cmd
 		}
 
-		_, err = executor.CliCommand(command.Args()...)
+		_, err = executor.CliCommand(command)
 		if err != nil {
 			if shouldExecuteOnFailure != nil && shouldExecuteOnFailure(logger.BytesWritten) {
 				logger.Println("")
 				logger.Println("Failed to push/start application")
 				logger.Println(fmt.Sprintf("$ %s", onFailure))
-				executor.CliCommand(onFailure.Args()...)
+				executor.CliCommand(onFailure)
 			}
 			return
 		}

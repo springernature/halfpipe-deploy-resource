@@ -63,21 +63,19 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 			return
 		}
 
-
-
 		pushCommand := NewCfCommand(
 			request.Params.Command,
 			"-manifestPath", fullManifestPath,
 			"-testDomain", request.Params.TestDomain,
 		)
 
-		isDocker, e := p.isDockerPush(fullManifestPath)
-		if e != nil {
-			err = e
-			return
-		}
+		isDockerPush := request.Params.DockerPassword != ""
+		if isDockerPush {
+			pushCommand = pushCommand.
+				AddToArgs("-dockerUsername", request.Params.DockerUsername).
+				AddToEnv(fmt.Sprintf("CF_DOCKER_PASSWORD=%s", request.Params.DockerPassword))
 
-		if !isDocker {
+		} else {
 			pushCommand = pushCommand.AddToArgs("-appPath", path.Join(concourseRoot, request.Params.AppPath))
 		}
 
@@ -184,16 +182,4 @@ func (p planner) readFile(gitRefPath string) (ref string, err error) {
 	}
 	ref = strings.TrimSpace(string(bytes))
 	return
-}
-
-func (p planner) isDockerPush(manifestPath string) (isDocker bool, err error) {
-	apps, err := p.readManifest(manifestPath)
-	if err != nil {
-		return
-	}
-
-	// We just assume the first app in the manifest is the app under deployment.
-	// We lint that this is the case in the halfpipe linter.
-	app := apps.Applications[0]
-	return app.Docker.Image != "", nil
 }

@@ -1,6 +1,7 @@
 package plan
 
 import (
+	"fmt"
 	"testing"
 
 	"errors"
@@ -227,14 +228,21 @@ func TestGivesACorrectPlanWhenDockerImageSpecifiedInManifest(t *testing.T) {
 	manifestReaderWriter := ManifestReadWriteStub{manifest: applicationManifest}
 	push := NewPlanner(&manifestReaderWriter, fs)
 
-	p, err := push.Plan(validRequest, "")
+	request := validRequest
+	request.Params.DockerUsername = "username"
+	request.Params.DockerPassword = "superSecret"
+
+	p, err := push.Plan(request, "")
 
 	assert.Nil(t, err)
 	assert.Equal(t, expectedManifest, manifestReaderWriter.savedManifest)
 	assert.Len(t, p, 2)
 	assert.Contains(t, p[0].String(), "cf login")
-	assert.Contains(t, p[1].String(), "cf halfpipe-push")
+	assert.Contains(t, p[1].String(), "CF_DOCKER_PASSWORD=... cf halfpipe-push")
+	assert.Contains(t, p[1].String(), fmt.Sprintf("-dockerUsername %s", request.Params.DockerUsername))
 	assert.NotContains(t, p[1].String(), "appPath")
+
+	assert.Equal(t, p[1].Env(), []string{fmt.Sprintf("CF_DOCKER_PASSWORD=%s", request.Params.DockerPassword)})
 }
 
 func TestErrorsIfTheGitRefPathIsSpecifiedButDoesntExist(t *testing.T) {

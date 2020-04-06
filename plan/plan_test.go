@@ -13,7 +13,7 @@ var discardLogger = logger.NewLogger(ioutil.Discard)
 
 type mockExecutor struct {
 	err error
-	f   func(args ...string) ([]string, error)
+	f   func(command Command) ([]string, error)
 }
 
 func newMockExecutorWithError(err error) Executor {
@@ -22,15 +22,15 @@ func newMockExecutorWithError(err error) Executor {
 	}
 }
 
-func newMockExecutorWithFunction(fun func(args ...string) ([]string, error)) Executor {
+func newMockExecutorWithFunction(fun func(command Command) ([]string, error)) Executor {
 	return mockExecutor{
 		f: fun,
 	}
 }
 
-func (m mockExecutor) CliCommand(args ...string) ([]string, error) {
+func (m mockExecutor) CliCommand(command Command) ([]string, error) {
 	if m.f != nil {
-		return m.f(args...)
+		return m.f(command)
 	}
 	return []string{}, m.err
 }
@@ -71,9 +71,9 @@ func TestPlan_ExecutePassesOnErrorIfItHappensInTheMiddleOfThePlan(t *testing.T) 
 		NewCfCommand("ok"),
 	}
 
-	err := p.Execute(newMockExecutorWithFunction(func(args ...string) ([]string, error) {
+	err := p.Execute(newMockExecutorWithFunction(func(command Command) ([]string, error) {
 		numberOfCalls++
-		if args[0] == "error" {
+		if command.Args()[0] == "error" {
 			return []string{}, expectedError
 		}
 		return []string{}, nil
@@ -93,7 +93,7 @@ func TestPlan_Execute(t *testing.T) {
 		NewCfCommand("ok"),
 	}
 
-	err := p.Execute(newMockExecutorWithFunction(func(args ...string) ([]string, error) {
+	err := p.Execute(newMockExecutorWithFunction(func(command Command) ([]string, error) {
 		numberOfCalls++
 		return []string{}, nil
 	}), &discardLogger)
