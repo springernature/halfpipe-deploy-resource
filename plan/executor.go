@@ -2,6 +2,7 @@ package plan
 
 import (
 	"github.com/springernature/halfpipe-deploy-resource/logger"
+	"os"
 	"os/exec"
 )
 
@@ -25,7 +26,7 @@ func (c cfCLIExecutor) CliCommand(command Command) (out []string, err error) {
 	execCmd := exec.Command("cf", command.Args()...) // #nosec disables the gas warning for this line.
 	execCmd.Stdout = c.logger
 	execCmd.Stderr = c.logger
-	execCmd.Env = append(execCmd.Env, command.Env()...)
+	execCmd.Env = append(os.Environ(), command.Env()...)
 
 	if err = execCmd.Start(); err != nil {
 		return
