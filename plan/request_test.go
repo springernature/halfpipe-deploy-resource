@@ -170,7 +170,7 @@ func TestRollingCommands(t *testing.T) {
 	t.Run("DEPLOY_ROLLING", func(t *testing.T) {
 		t.Run("Missing params", func(t *testing.T) {
 			missingCommand := Params{
-				Command: config.DEPLOY_ROLLING,
+				Command:      config.DEPLOY_ROLLING,
 				ManifestPath: "something",
 			}
 			assert.Equal(t, ParamsMissingError("appPath"), VerifyRequestParams(missingCommand))
@@ -178,11 +178,11 @@ func TestRollingCommands(t *testing.T) {
 
 		t.Run("All required params", func(t *testing.T) {
 			complete := Params{
-				Command: config.DEPLOY_ROLLING,
+				Command:      config.DEPLOY_ROLLING,
 				ManifestPath: "something",
-				TestDomain: "blah",
-				AppPath: "blah",
-				GitRefPath: "blah",
+				TestDomain:   "blah",
+				AppPath:      "blah",
+				GitRefPath:   "blah",
 			}
 			assert.NoError(t, VerifyRequestParams(complete))
 
@@ -199,7 +199,7 @@ func TestRollingCommands(t *testing.T) {
 
 		t.Run("All required params", func(t *testing.T) {
 			complete := Params{
-				Command: config.DELETE_TEST,
+				Command:      config.DELETE_TEST,
 				ManifestPath: "something",
 			}
 			assert.NoError(t, VerifyRequestParams(complete))
@@ -209,13 +209,21 @@ func TestRollingCommands(t *testing.T) {
 }
 
 func TestVerifyItDoesntErrorIfAppPathIsEmptyButDockerSpecified(t *testing.T) {
-	allesOk := Params{
-		Command:        config.PUSH,
+	params := Params{
 		ManifestPath:   "path",
 		TestDomain:     "test.com",
 		GitRefPath:     "path",
 		DockerUsername: "asd",
 		DockerPassword: "asd",
 	}
-	assert.Nil(t, VerifyRequestParams(allesOk))
+
+	t.Run("PUSH", func(t *testing.T) {
+		params.Command = config.PUSH
+		assert.Nil(t, VerifyRequestParams(params))
+	})
+
+	t.Run("DEPLOY_ROLLING", func(t *testing.T) {
+		params.Command = config.DEPLOY_ROLLING
+		assert.Nil(t, VerifyRequestParams(params))
+	})
 }

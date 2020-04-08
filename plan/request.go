@@ -116,7 +116,9 @@ func VerifyRequestParams(params Params) error {
 		}
 	case config.DEPLOY_ROLLING:
 		if params.AppPath == "" {
-			return ParamsMissingError("appPath")
+			if params.DockerPassword == "" && params.DockerUsername == "" {
+				return ParamsMissingError("appPath")
+			}
 		}
 
 		if params.GitRefPath == "" {
