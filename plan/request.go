@@ -34,6 +34,7 @@ type Params struct {
 	PreStartCommand  string
 	DockerUsername   string
 	DockerPassword   string
+	DockerTag        string
 }
 
 func SourceMissingError(field string) error {

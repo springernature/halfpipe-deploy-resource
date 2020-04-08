@@ -71,7 +71,14 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 
 		isDockerPush := request.Params.DockerPassword != ""
 		if isDockerPush {
+			fullDockerTagPath := path.Join(concourseRoot, request.Params.DockerTag)
+			dockerImage, e := p.getDockerImage(fullManifestPath, fullDockerTagPath)
+			if e != nil {
+				err = e
+				return
+			}
 			pushCommand = pushCommand.
+				AddToArgs("-dockerImage", dockerImage).
 				AddToArgs("-dockerUsername", request.Params.DockerUsername).
 				AddToEnv(fmt.Sprintf("CF_DOCKER_PASSWORD=%s", request.Params.DockerPassword))
 
@@ -181,5 +188,29 @@ func (p planner) readFile(gitRefPath string) (ref string, err error) {
 		return
 	}
 	ref = strings.TrimSpace(string(bytes))
+	return
+}
+
+func (p planner) getDockerImage(manifestPath string, tagPath string) (dockerImage string, err error) {
+	apps, err := p.readManifest(manifestPath)
+	if err != nil {
+		return
+	}
+	dockerImage = apps.Applications[0].Docker.Image
+
+	if tagPath != "" {
+		content, e := p.fs.ReadFile(tagPath)
+		if e != nil {
+			err = e
+			return
+		}
+
+		if strings.Contains(dockerImage, ":") {
+			dockerImage = strings.Split(dockerImage, ":")[0]
+		}
+
+		dockerImage = fmt.Sprintf("%s:%s", dockerImage, strings.Trim(string(content), "\n"))
+
+	}
 	return
 }
