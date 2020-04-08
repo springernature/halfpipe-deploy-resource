@@ -30,6 +30,7 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 	// Here we assume that the request is complete.
 	// It has already been verified in out.go with the help of requests.VerifyRequest.
 
+
 	fullManifestPath := path.Join(concourseRoot, request.Params.ManifestPath)
 
 	if request.Params.Command == config.PUSH {
@@ -71,12 +72,17 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 
 		isDockerPush := request.Params.DockerPassword != ""
 		if isDockerPush {
-			fullDockerTagPath := path.Join(concourseRoot, request.Params.DockerTag)
+			fullDockerTagPath := ""
+			if request.Params.DockerTag != "" {
+				fullDockerTagPath = path.Join(concourseRoot, request.Params.DockerTag)
+			}
+
 			dockerImage, e := p.getDockerImage(fullManifestPath, fullDockerTagPath)
 			if e != nil {
 				err = e
 				return
 			}
+
 			pushCommand = pushCommand.
 				AddToArgs("-dockerImage", dockerImage).
 				AddToArgs("-dockerUsername", request.Params.DockerUsername).
@@ -196,6 +202,7 @@ func (p planner) getDockerImage(manifestPath string, tagPath string) (dockerImag
 	if err != nil {
 		return
 	}
+
 	dockerImage = apps.Applications[0].Docker.Image
 
 	if tagPath != "" {
