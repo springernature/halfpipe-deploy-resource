@@ -30,7 +30,6 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 	// Here we assume that the request is complete.
 	// It has already been verified in out.go with the help of requests.VerifyRequest.
 
-
 	fullManifestPath := path.Join(concourseRoot, request.Params.ManifestPath)
 
 	if request.Params.Command == config.PUSH {
@@ -121,12 +120,36 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 			"-manifestPath", fullManifestPath,
 		)
 	case config.DEPLOY_ROLLING:
-		halfpipeCommand = NewCfCommand(
+
+		pushCommand := NewCfCommand(
 			"push",
 			"--manifest", fullManifestPath,
-			"--path", path.Join(concourseRoot, request.Params.AppPath),
 			"--strategy", "rolling",
 		)
+
+		isDockerPush := request.Params.DockerPassword != ""
+		if isDockerPush {
+			fullDockerTagPath := ""
+			if request.Params.DockerTag != "" {
+				fullDockerTagPath = path.Join(concourseRoot, request.Params.DockerTag)
+			}
+
+			dockerImage, e := p.getDockerImage(fullManifestPath, fullDockerTagPath)
+			if e != nil {
+				err = e
+				return
+			}
+
+			halfpipeCommand = pushCommand.
+				AddToArgs("--docker-image", dockerImage).
+				AddToArgs("--docker-username", request.Params.DockerUsername).
+				AddToEnv(fmt.Sprintf("CF_DOCKER_PASSWORD=%s", request.Params.DockerPassword))
+
+		} else {
+			halfpipeCommand = pushCommand.
+				AddToArgs("--path", path.Join(concourseRoot, request.Params.AppPath))
+		}
+
 	case config.DELETE_TEST:
 		candidateAppName, e := p.getCandidateName(fullManifestPath)
 		if e != nil {

@@ -309,6 +309,40 @@ func TestGivesACorrectPlanWhenDockerImageSpecifiedInManifest(t *testing.T) {
 			assert.Contains(t, p[1].String(), "CF_DOCKER_PASSWORD=... cf halfpipe-push")
 			assert.Contains(t, p[1].String(), fmt.Sprintf("-dockerImage %s", fmt.Sprintf("%s:%s", "someCool/image", tagContent)))
 		})
+
+		t.Run("With rolling deploy", func(t *testing.T) {
+			fs := afero.Afero{Fs: afero.NewMemMapFs()}
+			applicationManifest := manifest.Manifest{
+				Applications: []manifest.Application{
+					{
+						Name: "MyApp",
+						Docker: manifest.DockerInfo{
+							Image: "someCool/image:whoo",
+						},
+					},
+				},
+			}
+
+			manifestReaderWriter := ManifestReadWriteStub{manifest: applicationManifest}
+			push := NewPlanner(&manifestReaderWriter, fs)
+
+			request := validRequest
+			request.Params.Command = config.DEPLOY_ROLLING
+			request.Params.DockerUsername = "un"
+			request.Params.DockerPassword = "pw"
+
+			p, err := push.Plan(request, "")
+
+			assert.Nil(t, err)
+			assert.Len(t, p, 2)
+			assert.Contains(t, p[0].String(), "cf login")
+			assert.Contains(t, p[1].String(), "CF_DOCKER_PASSWORD=... cf push")
+			assert.Contains(t, p[1].String(), fmt.Sprintf("--docker-username %s", request.Params.DockerUsername))
+			assert.Contains(t, p[1].String(), fmt.Sprintf("--docker-image %s", applicationManifest.Applications[0].Docker.Image))
+			assert.NotContains(t, p[1].String(), "appPath")
+
+			assert.Equal(t, p[1].Env(), []string{fmt.Sprintf("CF_DOCKER_PASSWORD=%s", request.Params.DockerPassword)})
+		})
 	})
 }
 
@@ -578,7 +612,10 @@ func TestGivesACorrectRollingDeployPlan(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Len(t, p, 2)
 	assert.Contains(t, p[0].String(), "cf login")
-	assert.Equal(t, "cf push --manifest manifest.yml --path some/cool/path --strategy rolling", p[1].String())
+	assert.Contains(t, p[1].String(), "cf push")
+	assert.Contains(t, p[1].String(), "--manifest manifest.yml")
+	assert.Contains(t, p[1].String(), "--path some/cool/path")
+	assert.Contains(t, p[1].String(), "--strategy rolling")
 }
 
 func TestGivesACorrectDeleteTestDeployPlan(t *testing.T) {
