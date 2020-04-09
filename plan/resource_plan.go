@@ -43,16 +43,7 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 	switch request.Params.Command {
 	case config.PUSH:
 
-		fullGitRefPath := ""
-		if request.Params.GitRefPath != "" {
-			fullGitRefPath = path.Join(concourseRoot, request.Params.GitRefPath)
-		}
-		fullBuildVersionPath := ""
-		if request.Params.BuildVersionPath != "" {
-			fullBuildVersionPath = path.Join(concourseRoot, request.Params.BuildVersionPath)
-		}
-
-		if err = p.updateManifestWithVars(fullManifestPath, fullGitRefPath, request.Params.Vars, fullBuildVersionPath); err != nil {
+		if err = p.updateManifestWithVars(concourseRoot, request.Params); err != nil {
 			return pl, err
 		}
 
@@ -118,16 +109,7 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 		)
 	case config.DEPLOY_ROLLING:
 
-		fullGitRefPath := ""
-		if request.Params.GitRefPath != "" {
-			fullGitRefPath = path.Join(concourseRoot, request.Params.GitRefPath)
-		}
-		fullBuildVersionPath := ""
-		if request.Params.BuildVersionPath != "" {
-			fullBuildVersionPath = path.Join(concourseRoot, request.Params.BuildVersionPath)
-		}
-
-		if err = p.updateManifestWithVars(fullManifestPath, fullGitRefPath, request.Params.Vars, fullBuildVersionPath); err != nil {
+		if err = p.updateManifestWithVars(concourseRoot, request.Params); err != nil {
 			return pl, err
 		}
 
@@ -196,8 +178,20 @@ func (p planner) readManifest(manifestPath string) (manifest.Manifest, error) {
 	return p.manifestReaderWrite.ReadManifest(manifestPath)
 }
 
-func (p planner) updateManifestWithVars(manifestPath string, gitRefPath string, vars map[string]string, buildVersionPath string) (err error) {
-	if len(vars) > 0 || gitRefPath != "" {
+func (p planner) updateManifestWithVars(concourseRoot string, params Params) (err error) {
+
+	manifestPath := path.Join(concourseRoot, params.ManifestPath)
+
+	gitRefPath := ""
+	if params.GitRefPath != "" {
+		gitRefPath = path.Join(concourseRoot, params.GitRefPath)
+	}
+	buildVersionPath := ""
+	if params.BuildVersionPath != "" {
+		buildVersionPath = path.Join(concourseRoot, params.BuildVersionPath)
+	}
+
+	if len(params.Vars) > 0 || gitRefPath != "" {
 		apps, e := p.readManifest(manifestPath)
 		if e != nil {
 			err = e
@@ -211,7 +205,7 @@ func (p planner) updateManifestWithVars(manifestPath string, gitRefPath string, 
 			app.EnvironmentVariables = map[string]string{}
 		}
 
-		for key, value := range vars {
+		for key, value := range params.Vars {
 			app.EnvironmentVariables[key] = value
 		}
 
