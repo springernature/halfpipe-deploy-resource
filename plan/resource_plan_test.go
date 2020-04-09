@@ -654,3 +654,60 @@ func TestGivesACorrectDeleteTestDeployPlan(t *testing.T) {
 	assert.Contains(t, p[0].String(), "cf login")
 	assert.Equal(t, "cf delete -f MyApp-CANDIDATE", p[1].String())
 }
+
+
+func TestPutsVarsInTheManifestForARollingDeploy(t *testing.T) {
+	fs := afero.Afero{Fs: afero.NewMemMapFs()}
+	concourseRoot := "/some/path"
+
+	gitRefPath := "git/.git/ref"
+	gitRef := "wiiiie\n"
+	fs.WriteFile(path.Join(concourseRoot, gitRefPath), []byte(gitRef), 0700)
+
+	versionPath := "version/version"
+	version := "v1\n"
+	fs.WriteFile(path.Join(concourseRoot, versionPath), []byte(version), 0700)
+
+	applicationManifest := manifest.Manifest{
+		Applications: []manifest.Application{
+			{
+				Name: "MyApp",
+				EnvironmentVariables: map[string]string{
+					"VAR1": "a",
+					"VAR2": "b",
+				},
+			},
+		},
+	}
+
+	stub := ManifestReadWriteStub{manifest: applicationManifest}
+	push := NewPlanner(&stub, fs)
+
+	request := Request{
+		Source: Source{
+			API:      "a",
+			Org:      "b",
+			Space:    "c",
+			Username: "d",
+			Password: "e",
+		},
+		Params: Params{
+			ManifestPath: "manifest.yml",
+			GitRefPath:   gitRefPath,
+			BuildVersionPath: versionPath,
+			AppPath:      "",
+			TestDomain:   "kehe.com",
+			Command:      config.DEPLOY_ROLLING,
+		},
+	}
+
+	_, err := push.Plan(request, concourseRoot)
+
+	assert.Nil(t, err)
+	vars := stub.savedManifest.Applications[0].EnvironmentVariables
+
+	assert.Equal(t, "wiiiie", vars["GIT_REVISION"])
+	assert.Equal(t, "v1", vars["BUILD_VERSION"])
+	assert.Equal(t, "a", vars["VAR1"])
+	assert.Equal(t, "b", vars["VAR2"])
+}

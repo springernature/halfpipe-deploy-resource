@@ -32,21 +32,6 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 
 	fullManifestPath := path.Join(concourseRoot, request.Params.ManifestPath)
 
-	if request.Params.Command == config.PUSH {
-		fullGitRefPath := ""
-		if request.Params.GitRefPath != "" {
-			fullGitRefPath = path.Join(concourseRoot, request.Params.GitRefPath)
-		}
-		fullBuildVersionPath := ""
-		if request.Params.BuildVersionPath != "" {
-			fullBuildVersionPath = path.Join(concourseRoot, request.Params.BuildVersionPath)
-		}
-
-		if err = p.updateManifestWithVars(fullManifestPath, fullGitRefPath, request.Params.Vars, fullBuildVersionPath); err != nil {
-			return
-		}
-	}
-
 	pl = append(pl, NewCfCommand("login",
 		"-a", request.Source.API,
 		"-u", request.Source.Username,
@@ -57,10 +42,23 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 	var halfpipeCommand Command
 	switch request.Params.Command {
 	case config.PUSH:
-		candidateAppName, e := p.getCandidateName(fullManifestPath)
-		if e != nil {
-			err = e
-			return
+
+		fullGitRefPath := ""
+		if request.Params.GitRefPath != "" {
+			fullGitRefPath = path.Join(concourseRoot, request.Params.GitRefPath)
+		}
+		fullBuildVersionPath := ""
+		if request.Params.BuildVersionPath != "" {
+			fullBuildVersionPath = path.Join(concourseRoot, request.Params.BuildVersionPath)
+		}
+
+		if err = p.updateManifestWithVars(fullManifestPath, fullGitRefPath, request.Params.Vars, fullBuildVersionPath); err != nil {
+			return pl, err
+		}
+
+		candidateAppName, err := p.getCandidateName(fullManifestPath)
+		if err != nil {
+			return pl, err
 		}
 
 		pushCommand := NewCfCommand(
@@ -78,8 +76,7 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 
 			dockerImage, e := p.getDockerImage(fullManifestPath, fullDockerTagPath)
 			if e != nil {
-				err = e
-				return
+				return pl, e
 			}
 
 			pushCommand = pushCommand.
@@ -121,6 +118,19 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 		)
 	case config.DEPLOY_ROLLING:
 
+		fullGitRefPath := ""
+		if request.Params.GitRefPath != "" {
+			fullGitRefPath = path.Join(concourseRoot, request.Params.GitRefPath)
+		}
+		fullBuildVersionPath := ""
+		if request.Params.BuildVersionPath != "" {
+			fullBuildVersionPath = path.Join(concourseRoot, request.Params.BuildVersionPath)
+		}
+
+		if err = p.updateManifestWithVars(fullManifestPath, fullGitRefPath, request.Params.Vars, fullBuildVersionPath); err != nil {
+			return pl, err
+		}
+
 		pushCommand := NewCfCommand(
 			"push",
 			"--manifest", fullManifestPath,
@@ -136,8 +146,7 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 
 			dockerImage, e := p.getDockerImage(fullManifestPath, fullDockerTagPath)
 			if e != nil {
-				err = e
-				return
+				return pl, e
 			}
 
 			halfpipeCommand = pushCommand.
@@ -153,8 +162,7 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 	case config.DELETE_TEST:
 		candidateAppName, e := p.getCandidateName(fullManifestPath)
 		if e != nil {
-			err = e
-			return
+			return pl, e
 		}
 
 		halfpipeCommand = NewCfCommand(
@@ -168,7 +176,7 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 
 	pl = append(pl, halfpipeCommand)
 
-	return
+	return pl, nil
 }
 
 func (p planner) getCandidateName(manifestPath string) (candidateName string, err error) {
