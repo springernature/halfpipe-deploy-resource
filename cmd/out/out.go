@@ -14,6 +14,7 @@ import (
 	"github.com/springernature/halfpipe-deploy-resource/config"
 	"github.com/springernature/halfpipe-deploy-resource/manifest"
 	"github.com/springernature/halfpipe-deploy-resource/plan"
+	"github.com/cloudfoundry-community/go-cfclient"
 )
 
 func main() {
@@ -40,6 +41,13 @@ func main() {
 		logger.Println(err)
 		syscall.Exit(1)
 	}
+
+	appsSummaries, err := getApps(request)
+	if err != nil {
+		logger.Println(err)
+		syscall.Exit(1)
+	}
+	fmt.Print(appsSummaries)
 
 	var p plan.Plan
 	switch request.Params.Command {
@@ -90,4 +98,31 @@ func main() {
 	if err = json.NewEncoder(os.Stdout).Encode(response); err != nil {
 		panic(err)
 	}
+}
+
+func getApps(request plan.Request) (appSummary []cfclient.AppSummary,err error) {
+	c := &cfclient.Config{
+		ApiAddress: request.Source.API,
+		Username:   request.Source.Username,
+		Password:   request.Source.Password,
+	}
+	client, err := cfclient.NewClient(c)
+	if err != nil {
+		return
+	}
+	org, err := client.GetOrgByName(request.Source.Org)
+	if err != nil {
+		return
+	}
+	space, err := client.GetSpaceByName(request.Source.Space, org.Guid)
+	if err != nil {
+		return
+	}
+	spaceSummary, err := space.Summary()
+	if err != nil {
+		return
+	}
+
+	appSummary = spaceSummary.Apps
+	return
 }
