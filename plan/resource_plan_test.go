@@ -2,6 +2,7 @@ package plan
 
 import (
 	"fmt"
+	"github.com/cloudfoundry-community/go-cfclient"
 	"testing"
 
 	"errors"
@@ -59,7 +60,7 @@ func TestReturnsErrorIfWeFailToReadManifest(t *testing.T) {
 
 	concourseRoot := "/tmp/some/path"
 
-	push := NewPlanner(&ManifestReadWriteStub{readError: expectedError}, fs)
+	push := NewPlanner(&ManifestReadWriteStub{readError: expectedError}, fs, []cfclient.AppSummary{})
 
 	_, err := push.Plan(validRequest, concourseRoot)
 	assert.Equal(t, expectedError, err)
@@ -75,7 +76,7 @@ func TestReturnsErrorIfWeFailToWriteManifest(t *testing.T) {
 	manifest := manifest.Manifest{
 		Applications: []manifest.Application{{}},
 	}
-	push := NewPlanner(&ManifestReadWriteStub{manifest: manifest, writeError: expectedError}, fs)
+	push := NewPlanner(&ManifestReadWriteStub{manifest: manifest, writeError: expectedError}, fs, []cfclient.AppSummary{})
 
 	_, err := push.Plan(validRequest, concourseRoot)
 
@@ -87,11 +88,9 @@ func TestDoesntWriteManifestIfNotPush(t *testing.T) {
 
 	concourseRoot := "/tmp/some/path"
 
-	push := NewPlanner(
-		&ManifestReadWriteStub{
-			readError:  errors.New("should not happen"),
-			writeError: errors.New("should not happen")},
-		fs)
+	push := NewPlanner(&ManifestReadWriteStub{
+		readError:  errors.New("should not happen"),
+		writeError: errors.New("should not happen")}, fs, []cfclient.AppSummary{})
 
 	validPromoteRequest := Request{
 		Source: Source{
@@ -137,7 +136,7 @@ func TestGivesACorrectPlanWhenManifestDoesNotHaveAnyEnvironmentVariables(t *test
 
 	manifestReadWrite := &ManifestReadWriteStub{manifest: applicationManifest}
 
-	push := NewPlanner(manifestReadWrite, fs)
+	push := NewPlanner(manifestReadWrite, fs, []cfclient.AppSummary{})
 
 	p, err := push.Plan(validRequest, "")
 
@@ -179,7 +178,7 @@ func TestGivesACorrectPlanThatAlsoOverridesVariablesInManifest(t *testing.T) {
 	}
 
 	manifestReaderWriter := ManifestReadWriteStub{manifest: applicationManifest}
-	push := NewPlanner(&manifestReaderWriter, fs)
+	push := NewPlanner(&manifestReaderWriter, fs, []cfclient.AppSummary{})
 
 	p, err := push.Plan(validRequest, "")
 
@@ -210,7 +209,7 @@ func TestGivesACorrectPlanWhenDockerImageSpecifiedInManifest(t *testing.T) {
 		}
 
 		manifestReaderWriter := ManifestReadWriteStub{manifest: applicationManifest}
-		push := NewPlanner(&manifestReaderWriter, fs)
+		push := NewPlanner(&manifestReaderWriter, fs, []cfclient.AppSummary{})
 
 		request := validRequest
 		request.Params.DockerUsername = "username"
@@ -254,7 +253,7 @@ func TestGivesACorrectPlanWhenDockerImageSpecifiedInManifest(t *testing.T) {
 			}
 
 			manifestReaderWriter := ManifestReadWriteStub{manifest: applicationManifest}
-			push := NewPlanner(&manifestReaderWriter, fs)
+			push := NewPlanner(&manifestReaderWriter, fs, []cfclient.AppSummary{})
 
 			request := validRequest
 			request.Params.DockerUsername = "username"
@@ -294,7 +293,7 @@ func TestGivesACorrectPlanWhenDockerImageSpecifiedInManifest(t *testing.T) {
 			}
 
 			manifestReaderWriter := ManifestReadWriteStub{manifest: applicationManifest}
-			push := NewPlanner(&manifestReaderWriter, fs)
+			push := NewPlanner(&manifestReaderWriter, fs, []cfclient.AppSummary{})
 
 			request := validRequest
 			request.Params.DockerUsername = "username"
@@ -317,7 +316,7 @@ func TestErrorsIfTheGitRefPathIsSpecifiedButDoesntExist(t *testing.T) {
 
 	push := NewPlanner(&ManifestReadWriteStub{
 		manifest: manifest.Manifest{[]manifest.Application{{}}},
-	}, fs)
+	}, fs, []cfclient.AppSummary{})
 	request := Request{
 		Source: Source{
 			API:      "a",
@@ -360,7 +359,7 @@ func TestPutsGitRefInTheManifest(t *testing.T) {
 	}
 
 	stub := ManifestReadWriteStub{manifest: applicationManifest}
-	push := NewPlanner(&stub, fs)
+	push := NewPlanner(&stub, fs, []cfclient.AppSummary{})
 
 	request := Request{
 		Source: Source{
@@ -409,7 +408,7 @@ func TestPutsBuildVersionInTheManifest(t *testing.T) {
 	}
 
 	stub := ManifestReadWriteStub{manifest: applicationManifest}
-	push := NewPlanner(&stub, fs)
+	push := NewPlanner(&stub, fs, []cfclient.AppSummary{})
 
 	request := Request{
 		Source: Source{
@@ -460,7 +459,7 @@ func TestAddsTimoutIfSpecified(t *testing.T) {
 
 	manifestReadWrite := &ManifestReadWriteStub{manifest: applicationManifest}
 
-	push := NewPlanner(manifestReadWrite, fs)
+	push := NewPlanner(manifestReadWrite, fs, []cfclient.AppSummary{})
 
 	p, err := push.Plan(requestWithTimeout, "")
 
@@ -495,7 +494,7 @@ func TestAddsPreStartCommandIfSpecified(t *testing.T) {
 
 	manifestReadWrite := &ManifestReadWriteStub{manifest: applicationManifest}
 
-	push := NewPlanner(manifestReadWrite, fs)
+	push := NewPlanner(manifestReadWrite, fs, []cfclient.AppSummary{})
 
 	p, err := push.Plan(requestWithPreStartCommand, "")
 

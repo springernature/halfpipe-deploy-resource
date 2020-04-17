@@ -42,13 +42,11 @@ func main() {
 		syscall.Exit(1)
 	}
 
-	logger.Println("Gonna fetch me some data")
-	appsSummaries, err := getApps(request)
+	appsSummary, err := getApps(request)
 	if err != nil {
 		logger.Println(err)
 		syscall.Exit(1)
 	}
-	logger.Println(appsSummaries)
 
 	var p plan.Plan
 	switch request.Params.Command {
@@ -63,6 +61,7 @@ func main() {
 		p, err = plan.NewPlanner(
 			manifest.NewManifestReadWrite(fs),
 			fs,
+			appsSummary,
 		).Plan(request, concourseRoot)
 	default:
 		panic(fmt.Sprintf("Command '%s' not supported", request.Params.Command))

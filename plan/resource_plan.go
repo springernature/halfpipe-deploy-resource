@@ -2,6 +2,7 @@ package plan
 
 import (
 	"fmt"
+	"github.com/cloudfoundry-community/go-cfclient"
 	"path"
 
 	"github.com/spf13/afero"
@@ -19,7 +20,7 @@ type planner struct {
 	fs                  afero.Afero
 }
 
-func NewPlanner(manifestReaderWrite manifest.ReaderWriter, fs afero.Afero) ResourcePlan {
+func NewPlanner(manifestReaderWrite manifest.ReaderWriter, fs afero.Afero, appsSummary []cfclient.AppSummary) ResourcePlan {
 	return planner{
 		manifestReaderWrite: manifestReaderWrite,
 		fs:                  fs,
