@@ -33,6 +33,14 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 
 
 	fullManifestPath := path.Join(concourseRoot, request.Params.ManifestPath)
+	readManifest, err := p.readManifest(fullManifestPath)
+	if err != nil {
+		// todo: test this
+		return
+	}
+
+	// We lint that there is only one app.
+	appUnderDeployment := readManifest.Applications[0]
 
 	if request.Params.Command == config.PUSH {
 		fullGitRefPath := ""
@@ -59,7 +67,7 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 	var halfpipeCommand Command
 	switch request.Params.Command {
 	case config.PUSH:
-		commands, e := NewPushPlan().Plan()
+		commands, e := NewPushPlan(appUnderDeployment, request).Plan()
 		if e != nil {
 			// todo: test this
 			err = e
