@@ -42,12 +42,13 @@ func main() {
 		syscall.Exit(1)
 	}
 
+	logger.Println("Gonna fetch me some data")
 	appsSummaries, err := getApps(request)
 	if err != nil {
 		logger.Println(err)
 		syscall.Exit(1)
 	}
-	fmt.Print(appsSummaries)
+	logger.Println(appsSummaries)
 
 	var p plan.Plan
 	switch request.Params.Command {
