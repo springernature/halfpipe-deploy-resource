@@ -59,54 +59,64 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 	var halfpipeCommand Command
 	switch request.Params.Command {
 	case config.PUSH:
-		candidateAppName, e := p.getCandidateName(fullManifestPath)
+		commands, e := NewPushPlan().Plan()
 		if e != nil {
+			// todo: test this
 			err = e
 			return
 		}
 
-		pushCommand := NewCfCommand(
-			request.Params.Command,
-			"-manifestPath", fullManifestPath,
-			"-testDomain", request.Params.TestDomain,
-		)
-
-		isDockerPush := request.Params.DockerPassword != ""
-		if isDockerPush {
-			fullDockerTagPath := ""
-			if request.Params.DockerTag != "" {
-				fullDockerTagPath = path.Join(concourseRoot, request.Params.DockerTag)
-			}
-
-			dockerImage, e := p.getDockerImage(fullManifestPath, fullDockerTagPath)
-			if e != nil {
-				err = e
-				return
-			}
-
-			pushCommand = pushCommand.
-				AddToArgs("-dockerImage", dockerImage).
-				AddToArgs("-dockerUsername", request.Params.DockerUsername).
-				AddToEnv(fmt.Sprintf("CF_DOCKER_PASSWORD=%s", request.Params.DockerPassword))
-
-		} else {
-			pushCommand = pushCommand.AddToArgs("-appPath", path.Join(concourseRoot, request.Params.AppPath))
-		}
-
-		if request.Params.PreStartCommand != "" {
-			quotedCommand := fmt.Sprintf(`"%s"`, strings.ReplaceAll(request.Params.PreStartCommand, `"`, `\"`))
-			pushCommand = pushCommand.AddToArgs("-preStartCommand", quotedCommand)
-		}
-
-		halfpipeCommand = NewCompoundCommand(
-			pushCommand,
-			NewCfCommand("logs",
-				candidateAppName,
-				"--recent",
-			),
-			func(log []byte) bool {
-				return strings.Contains(string(log), `TIP: use 'cf logs`)
-			})
+		pl = append(pl, commands...)
+		//
+		//
+		//candidateAppName, e := p.getCandidateName(fullManifestPath)
+		//if e != nil {
+		//	err = e
+		//	return
+		//}
+		//
+		//pushCommand := NewCfCommand(
+		//	request.Params.Command,
+		//	"-manifestPath", fullManifestPath,
+		//	"-testDomain", request.Params.TestDomain,
+		//)
+		//
+		//isDockerPush := request.Params.DockerPassword != ""
+		//if isDockerPush {
+		//	fullDockerTagPath := ""
+		//	if request.Params.DockerTag != "" {
+		//		fullDockerTagPath = path.Join(concourseRoot, request.Params.DockerTag)
+		//	}
+		//
+		//	dockerImage, e := p.getDockerImage(fullManifestPath, fullDockerTagPath)
+		//	if e != nil {
+		//		err = e
+		//		return
+		//	}
+		//
+		//	pushCommand = pushCommand.
+		//		AddToArgs("-dockerImage", dockerImage).
+		//		AddToArgs("-dockerUsername", request.Params.DockerUsername).
+		//		AddToEnv(fmt.Sprintf("CF_DOCKER_PASSWORD=%s", request.Params.DockerPassword))
+		//
+		//} else {
+		//	pushCommand = pushCommand.AddToArgs("-appPath", path.Join(concourseRoot, request.Params.AppPath))
+		//}
+		//
+		//if request.Params.PreStartCommand != "" {
+		//	quotedCommand := fmt.Sprintf(`"%s"`, strings.ReplaceAll(request.Params.PreStartCommand, `"`, `\"`))
+		//	pushCommand = pushCommand.AddToArgs("-preStartCommand", quotedCommand)
+		//}
+		//
+		//halfpipeCommand = NewCompoundCommand(
+		//	pushCommand,
+		//	NewCfCommand("logs",
+		//		candidateAppName,
+		//		"--recent",
+		//	),
+		//	func(log []byte) bool {
+		//		return strings.Contains(string(log), `TIP: use 'cf logs`)
+		//	})
 
 	case config.PROMOTE:
 		halfpipeCommand = NewCfCommand(request.Params.Command,
