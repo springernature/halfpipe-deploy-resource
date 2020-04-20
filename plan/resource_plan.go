@@ -31,7 +31,6 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 	// Here we assume that the request is complete.
 	// It has already been verified in out.go with the help of requests.VerifyRequest.
 
-
 	fullManifestPath := path.Join(concourseRoot, request.Params.ManifestPath)
 	readManifest, err := p.readManifest(fullManifestPath)
 	if err != nil {
@@ -43,6 +42,7 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 	appUnderDeployment := readManifest.Applications[0]
 
 	if request.Params.Command == config.PUSH {
+
 		fullGitRefPath := ""
 		if request.Params.GitRefPath != "" {
 			fullGitRefPath = path.Join(concourseRoot, request.Params.GitRefPath)
@@ -64,10 +64,20 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 		"-o", request.Source.Org,
 		"-s", request.Source.Space))
 
-	var halfpipeCommand Command
 	switch request.Params.Command {
 	case config.PUSH:
-		commands, e := NewPushPlan(appUnderDeployment, request).Plan()
+		var dockerTag string
+		if request.Params.DockerTag != "" {
+			fullDockerTagPath := path.Join(concourseRoot, request.Params.DockerTag)
+			content, e := p.fs.ReadFile(fullDockerTagPath)
+			if e != nil {
+				err = e
+				return
+			}
+			dockerTag = string(content)
+		}
+
+		commands, e := NewPushPlan(appUnderDeployment, request, dockerTag).Plan()
 		if e != nil {
 			// todo: test this
 			err = e
@@ -89,23 +99,8 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 		//	"-testDomain", request.Params.TestDomain,
 		//)
 		//
-		//isDockerPush := request.Params.DockerPassword != ""
-		//if isDockerPush {
-		//	fullDockerTagPath := ""
-		//	if request.Params.DockerTag != "" {
-		//		fullDockerTagPath = path.Join(concourseRoot, request.Params.DockerTag)
-		//	}
 		//
-		//	dockerImage, e := p.getDockerImage(fullManifestPath, fullDockerTagPath)
-		//	if e != nil {
-		//		err = e
-		//		return
-		//	}
-		//
-		//	pushCommand = pushCommand.
-		//		AddToArgs("-dockerImage", dockerImage).
-		//		AddToArgs("-dockerUsername", request.Params.DockerUsername).
-		//		AddToEnv(fmt.Sprintf("CF_DOCKER_PASSWORD=%s", request.Params.DockerPassword))
+
 		//
 		//} else {
 		//	pushCommand = pushCommand.AddToArgs("-appPath", path.Join(concourseRoot, request.Params.AppPath))
@@ -126,22 +121,22 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 		//		return strings.Contains(string(log), `TIP: use 'cf logs`)
 		//	})
 
-	case config.PROMOTE:
-		halfpipeCommand = NewCfCommand(request.Params.Command,
-			"-manifestPath", fullManifestPath,
-			"-testDomain", request.Params.TestDomain,
-		)
-	case config.CHECK, config.CLEANUP, config.DELETE:
-		halfpipeCommand = NewCfCommand(request.Params.Command,
-			"-manifestPath", fullManifestPath,
-		)
+		//case config.PROMOTE:
+		//	halfpipeCommand = NewCfCommand(request.Params.Command,
+		//		"-manifestPath", fullManifestPath,
+		//		"-testDomain", request.Params.TestDomain,
+		//	)
+		//case config.CHECK, config.CLEANUP, config.DELETE:
+		//	halfpipeCommand = NewCfCommand(request.Params.Command,
+		//		"-manifestPath", fullManifestPath,
+		//	)
 	}
 
-	if request.Params.Timeout != "" {
-		halfpipeCommand = halfpipeCommand.AddToArgs("-timeout", request.Params.Timeout)
-	}
-
-	pl = append(pl, halfpipeCommand)
+	//if request.Params.Timeout != "" {
+	//	halfpipeCommand = halfpipeCommand.AddToArgs("-timeout", request.Params.Timeout)
+	//}
+	//
+	//pl = append(pl, halfpipeCommand)
 
 	return
 }
@@ -213,30 +208,5 @@ func (p planner) readFile(gitRefPath string) (ref string, err error) {
 		return
 	}
 	ref = strings.TrimSpace(string(bytes))
-	return
-}
-
-func (p planner) getDockerImage(manifestPath string, tagPath string) (dockerImage string, err error) {
-	apps, err := p.readManifest(manifestPath)
-	if err != nil {
-		return
-	}
-
-	dockerImage = apps.Applications[0].Docker.Image
-
-	if tagPath != "" {
-		content, e := p.fs.ReadFile(tagPath)
-		if e != nil {
-			err = e
-			return
-		}
-
-		if strings.Contains(dockerImage, ":") {
-			dockerImage = strings.Split(dockerImage, ":")[0]
-		}
-
-		dockerImage = fmt.Sprintf("%s:%s", dockerImage, strings.Trim(string(content), "\n"))
-
-	}
 	return
 }

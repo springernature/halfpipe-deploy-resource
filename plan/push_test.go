@@ -37,7 +37,7 @@ func TestNormalApp(t *testing.T) {
 			},
 		}
 
-		pl, err := NewPushPlan(application, request).Plan()
+		pl, err := NewPushPlan(application, request, "").Plan()
 		assert.Nil(t, err)
 		assert.Equal(t, expectedPlan, pl)
 	})

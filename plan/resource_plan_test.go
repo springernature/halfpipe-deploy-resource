@@ -89,7 +89,7 @@ func TestDoesntWriteManifestIfNotPush(t *testing.T) {
 	concourseRoot := "/tmp/some/path"
 
 	push := NewPlanner(&ManifestReadWriteStub{
-		readError:  errors.New("should not happen"),
+		manifest:   manifest.Manifest{Applications: []manifest.Application{{}}},
 		writeError: errors.New("should not happen")}, fs, []cfclient.AppSummary{})
 
 	validPromoteRequest := Request{
@@ -142,9 +142,11 @@ func TestGivesACorrectPlanWhenManifestDoesNotHaveAnyEnvironmentVariables(t *test
 
 	assert.Nil(t, err)
 	assert.Equal(t, expectedManifest, manifestReadWrite.savedManifest)
-	assert.Len(t, p, 2)
-	assert.Contains(t, p[0].String(), "cf login")
-	assert.Contains(t, p[1].String(), "cf halfpipe-push")
+	assert.Len(t, p, 4)
+	assert.Equal(t, p[0].String(), "cf login -a a -u d -p ******** -o b -s c")
+	assert.Equal(t, p[1].String(), "cf push MyApp-CANDIDATE -f manifest.yml -p  --no-route --no-start")
+	assert.Equal(t, p[2].String(), "cf map-route MyApp-CANDIDATE kehe.com -n MyApp-c-CANDIDATE")
+	assert.Equal(t, p[3].String(), "cf start MyApp-CANDIDATE || cf logs MyApp-CANDIDATE --recent")
 }
 
 func TestGivesACorrectPlanThatAlsoOverridesVariablesInManifest(t *testing.T) {
@@ -184,9 +186,11 @@ func TestGivesACorrectPlanThatAlsoOverridesVariablesInManifest(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, expectedManifest, manifestReaderWriter.savedManifest)
-	assert.Len(t, p, 2)
-	assert.Contains(t, p[0].String(), "cf login")
-	assert.Contains(t, p[1].String(), "cf halfpipe-push")
+	assert.Len(t, p, 4)
+	assert.Equal(t, p[0].String(), "cf login -a a -u d -p ******** -o b -s c")
+	assert.Equal(t, p[1].String(), "cf push MyApp-CANDIDATE -f manifest.yml -p  --no-route --no-start")
+	assert.Equal(t, p[2].String(), "cf map-route MyApp-CANDIDATE kehe.com -n MyApp-c-CANDIDATE")
+	assert.Equal(t, p[3].String(), "cf start MyApp-CANDIDATE || cf logs MyApp-CANDIDATE --recent")
 }
 
 func TestGivesACorrectPlanWhenDockerImageSpecifiedInManifest(t *testing.T) {
@@ -218,14 +222,14 @@ func TestGivesACorrectPlanWhenDockerImageSpecifiedInManifest(t *testing.T) {
 		p, err := push.Plan(request, "")
 
 		assert.Nil(t, err)
-		assert.Len(t, p, 2)
-		assert.Contains(t, p[0].String(), "cf login")
-		assert.Contains(t, p[1].String(), "CF_DOCKER_PASSWORD=... cf halfpipe-push")
-		assert.Contains(t, p[1].String(), fmt.Sprintf("-dockerUsername %s", request.Params.DockerUsername))
-		assert.Contains(t, p[1].String(), fmt.Sprintf("-dockerImage %s", applicationManifest.Applications[0].Docker.Image))
-		assert.NotContains(t, p[1].String(), "appPath")
+		assert.Len(t, p, 4)
+		assert.Equal(t, p[0].String(), "cf login -a a -u d -p ******** -o b -s c")
+		assert.Equal(t, p[1].String(), "CF_DOCKER_PASSWORD=... cf push MyApp-CANDIDATE -f manifest.yml --docker-image someCool/image:whoo --docker-username username")
+		assert.Equal(t, p[2].String(), "cf map-route MyApp-CANDIDATE kehe.com -n MyApp-c-CANDIDATE")
+		assert.Equal(t, p[3].String(), "cf start MyApp-CANDIDATE || cf logs MyApp-CANDIDATE --recent")
+		assert.NotEqual(t, p[1].String(), "appPath")
 
-		assert.Equal(t, p[1].Env(), []string{fmt.Sprintf("CF_DOCKER_PASSWORD=%s", request.Params.DockerPassword)})
+		assert.Equal(t, []string{fmt.Sprintf("CF_DOCKER_PASSWORD=%s", request.Params.DockerPassword)}, p[1].Env())
 	})
 
 	t.Run("With tag", func(t *testing.T) {
@@ -263,10 +267,11 @@ func TestGivesACorrectPlanWhenDockerImageSpecifiedInManifest(t *testing.T) {
 			p, err := push.Plan(request, "")
 
 			assert.Nil(t, err)
-			assert.Len(t, p, 2)
-			assert.Contains(t, p[0].String(), "cf login")
-			assert.Contains(t, p[1].String(), "CF_DOCKER_PASSWORD=... cf halfpipe-push")
-			assert.Contains(t, p[1].String(), fmt.Sprintf("-dockerImage %s", fmt.Sprintf("%s:%s", applicationManifest.Applications[0].Docker.Image, tagContent)))
+			assert.Len(t, p, 4)
+			assert.Equal(t, p[0].String(), "cf login -a a -u d -p ******** -o b -s c")
+			assert.Equal(t, p[1].String(), fmt.Sprintf("CF_DOCKER_PASSWORD=... cf push MyApp-CANDIDATE -f manifest.yml --docker-image someCool/image:%s --docker-username username", tagContent))
+			assert.Equal(t, p[2].String(), "cf map-route MyApp-CANDIDATE kehe.com -n MyApp-c-CANDIDATE")
+			assert.Equal(t, p[3].String(), "cf start MyApp-CANDIDATE || cf logs MyApp-CANDIDATE --recent")
 		})
 
 		t.Run("When image in manifest specifies version", func(t *testing.T) {
@@ -303,10 +308,11 @@ func TestGivesACorrectPlanWhenDockerImageSpecifiedInManifest(t *testing.T) {
 			p, err := push.Plan(request, "")
 
 			assert.Nil(t, err)
-			assert.Len(t, p, 2)
-			assert.Contains(t, p[0].String(), "cf login")
-			assert.Contains(t, p[1].String(), "CF_DOCKER_PASSWORD=... cf halfpipe-push")
-			assert.Contains(t, p[1].String(), fmt.Sprintf("-dockerImage %s", fmt.Sprintf("%s:%s", "someCool/image", tagContent)))
+			assert.Len(t, p, 4)
+			assert.Equal(t, p[0].String(), "cf login -a a -u d -p ******** -o b -s c")
+			assert.Equal(t, p[1].String(), fmt.Sprintf("CF_DOCKER_PASSWORD=... cf push MyApp-CANDIDATE -f manifest.yml --docker-image someCool/image:%s --docker-username username", tagContent))
+			assert.Equal(t, p[2].String(), "cf map-route MyApp-CANDIDATE kehe.com -n MyApp-c-CANDIDATE")
+			assert.Equal(t, p[3].String(), "cf start MyApp-CANDIDATE || cf logs MyApp-CANDIDATE --recent")
 		})
 	})
 }
@@ -435,40 +441,6 @@ func TestPutsBuildVersionInTheManifest(t *testing.T) {
 	assert.Equal(t, stub.savedManifest.Applications[0].EnvironmentVariables["BUILD_VERSION"], "1.1.0")
 }
 
-func TestAddsTimoutIfSpecified(t *testing.T) {
-	fs := afero.Afero{Fs: afero.NewMemMapFs()}
-
-	var requestWithTimeout = Request{
-		Source: Source{
-			Space: "dev",
-		},
-		Params: Params{
-			Command:      config.PUSH,
-			ManifestPath: "manifest.yml",
-			AppPath:      ".",
-			TestDomain:   "domain.com",
-			Timeout:      "1m",
-		},
-	}
-
-	applicationManifest := manifest.Manifest{
-		Applications: []manifest.Application{
-			{Name: "MyApp"},
-		},
-	}
-
-	manifestReadWrite := &ManifestReadWriteStub{manifest: applicationManifest}
-
-	push := NewPlanner(manifestReadWrite, fs, []cfclient.AppSummary{})
-
-	p, err := push.Plan(requestWithTimeout, "")
-
-	assert.Nil(t, err)
-	assert.Len(t, p, 2)
-	assert.Contains(t, p[0].String(), "cf login")
-	assert.Equal(t, "cf halfpipe-push -manifestPath manifest.yml -testDomain domain.com -appPath . -timeout 1m || cf logs MyApp-CANDIDATE --recent", p[1].String())
-}
-
 func TestAddsPreStartCommandIfSpecified(t *testing.T) {
 	fs := afero.Afero{Fs: afero.NewMemMapFs()}
 
@@ -482,7 +454,7 @@ func TestAddsPreStartCommandIfSpecified(t *testing.T) {
 			AppPath:         ".",
 			TestDomain:      "domain.com",
 			Timeout:         "1m",
-			PreStartCommand: "cf something \"or other\"",
+			PreStartCommand: "cf blah; cf bluh; cf something -n flag",
 		},
 	}
 
@@ -499,7 +471,12 @@ func TestAddsPreStartCommandIfSpecified(t *testing.T) {
 	p, err := push.Plan(requestWithPreStartCommand, "")
 
 	assert.Nil(t, err)
-	assert.Len(t, p, 2)
-	assert.Contains(t, p[0].String(), "cf login")
-	assert.Equal(t, `cf halfpipe-push -manifestPath manifest.yml -testDomain domain.com -appPath . -preStartCommand "cf something \"or other\"" -timeout 1m || cf logs MyApp-CANDIDATE --recent`, p[1].String())
+	assert.Len(t, p, 7)
+	assert.Equal(t, p[0].String(), "cf login -a  -u  -p  -o  -s dev")
+	assert.Equal(t, p[1].String(), "cf push MyApp-CANDIDATE -f manifest.yml -p . --no-route --no-start")
+	assert.Equal(t, p[2].String(), "cf map-route MyApp-CANDIDATE domain.com -n MyApp-dev-CANDIDATE")
+	assert.Equal(t, p[3].String(), "cf blah")
+	assert.Equal(t, p[4].String(), "cf bluh")
+	assert.Equal(t, p[5].String(), "cf something -n flag")
+	assert.Equal(t, p[6].String(), "cf start MyApp-CANDIDATE || cf logs MyApp-CANDIDATE --recent")
 }
