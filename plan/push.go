@@ -8,7 +8,7 @@ import (
 
 type PushPlan struct{}
 
-func (p PushPlan) Plan(manifest manifest.Application, request Request, dockerTag string) (pl Plan, err error) {
+func (p PushPlan) Plan(manifest manifest.Application, request Request, dockerTag string) (pl Plan) {
 	pl = append(pl, p.pushCommand(manifest, request, dockerTag))
 
 	pl = append(pl, NewCfCommand("map-route").

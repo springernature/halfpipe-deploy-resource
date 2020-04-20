@@ -92,14 +92,7 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 			dockerTag = string(content)
 		}
 
-		pushCommands, e := NewPushPlan().Plan(appUnderDeployment, request, dockerTag)
-		if e != nil {
-			// todo: test this
-			err = e
-			return
-		}
-
-		pl = append(pl, pushCommands...)
+		pl = append(pl, NewPushPlan().Plan(appUnderDeployment, request, dockerTag)...)
 		//
 		//
 		//candidateAppName, e := p.getCandidateName(fullManifestPath)

@@ -32,7 +32,7 @@ func TestNormalApp(t *testing.T) {
 				Name: "MyApp",
 			}
 
-			p, _ := NewPushPlan().Plan(applicationManifest, request, "")
+			p := NewPushPlan().Plan(applicationManifest, request, "")
 			assert.Len(t, p, 3)
 			assert.Equal(t, p[0].String(), "cf push MyApp-CANDIDATE -f path/to/manifest.yml -p path/to/app --no-route --no-start")
 			assert.Equal(t, p[1].String(), "cf map-route MyApp-CANDIDATE kehe.com -n MyApp-c-CANDIDATE")
@@ -45,7 +45,7 @@ func TestNormalApp(t *testing.T) {
 
 			r := request
 			r.Params.PreStartCommand = "cf something; cf somethingElse"
-			p, _ := NewPushPlan().Plan(applicationManifest, r, "")
+			p := NewPushPlan().Plan(applicationManifest, r, "")
 
 			assert.Len(t, p, 5)
 			assert.Equal(t, p[0].String(), "cf push MyApp-CANDIDATE -f path/to/manifest.yml -p path/to/app --no-route --no-start")
