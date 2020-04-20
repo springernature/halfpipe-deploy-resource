@@ -6,21 +6,17 @@ import (
 	"strings"
 )
 
-type PushPlan struct {
-	manifest  manifest.Application
-	request   Request
-	dockerTag string
-}
+type PushPlan struct{}
 
-func (p PushPlan) Plan() (pl Plan, err error) {
-	pl = append(pl, p.pushCommand())
+func (p PushPlan) Plan(manifest manifest.Application, request Request, dockerTag string) (pl Plan, err error) {
+	pl = append(pl, p.pushCommand(manifest, request, dockerTag))
 
 	pl = append(pl, NewCfCommand("map-route").
-		AddToArgs(p.getCandidateAppName()).
-		AddToArgs(p.request.Params.TestDomain).
-		AddToArgs("-n", p.getCandidateHostname()))
+		AddToArgs(p.getCandidateAppName(manifest)).
+		AddToArgs(request.Params.TestDomain).
+		AddToArgs("-n", p.getCandidateHostname(manifest, request)))
 
-	if preStartArs := strings.Split(p.request.Params.PreStartCommand, "; "); p.request.Params.PreStartCommand != "" && len(preStartArs) > 0 {
+	if preStartArs := strings.Split(request.Params.PreStartCommand, "; "); request.Params.PreStartCommand != "" && len(preStartArs) > 0 {
 		for _, prestartArg := range preStartArs {
 			args := strings.Split(prestartArg, " ")[1:]
 			pl = append(pl, NewCfCommand(args...))
@@ -29,9 +25,9 @@ func (p PushPlan) Plan() (pl Plan, err error) {
 
 	pl = append(pl, NewCompoundCommand(
 		NewCfCommand("start").
-			AddToArgs(p.getCandidateAppName()),
+			AddToArgs(p.getCandidateAppName(manifest)),
 		NewCfCommand("logs",
-			p.getCandidateAppName(),
+			p.getCandidateAppName(manifest),
 			"--recent",
 		),
 		func(log []byte) bool {
@@ -41,25 +37,25 @@ func (p PushPlan) Plan() (pl Plan, err error) {
 	return
 }
 
-func (p PushPlan) pushCommand() Command {
+func (p PushPlan) pushCommand(manifest manifest.Application, request Request, dockerTag string) Command {
 	pushCommand := NewCfCommand("push").
-		AddToArgs(p.getCandidateAppName()).
-		AddToArgs("-f", p.request.Params.ManifestPath)
+		AddToArgs(p.getCandidateAppName(manifest)).
+		AddToArgs("-f", request.Params.ManifestPath)
 
-	if p.manifest.Docker.Image != "" {
-		image := p.manifest.Docker.Image
-		if p.dockerTag != "" {
+	if manifest.Docker.Image != "" {
+		image := manifest.Docker.Image
+		if dockerTag != "" {
 			if strings.Contains(image, ":") {
 				image = strings.Split(image, ":")[0]
 			}
-			image = fmt.Sprintf("%s:%s", image, p.dockerTag)
+			image = fmt.Sprintf("%s:%s", image, dockerTag)
 		}
 		pushCommand = pushCommand.
 			AddToArgs("--docker-image", image).
-			AddToArgs("--docker-username", p.request.Params.DockerUsername).
-			AddToEnv(fmt.Sprintf("CF_DOCKER_PASSWORD=%s", p.request.Params.DockerPassword))
+			AddToArgs("--docker-username", request.Params.DockerUsername).
+			AddToEnv(fmt.Sprintf("CF_DOCKER_PASSWORD=%s", request.Params.DockerPassword))
 	} else {
-		pushCommand = pushCommand.AddToArgs("-p", p.request.Params.AppPath).
+		pushCommand = pushCommand.AddToArgs("-p", request.Params.AppPath).
 			AddToArgs("--no-route").
 			AddToArgs("--no-start")
 	}
@@ -67,18 +63,14 @@ func (p PushPlan) pushCommand() Command {
 	return pushCommand
 }
 
-func (p PushPlan) getCandidateAppName() string {
-	return fmt.Sprintf("%s-CANDIDATE", p.manifest.Name)
+func (p PushPlan) getCandidateAppName(manifest manifest.Application) string {
+	return fmt.Sprintf("%s-CANDIDATE", manifest.Name)
 }
 
-func (p PushPlan) getCandidateHostname() string {
-	return strings.Join([]string{p.manifest.Name, p.request.Source.Space, "CANDIDATE"}, "-")
+func (p PushPlan) getCandidateHostname(manifest manifest.Application, request Request) string {
+	return strings.Join([]string{manifest.Name, request.Source.Space, "CANDIDATE"}, "-")
 }
 
-func NewPushPlan(manifest manifest.Application, request Request, dockerTag string) PushPlan {
-	return PushPlan{
-		manifest:  manifest,
-		request:   request,
-		dockerTag: dockerTag,
-	}
+func NewPushPlan() PushPlan {
+	return PushPlan{}
 }

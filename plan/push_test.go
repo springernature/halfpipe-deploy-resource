@@ -6,43 +6,64 @@ import (
 	"testing"
 )
 
+var request = Request{
+	Source: Source{
+		API:      "a",
+		Org:      "b",
+		Space:    "c",
+		Username: "d",
+		Password: "e",
+	},
+	Params: Params{
+		ManifestPath: "path/to/manifest.yml",
+		AppPath:      "path/to/app",
+		TestDomain:   "kehe.com",
+		Vars: map[string]string{
+			"VAR2": "bb",
+			"VAR4": "cc",
+		},
+	},
+}
+
 func TestNormalApp(t *testing.T) {
-	t.Run("Alles OK", func(t *testing.T) {
-		space := "dev"
-		manifestPath := "manifest.yml"
-		appPath := "path/to/cool/app.jar"
-		testDomain := "wicked.com"
+	t.Run("Normal app", func(t *testing.T) {
+		t.Run("No pre start", func(t *testing.T) {
+			applicationManifest := manifest.Application{
+				Name: "MyApp",
+			}
 
-		application := manifest.Application{
-			Name: "my-app",
-		}
-		//
-		expectedApplicationName := "my-app-CANDIDATE"         //helpers.CreateCandidateAppName(application.Name)
-		expectedApplicationHostname := "my-app-dev-CANDIDATE" //helpers.CreateCandidateHostname(application.Name, space)
+			p, _ := NewPushPlan().Plan(applicationManifest, request, "")
+			assert.Len(t, p, 3)
+			assert.Equal(t, p[0].String(), "cf push MyApp-CANDIDATE -f path/to/manifest.yml -p path/to/app --no-route --no-start")
+			assert.Equal(t, p[1].String(), "cf map-route MyApp-CANDIDATE kehe.com -n MyApp-c-CANDIDATE")
+			assert.Equal(t, p[2].String(), "cf start MyApp-CANDIDATE || cf logs MyApp-CANDIDATE --recent")
+		})
+		t.Run("With pre start", func(t *testing.T) {
+			applicationManifest := manifest.Application{
+				Name: "MyApp",
+			}
 
-		expectedPlan := Plan{
-			NewCfCommand("push", expectedApplicationName, "-f", manifestPath, "-p", appPath, "--no-route", "--no-start"),
-			NewCfCommand("map-route", expectedApplicationName, testDomain, "-n", expectedApplicationHostname),
-			NewCfCommand("start", expectedApplicationName),
-		}
+			r := request
+			r.Params.PreStartCommand = "cf something; cf somethingElse"
+			p, _ := NewPushPlan().Plan(applicationManifest, r, "")
 
-		request := Request{
-			Source: Source{
-				Space: space,
-			},
-			Params: Params{
-				ManifestPath: manifestPath,
-				AppPath:      appPath,
-				TestDomain:   testDomain,
-			},
-		}
+			assert.Len(t, p, 5)
+			assert.Equal(t, p[0].String(), "cf push MyApp-CANDIDATE -f path/to/manifest.yml -p path/to/app --no-route --no-start")
+			assert.Equal(t, p[1].String(), "cf map-route MyApp-CANDIDATE kehe.com -n MyApp-c-CANDIDATE")
+			assert.Equal(t, p[2].String(), "cf something")
+			assert.Equal(t, p[3].String(), "cf somethingElse")
+			assert.Equal(t, p[4].String(), "cf start MyApp-CANDIDATE || cf logs MyApp-CANDIDATE --recent")
+		})
+	})
 
-		pl, err := NewPushPlan(application, request, "").Plan()
-		assert.Nil(t, err)
-		assert.Equal(t, expectedPlan, pl)
+	t.Run("Worker app", func(t *testing.T) {
 	})
 }
 
 func TestDocker(t *testing.T) {
+	t.Run("Normal app", func(t *testing.T) {
+	})
 
+	t.Run("Worker app", func(t *testing.T) {
+	})
 }

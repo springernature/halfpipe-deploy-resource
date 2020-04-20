@@ -27,12 +27,38 @@ func NewPlanner(manifestReaderWrite manifest.ReaderWriter, fs afero.Afero, appsS
 	}
 }
 
+func (p planner) setFullPathInRequest(request Request, concourseRoot string) Request {
+	updatedRequest := request
+
+	updatedRequest.Params.ManifestPath = path.Join(concourseRoot, updatedRequest.Params.ManifestPath)
+
+	if updatedRequest.Params.AppPath != "" {
+		updatedRequest.Params.AppPath = path.Join(concourseRoot, updatedRequest.Params.AppPath)
+	}
+
+	if updatedRequest.Params.DockerTag != "" {
+		updatedRequest.Params.DockerTag = path.Join(concourseRoot, updatedRequest.Params.DockerTag)
+	}
+
+	if request.Params.GitRefPath != "" {
+		updatedRequest.Params.GitRefPath = path.Join(concourseRoot, request.Params.GitRefPath)
+	}
+
+	if request.Params.BuildVersionPath != "" {
+		updatedRequest.Params.BuildVersionPath = path.Join(concourseRoot, request.Params.BuildVersionPath)
+	}
+
+	return updatedRequest
+}
+
 func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error) {
 	// Here we assume that the request is complete.
 	// It has already been verified in out.go with the help of requests.VerifyRequest.
 
-	fullManifestPath := path.Join(concourseRoot, request.Params.ManifestPath)
-	readManifest, err := p.readManifest(fullManifestPath)
+	// Here we update the paths to take into account concourse root
+	request = p.setFullPathInRequest(request, concourseRoot)
+
+	readManifest, err := p.readManifest(request.Params.ManifestPath)
 	if err != nil {
 		// todo: test this
 		return
@@ -42,17 +68,7 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 	appUnderDeployment := readManifest.Applications[0]
 
 	if request.Params.Command == config.PUSH {
-
-		fullGitRefPath := ""
-		if request.Params.GitRefPath != "" {
-			fullGitRefPath = path.Join(concourseRoot, request.Params.GitRefPath)
-		}
-		fullBuildVersionPath := ""
-		if request.Params.BuildVersionPath != "" {
-			fullBuildVersionPath = path.Join(concourseRoot, request.Params.BuildVersionPath)
-		}
-
-		if err = p.updateManifestWithVars(fullManifestPath, fullGitRefPath, request.Params.Vars, fullBuildVersionPath); err != nil {
+		if err = p.updateManifestWithVars(request); err != nil {
 			return
 		}
 	}
@@ -68,8 +84,7 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 	case config.PUSH:
 		var dockerTag string
 		if request.Params.DockerTag != "" {
-			fullDockerTagPath := path.Join(concourseRoot, request.Params.DockerTag)
-			content, e := p.fs.ReadFile(fullDockerTagPath)
+			content, e := p.fs.ReadFile(request.Params.DockerTag)
 			if e != nil {
 				err = e
 				return
@@ -77,14 +92,14 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 			dockerTag = string(content)
 		}
 
-		commands, e := NewPushPlan(appUnderDeployment, request, dockerTag).Plan()
+		pushCommands, e := NewPushPlan().Plan(appUnderDeployment, request, dockerTag)
 		if e != nil {
 			// todo: test this
 			err = e
 			return
 		}
 
-		pl = append(pl, commands...)
+		pl = append(pl, pushCommands...)
 		//
 		//
 		//candidateAppName, e := p.getCandidateName(fullManifestPath)
@@ -158,9 +173,9 @@ func (p planner) readManifest(manifestPath string) (manifest.Manifest, error) {
 	return p.manifestReaderWrite.ReadManifest(manifestPath)
 }
 
-func (p planner) updateManifestWithVars(manifestPath string, gitRefPath string, vars map[string]string, buildVersionPath string) (err error) {
-	if len(vars) > 0 || gitRefPath != "" {
-		apps, e := p.readManifest(manifestPath)
+func (p planner) updateManifestWithVars(request Request) (err error) {
+	if len(request.Params.Vars) > 0 || request.Params.GitRefPath != "" {
+		apps, e := p.readManifest(request.Params.ManifestPath)
 		if e != nil {
 			err = e
 			return
@@ -173,12 +188,12 @@ func (p planner) updateManifestWithVars(manifestPath string, gitRefPath string, 
 			app.EnvironmentVariables = map[string]string{}
 		}
 
-		for key, value := range vars {
+		for key, value := range request.Params.Vars {
 			app.EnvironmentVariables[key] = value
 		}
 
-		if gitRefPath != "" {
-			ref, errRead := p.readFile(gitRefPath)
+		if request.Params.GitRefPath != "" {
+			ref, errRead := p.readFile(request.Params.GitRefPath)
 			if errRead != nil {
 				err = errRead
 				return
@@ -186,8 +201,8 @@ func (p planner) updateManifestWithVars(manifestPath string, gitRefPath string, 
 			app.EnvironmentVariables["GIT_REVISION"] = ref
 		}
 
-		if buildVersionPath != "" {
-			version, errRead := p.readFile(buildVersionPath)
+		if request.Params.BuildVersionPath != "" {
+			version, errRead := p.readFile(request.Params.BuildVersionPath)
 			if errRead != nil {
 				err = errRead
 				return
@@ -195,7 +210,7 @@ func (p planner) updateManifestWithVars(manifestPath string, gitRefPath string, 
 			app.EnvironmentVariables["BUILD_VERSION"] = version
 		}
 
-		if err = p.manifestReaderWrite.WriteManifest(manifestPath, app); err != nil {
+		if err = p.manifestReaderWrite.WriteManifest(request.Params.ManifestPath, app); err != nil {
 			return
 		}
 	}
