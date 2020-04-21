@@ -18,13 +18,15 @@ type planner struct {
 	manifestReaderWrite manifest.ReaderWriter
 	fs                  afero.Afero
 	pushPlan            PushPlan
+	promotePlan         PromotePlan
 }
 
-func NewPlanner(manifestReaderWrite manifest.ReaderWriter, fs afero.Afero, appsSummary []cfclient.AppSummary, pushPlan PushPlan) ResourcePlan {
+func NewPlanner(manifestReaderWrite manifest.ReaderWriter, fs afero.Afero, appsSummary []cfclient.AppSummary, pushPlan PushPlan, promotePlan PromotePlan) ResourcePlan {
 	return planner{
 		manifestReaderWrite: manifestReaderWrite,
 		fs:                  fs,
 		pushPlan:            pushPlan,
+		promotePlan:         promotePlan,
 	}
 }
 
@@ -91,6 +93,9 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 		}
 
 		pl = append(pl, p.pushPlan.Plan(appUnderDeployment, request, dockerTag)...)
+	case config.PROMOTE:
+		pl = append(pl, p.promotePlan.Plan(appUnderDeployment, request)...)
+
 	}
 
 	return

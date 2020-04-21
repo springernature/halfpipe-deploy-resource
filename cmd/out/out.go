@@ -63,6 +63,7 @@ func main() {
 			fs,
 			appsSummary,
 			plan.NewPushPlan(),
+			plan.NewPromotePlan(),
 		).Plan(request, concourseRoot)
 	default:
 		panic(fmt.Sprintf("Command '%s' not supported", request.Params.Command))
