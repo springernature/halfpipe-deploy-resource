@@ -72,6 +72,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	logger.Println(p.String())
+
 	if err = p.Execute(plan.NewCFCliExecutor(&logger), &logger); err != nil {
 		logger.Println(err)
 		logger.Println("")
