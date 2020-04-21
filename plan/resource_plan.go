@@ -11,7 +11,7 @@ import (
 )
 
 type ResourcePlan interface {
-	Plan(request Request, concourseRoot string) (plan Plan, err error)
+	Plan(request Request, concourseRoot string, appsSummary []cfclient.AppSummary) (plan Plan, err error)
 }
 
 type planner struct {
@@ -21,7 +21,7 @@ type planner struct {
 	promotePlan         PromotePlan
 }
 
-func NewPlanner(manifestReaderWrite manifest.ReaderWriter, fs afero.Afero, appsSummary []cfclient.AppSummary, pushPlan PushPlan, promotePlan PromotePlan) ResourcePlan {
+func NewPlanner(manifestReaderWrite manifest.ReaderWriter, fs afero.Afero, pushPlan PushPlan, promotePlan PromotePlan) ResourcePlan {
 	return planner{
 		manifestReaderWrite: manifestReaderWrite,
 		fs:                  fs,
@@ -54,7 +54,7 @@ func (p planner) setFullPathInRequest(request Request, concourseRoot string) Req
 	return updatedRequest
 }
 
-func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error) {
+func (p planner) Plan(request Request, concourseRoot string, appsSummary []cfclient.AppSummary) (pl Plan, err error) {
 	// Here we assume that the request is complete.
 	// It has already been verified in out.go with the help of requests.VerifyRequest.
 
@@ -94,7 +94,7 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 
 		pl = append(pl, p.pushPlan.Plan(appUnderDeployment, request, dockerTag)...)
 	case config.PROMOTE:
-		pl = append(pl, p.promotePlan.Plan(appUnderDeployment, request)...)
+		pl = append(pl, p.promotePlan.Plan(appUnderDeployment, request, appsSummary)...)
 
 	}
 

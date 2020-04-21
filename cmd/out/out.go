@@ -61,10 +61,9 @@ func main() {
 		p, err = plan.NewPlanner(
 			manifest.NewManifestReadWrite(fs),
 			fs,
-			appsSummary,
 			plan.NewPushPlan(),
 			plan.NewPromotePlan(),
-		).Plan(request, concourseRoot)
+		).Plan(request, concourseRoot, appsSummary)
 	default:
 		panic(fmt.Sprintf("Command '%s' not supported", request.Params.Command))
 	}

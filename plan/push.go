@@ -17,9 +17,9 @@ func (p pushPlan) Plan(manifest manifest.Application, request Request, dockerTag
 
 	if !manifest.NoRoute {
 		pl = append(pl, NewCfCommand("map-route").
-			AddToArgs(p.getCandidateAppName(manifest)).
+			AddToArgs(createCandidateAppName(manifest)).
 			AddToArgs(request.Params.TestDomain).
-			AddToArgs("-n", p.getCandidateHostname(manifest, request)))
+			AddToArgs("-n", createCandidateHostname(manifest, request)))
 	}
 
 	if preStartArs := strings.Split(request.Params.PreStartCommand, "; "); request.Params.PreStartCommand != "" && len(preStartArs) > 0 {
@@ -31,9 +31,9 @@ func (p pushPlan) Plan(manifest manifest.Application, request Request, dockerTag
 
 	pl = append(pl, NewCompoundCommand(
 		NewCfCommand("start").
-			AddToArgs(p.getCandidateAppName(manifest)),
+			AddToArgs(createCandidateAppName(manifest)),
 		NewCfCommand("logs",
-			p.getCandidateAppName(manifest),
+			createCandidateAppName(manifest),
 			"--recent",
 		),
 		func(log []byte) bool {
@@ -45,7 +45,7 @@ func (p pushPlan) Plan(manifest manifest.Application, request Request, dockerTag
 
 func (p pushPlan) pushCommand(manifest manifest.Application, request Request, dockerTag string) Command {
 	pushCommand := NewCfCommand("push").
-		AddToArgs(p.getCandidateAppName(manifest)).
+		AddToArgs(createCandidateAppName(manifest)).
 		AddToArgs("-f", request.Params.ManifestPath)
 
 	if manifest.Docker.Image != "" {
@@ -67,14 +67,6 @@ func (p pushPlan) pushCommand(manifest manifest.Application, request Request, do
 	}
 
 	return pushCommand
-}
-
-func (p pushPlan) getCandidateAppName(manifest manifest.Application) string {
-	return fmt.Sprintf("%s-CANDIDATE", manifest.Name)
-}
-
-func (p pushPlan) getCandidateHostname(manifest manifest.Application, request Request) string {
-	return strings.Join([]string{manifest.Name, request.Source.Space, "CANDIDATE"}, "-")
 }
 
 func NewPushPlan() PushPlan {
