@@ -11,10 +11,12 @@ type PushPlan struct{}
 func (p PushPlan) Plan(manifest manifest.Application, request Request, dockerTag string) (pl Plan) {
 	pl = append(pl, p.pushCommand(manifest, request, dockerTag))
 
-	pl = append(pl, NewCfCommand("map-route").
-		AddToArgs(p.getCandidateAppName(manifest)).
-		AddToArgs(request.Params.TestDomain).
-		AddToArgs("-n", p.getCandidateHostname(manifest, request)))
+	if !manifest.NoRoute {
+		pl = append(pl, NewCfCommand("map-route").
+			AddToArgs(p.getCandidateAppName(manifest)).
+			AddToArgs(request.Params.TestDomain).
+			AddToArgs("-n", p.getCandidateHostname(manifest, request)))
+	}
 
 	if preStartArs := strings.Split(request.Params.PreStartCommand, "; "); request.Params.PreStartCommand != "" && len(preStartArs) > 0 {
 		for _, prestartArg := range preStartArs {
