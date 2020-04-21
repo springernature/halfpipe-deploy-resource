@@ -13,7 +13,12 @@ type PromotePlan interface {
 type promotePlan struct{}
 
 func (p promotePlan) Plan(manifest manifest.Application, request Request, summary []cfclient.AppSummary) (pl Plan) {
-	currentLive, _, _ := p.getPreviousAppState(manifest.Name, summary)
+	currentLive, currentOld, currentDelete := p.getPreviousAppState(manifest.Name, summary)
+
+	if currentOld.Name != "" {
+		i := len(currentDelete)
+		pl = append(pl, NewCfCommand("rename", createOldAppName(manifest.Name), createDeleteName(manifest.Name, i)))
+	}
 
 	if currentLive.Name != "" {
 		pl = append(pl, NewCfCommand("rename", manifest.Name, createOldAppName(manifest.Name)))
@@ -21,6 +26,7 @@ func (p promotePlan) Plan(manifest manifest.Application, request Request, summar
 			pl = append(pl, NewCfCommand("stop", createOldAppName(manifest.Name)))
 		}
 	}
+
 	pl = append(pl, NewCfCommand("rename", createCandidateAppName(manifest.Name), manifest.Name))
 	return pl
 }
