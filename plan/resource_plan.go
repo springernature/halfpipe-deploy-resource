@@ -1,7 +1,6 @@
 package plan
 
 import (
-	"fmt"
 	"github.com/cloudfoundry-community/go-cfclient"
 	"path"
 
@@ -18,12 +17,14 @@ type ResourcePlan interface {
 type planner struct {
 	manifestReaderWrite manifest.ReaderWriter
 	fs                  afero.Afero
+	pushPlan            PushPlan
 }
 
-func NewPlanner(manifestReaderWrite manifest.ReaderWriter, fs afero.Afero, appsSummary []cfclient.AppSummary) ResourcePlan {
+func NewPlanner(manifestReaderWrite manifest.ReaderWriter, fs afero.Afero, appsSummary []cfclient.AppSummary, pushPlan PushPlan) ResourcePlan {
 	return planner{
 		manifestReaderWrite: manifestReaderWrite,
 		fs:                  fs,
+		pushPlan:            pushPlan,
 	}
 }
 
@@ -92,73 +93,9 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 			dockerTag = string(content)
 		}
 
-		pl = append(pl, NewPushPlan().Plan(appUnderDeployment, request, dockerTag)...)
-		//
-		//
-		//candidateAppName, e := p.getCandidateName(fullManifestPath)
-		//if e != nil {
-		//	err = e
-		//	return
-		//}
-		//
-		//pushCommand := NewCfCommand(
-		//	request.Params.Command,
-		//	"-manifestPath", fullManifestPath,
-		//	"-testDomain", request.Params.TestDomain,
-		//)
-		//
-		//
-
-		//
-		//} else {
-		//	pushCommand = pushCommand.AddToArgs("-appPath", path.Join(concourseRoot, request.Params.AppPath))
-		//}
-		//
-		//if request.Params.PreStartCommand != "" {
-		//	quotedCommand := fmt.Sprintf(`"%s"`, strings.ReplaceAll(request.Params.PreStartCommand, `"`, `\"`))
-		//	pushCommand = pushCommand.AddToArgs("-preStartCommand", quotedCommand)
-		//}
-		//
-		//halfpipeCommand = NewCompoundCommand(
-		//	pushCommand,
-		//	NewCfCommand("logs",
-		//		candidateAppName,
-		//		"--recent",
-		//	),
-		//	func(log []byte) bool {
-		//		return strings.Contains(string(log), `TIP: use 'cf logs`)
-		//	})
-
-		//case config.PROMOTE:
-		//	halfpipeCommand = NewCfCommand(request.Params.Command,
-		//		"-manifestPath", fullManifestPath,
-		//		"-testDomain", request.Params.TestDomain,
-		//	)
-		//case config.CHECK, config.CLEANUP, config.DELETE:
-		//	halfpipeCommand = NewCfCommand(request.Params.Command,
-		//		"-manifestPath", fullManifestPath,
-		//	)
+		pl = append(pl, p.pushPlan.Plan(appUnderDeployment, request, dockerTag)...)
 	}
 
-	//if request.Params.Timeout != "" {
-	//	halfpipeCommand = halfpipeCommand.AddToArgs("-timeout", request.Params.Timeout)
-	//}
-	//
-	//pl = append(pl, halfpipeCommand)
-
-	return
-}
-
-func (p planner) getCandidateName(manifestPath string) (candidateName string, err error) {
-	apps, err := p.readManifest(manifestPath)
-	if err != nil {
-		return
-	}
-
-	// We just assume the first app in the manifest is the app under deployment.
-	// We lint that this is the case in the halfpipe linter.
-	app := apps.Applications[0]
-	candidateName = fmt.Sprintf("%s-CANDIDATE", app.Name)
 	return
 }
 

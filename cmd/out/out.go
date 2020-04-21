@@ -10,11 +10,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/spf13/afero"
 	"github.com/springernature/halfpipe-deploy-resource/config"
 	"github.com/springernature/halfpipe-deploy-resource/manifest"
 	"github.com/springernature/halfpipe-deploy-resource/plan"
-	"github.com/cloudfoundry-community/go-cfclient"
 )
 
 func main() {
@@ -62,6 +62,7 @@ func main() {
 			manifest.NewManifestReadWrite(fs),
 			fs,
 			appsSummary,
+			plan.NewPushPlan(),
 		).Plan(request, concourseRoot)
 	default:
 		panic(fmt.Sprintf("Command '%s' not supported", request.Params.Command))
@@ -102,7 +103,7 @@ func main() {
 	}
 }
 
-func getApps(request plan.Request) (appSummary []cfclient.AppSummary,err error) {
+func getApps(request plan.Request) (appSummary []cfclient.AppSummary, err error) {
 	c := &cfclient.Config{
 		ApiAddress: request.Source.API,
 		Username:   request.Source.Username,

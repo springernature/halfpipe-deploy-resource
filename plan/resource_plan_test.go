@@ -1,17 +1,14 @@
 package plan
 
 import (
-	"fmt"
-	"github.com/cloudfoundry-community/go-cfclient"
-	"testing"
-
 	"errors"
-	"github.com/google/uuid"
 	"github.com/spf13/afero"
-	"github.com/springernature/halfpipe-deploy-resource/config"
-	"github.com/springernature/halfpipe-deploy-resource/manifest"
 	"github.com/stretchr/testify/assert"
 	"path"
+	"testing"
+
+	"github.com/springernature/halfpipe-deploy-resource/config"
+	"github.com/springernature/halfpipe-deploy-resource/manifest"
 )
 
 var validRequest = Request{
@@ -23,10 +20,12 @@ var validRequest = Request{
 		Password: "e",
 	},
 	Params: Params{
-		ManifestPath: "manifest.yml",
-		AppPath:      "",
-		TestDomain:   "kehe.com",
-		Command:      config.PUSH,
+		ManifestPath:     "manifest.yml",
+		AppPath:          "",
+		TestDomain:       "kehe.com",
+		Command:          config.PUSH,
+		GitRefPath:       "gitRefPath",
+		BuildVersionPath: "buildVersionPath",
 		Vars: map[string]string{
 			"VAR2": "bb",
 			"VAR4": "cc",
@@ -39,13 +38,18 @@ type ManifestReadWriteStub struct {
 	readError     error
 	writeError    error
 	savedManifest manifest.Manifest
+
+	readPath  string
+	writePath string
 }
 
 func (m *ManifestReadWriteStub) ReadManifest(path string) (manifest.Manifest, error) {
+	m.readPath = path
 	return m.manifest, m.readError
 }
 
 func (m *ManifestReadWriteStub) WriteManifest(path string, application manifest.Application) error {
+	m.writePath = path
 	m.savedManifest = manifest.Manifest{
 		Applications: []manifest.Application{application},
 	}
@@ -53,390 +57,214 @@ func (m *ManifestReadWriteStub) WriteManifest(path string, application manifest.
 	return m.writeError
 }
 
-func TestReturnsErrorIfWeFailToReadManifest(t *testing.T) {
-	fs := afero.Afero{Fs: afero.NewMemMapFs()}
+//
+var concourseRoot = "/tmp/some/path"
 
-	expectedError := errors.New("Shiied")
+func TestErrorsReadingAppManifest(t *testing.T) {
+	expectedErr := errors.New("blurgh")
+	expectedPath := path.Join(concourseRoot, validRequest.Params.ManifestPath)
+	manifestReader := ManifestReadWriteStub{readError: expectedErr}
 
-	concourseRoot := "/tmp/some/path"
+	planner := NewPlanner(&manifestReader, afero.Afero{}, nil, nil)
 
-	push := NewPlanner(&ManifestReadWriteStub{readError: expectedError}, fs, []cfclient.AppSummary{})
-
-	_, err := push.Plan(validRequest, concourseRoot)
-	assert.Equal(t, expectedError, err)
+	_, err := planner.Plan(validRequest, concourseRoot)
+	assert.Equal(t, expectedErr, err)
+	assert.Equal(t, expectedPath, manifestReader.readPath)
 }
 
-func TestReturnsErrorIfWeFailToWriteManifest(t *testing.T) {
-	fs := afero.Afero{Fs: afero.NewMemMapFs()}
-
-	expectedError := errors.New("Shiied")
-
-	concourseRoot := "/tmp/some/path"
-
-	manifest := manifest.Manifest{
-		Applications: []manifest.Application{{}},
-	}
-	push := NewPlanner(&ManifestReadWriteStub{manifest: manifest, writeError: expectedError}, fs, []cfclient.AppSummary{})
-
-	_, err := push.Plan(validRequest, concourseRoot)
-
-	assert.Equal(t, expectedError, err)
-}
-
-func TestDoesntWriteManifestIfNotPush(t *testing.T) {
-	fs := afero.Afero{Fs: afero.NewMemMapFs()}
-
-	concourseRoot := "/tmp/some/path"
-
-	push := NewPlanner(&ManifestReadWriteStub{
-		manifest:   manifest.Manifest{Applications: []manifest.Application{{}}},
-		writeError: errors.New("should not happen")}, fs, []cfclient.AppSummary{})
-
-	validPromoteRequest := Request{
-		Source: Source{
-			API:      "a",
-			Org:      "b",
-			Space:    "c",
-			Username: "d",
-			Password: "e",
-		},
-		Params: Params{
-			ManifestPath: "manifest.yml",
-			AppPath:      "",
-			TestDomain:   "kehe.com",
-			Command:      config.PROMOTE,
-			Vars: map[string]string{
-				"VAR2": "bb",
-				"VAR4": "cc",
+func TestErrorsWhenWeFailToReadGitRef(t *testing.T) {
+	manifestReader := ManifestReadWriteStub{
+		manifest: manifest.Manifest{
+			Applications: []manifest.Application{
+				{},
 			},
 		},
 	}
 
-	_, err := push.Plan(validPromoteRequest, concourseRoot)
+	planner := NewPlanner(&manifestReader, afero.Afero{Fs: afero.NewMemMapFs()}, nil, nil)
 
-	assert.Nil(t, err)
+	_, err := planner.Plan(validRequest, concourseRoot)
+	assert.Equal(t, "open /tmp/some/path/gitRefPath: file does not exist", err.Error())
 }
 
-func TestGivesACorrectPlanWhenManifestDoesNotHaveAnyEnvironmentVariables(t *testing.T) {
+func TestErrorsWhenWeFailToReadBuildVersion(t *testing.T) {
+	manifestReader := ManifestReadWriteStub{
+		manifest: manifest.Manifest{
+			Applications: []manifest.Application{
+				{},
+			},
+		},
+	}
+
 	fs := afero.Afero{Fs: afero.NewMemMapFs()}
+	fs.WriteFile(path.Join(concourseRoot, validRequest.Params.GitRefPath), []byte(""), 0777)
+	planner := NewPlanner(&manifestReader, fs, nil, nil)
 
-	applicationManifest := manifest.Manifest{
-		Applications: []manifest.Application{
-			{Name: "MyApp"},
-		},
-	}
-	expectedManifest := manifest.Manifest{
-		Applications: []manifest.Application{
-			{
-				Name:                 "MyApp",
-				EnvironmentVariables: validRequest.Params.Vars,
-			},
-		},
-	}
-
-	manifestReadWrite := &ManifestReadWriteStub{manifest: applicationManifest}
-
-	push := NewPlanner(manifestReadWrite, fs, []cfclient.AppSummary{})
-
-	p, err := push.Plan(validRequest, "")
-
-	assert.Nil(t, err)
-	assert.Equal(t, expectedManifest, manifestReadWrite.savedManifest)
-	assert.Len(t, p, 4)
-	assert.Equal(t, p[0].String(), "cf login -a a -u d -p ******** -o b -s c")
-	assert.Equal(t, p[1].String(), "cf push MyApp-CANDIDATE -f manifest.yml -p  --no-route --no-start")
-	assert.Equal(t, p[2].String(), "cf map-route MyApp-CANDIDATE kehe.com -n MyApp-c-CANDIDATE")
-	assert.Equal(t, p[3].String(), "cf start MyApp-CANDIDATE || cf logs MyApp-CANDIDATE --recent")
+	_, err := planner.Plan(validRequest, concourseRoot)
+	assert.Equal(t, "open /tmp/some/path/buildVersionPath: file does not exist", err.Error())
 }
 
-func TestGivesACorrectPlanThatAlsoOverridesVariablesInManifest(t *testing.T) {
+func TestErrorsWhenSavingManifestWithUpdatedVars(t *testing.T) {
+	expectedErr := errors.New("blurgh")
+	expectedPath := path.Join(concourseRoot, validRequest.Params.ManifestPath)
+	manifestReader := ManifestReadWriteStub{
+		manifest: manifest.Manifest{
+			Applications: []manifest.Application{
+				{},
+			},
+		},
+		writeError: expectedErr,
+	}
+
 	fs := afero.Afero{Fs: afero.NewMemMapFs()}
+	fs.WriteFile(path.Join(concourseRoot, validRequest.Params.GitRefPath), []byte(""), 0777)
+	fs.WriteFile(path.Join(concourseRoot, validRequest.Params.BuildVersionPath), []byte(""), 0777)
 
-	applicationManifest := manifest.Manifest{
-		Applications: []manifest.Application{
-			{
-				Name: "MyApp",
-				EnvironmentVariables: map[string]string{
-					"VAR1": "a",
-					"VAR2": "b",
-					"VAR3": "c",
-				},
-			},
-		},
-	}
+	planner := NewPlanner(&manifestReader, fs, nil, nil)
 
-	expectedManifest := manifest.Manifest{
-		Applications: []manifest.Application{
-			{
-				Name: "MyApp",
-				EnvironmentVariables: map[string]string{
-					"VAR1": "a",
-					"VAR2": "bb",
-					"VAR3": "c",
-					"VAR4": "cc",
-				},
-			},
-		},
-	}
-
-	manifestReaderWriter := ManifestReadWriteStub{manifest: applicationManifest}
-	push := NewPlanner(&manifestReaderWriter, fs, []cfclient.AppSummary{})
-
-	p, err := push.Plan(validRequest, "")
-
-	assert.Nil(t, err)
-	assert.Equal(t, expectedManifest, manifestReaderWriter.savedManifest)
-	assert.Len(t, p, 4)
-	assert.Equal(t, p[0].String(), "cf login -a a -u d -p ******** -o b -s c")
-	assert.Equal(t, p[1].String(), "cf push MyApp-CANDIDATE -f manifest.yml -p  --no-route --no-start")
-	assert.Equal(t, p[2].String(), "cf map-route MyApp-CANDIDATE kehe.com -n MyApp-c-CANDIDATE")
-	assert.Equal(t, p[3].String(), "cf start MyApp-CANDIDATE || cf logs MyApp-CANDIDATE --recent")
+	_, err := planner.Plan(validRequest, concourseRoot)
+	assert.Equal(t, expectedErr, err)
+	assert.Equal(t, expectedPath, manifestReader.readPath)
+	assert.Equal(t, expectedPath, manifestReader.writePath)
 }
 
-func TestGivesACorrectPlanWhenDockerImageSpecifiedInManifest(t *testing.T) {
-	t.Run("Without tag", func(t *testing.T) {
-		fs := afero.Afero{Fs: afero.NewMemMapFs()}
-		applicationManifest := manifest.Manifest{
+func TestErrorsWhenReadingDockerTag(t *testing.T) {
+	expectedErr := errors.New("open /tmp/some/path/some/path/to/a/DockerTagFile: file does not exist")
+	expectedPath := path.Join(concourseRoot, validRequest.Params.ManifestPath)
+	manifestReader := ManifestReadWriteStub{
+		manifest: manifest.Manifest{
 			Applications: []manifest.Application{
 				{
-					Name: "MyApp",
-					EnvironmentVariables: map[string]string{
-						"VAR1": "a",
-						"VAR2": "b",
-						"VAR3": "c",
-					},
 					Docker: manifest.DockerInfo{
-						Image: "someCool/image:whoo",
+						Image: "yo/brawh",
 					},
 				},
 			},
-		}
+		},
+	}
+	fs := afero.Afero{Fs: afero.NewMemMapFs()}
+	fs.WriteFile(path.Join(concourseRoot, validRequest.Params.GitRefPath), []byte(""), 0777)
+	fs.WriteFile(path.Join(concourseRoot, validRequest.Params.BuildVersionPath), []byte(""), 0777)
 
-		manifestReaderWriter := ManifestReadWriteStub{manifest: applicationManifest}
-		push := NewPlanner(&manifestReaderWriter, fs, []cfclient.AppSummary{})
+	planner := NewPlanner(&manifestReader, fs, nil, nil)
 
-		request := validRequest
-		request.Params.DockerUsername = "username"
-		request.Params.DockerPassword = "superSecret"
+	r := validRequest
+	r.Params.DockerTag = "/some/path/to/a/DockerTagFile"
 
-		p, err := push.Plan(request, "")
+	_, err := planner.Plan(r, concourseRoot)
 
-		assert.Nil(t, err)
-		assert.Len(t, p, 4)
-		assert.Equal(t, p[0].String(), "cf login -a a -u d -p ******** -o b -s c")
-		assert.Equal(t, p[1].String(), "CF_DOCKER_PASSWORD=... cf push MyApp-CANDIDATE -f manifest.yml --docker-image someCool/image:whoo --docker-username username")
-		assert.Equal(t, p[2].String(), "cf map-route MyApp-CANDIDATE kehe.com -n MyApp-c-CANDIDATE")
-		assert.Equal(t, p[3].String(), "cf start MyApp-CANDIDATE || cf logs MyApp-CANDIDATE --recent")
-		assert.NotEqual(t, p[1].String(), "appPath")
+	assert.Equal(t, expectedErr.Error(), err.Error())
+	assert.Equal(t, expectedPath, manifestReader.readPath)
+	assert.Equal(t, expectedPath, manifestReader.writePath)
+}
 
-		assert.Equal(t, []string{fmt.Sprintf("CF_DOCKER_PASSWORD=%s", request.Params.DockerPassword)}, p[1].Env())
-	})
+type fakePushPlanner struct {
+	plan      Plan
+	dockerTag string
+}
 
-	t.Run("With tag", func(t *testing.T) {
-		t.Run("When image in manifest doesnt specify version", func(t *testing.T) {
-			fs := afero.Afero{Fs: afero.NewMemMapFs()}
+func (f *fakePushPlanner) Plan(manifest manifest.Application, request Request, dockerTag string) (pl Plan) {
+	f.dockerTag = dockerTag
+	return f.plan
+}
 
-			tagFile := "path/To/TagFile"
-			tagContent := uuid.New().String()
-			fs.WriteFile(tagFile, []byte(tagContent), 0777)
+func TestCallsOutToCorrectPlanner(t *testing.T) {
+	t.Run("Push planner", func(t *testing.T) {
 
-			applicationManifest := manifest.Manifest{
+		t.Run("Normal app", func(t *testing.T) {
+			expectedPath := path.Join(concourseRoot, validRequest.Params.ManifestPath)
+
+			expectedManifest := manifest.Manifest{
 				Applications: []manifest.Application{
 					{
-						Name: "MyApp",
-						EnvironmentVariables: map[string]string{
-							"VAR1": "a",
-							"VAR2": "b",
-							"VAR3": "c",
-						},
-						Docker: manifest.DockerInfo{
-							Image: "someCool/image",
-						},
+						EnvironmentVariables: validRequest.Params.Vars,
 					},
 				},
 			}
 
-			manifestReaderWriter := ManifestReadWriteStub{manifest: applicationManifest}
-			push := NewPlanner(&manifestReaderWriter, fs, []cfclient.AppSummary{})
-
-			request := validRequest
-			request.Params.DockerUsername = "username"
-			request.Params.DockerPassword = "superSecret"
-			request.Params.DockerTag = tagFile
-
-			p, err := push.Plan(request, "")
-
-			assert.Nil(t, err)
-			assert.Len(t, p, 4)
-			assert.Equal(t, p[0].String(), "cf login -a a -u d -p ******** -o b -s c")
-			assert.Equal(t, p[1].String(), fmt.Sprintf("CF_DOCKER_PASSWORD=... cf push MyApp-CANDIDATE -f manifest.yml --docker-image someCool/image:%s --docker-username username", tagContent))
-			assert.Equal(t, p[2].String(), "cf map-route MyApp-CANDIDATE kehe.com -n MyApp-c-CANDIDATE")
-			assert.Equal(t, p[3].String(), "cf start MyApp-CANDIDATE || cf logs MyApp-CANDIDATE --recent")
-		})
-
-		t.Run("When image in manifest specifies version", func(t *testing.T) {
-			fs := afero.Afero{Fs: afero.NewMemMapFs()}
-
-			tagFile := "path/To/TagFile"
-			tagContent := uuid.New().String()
-			fs.WriteFile(tagFile, []byte(tagContent), 0777)
-
-			applicationManifest := manifest.Manifest{
-				Applications: []manifest.Application{
-					{
-						Name: "MyApp",
-						EnvironmentVariables: map[string]string{
-							"VAR1": "a",
-							"VAR2": "b",
-							"VAR3": "c",
-						},
-						Docker: manifest.DockerInfo{
-							Image: "someCool/image:someTag",
-						},
+			manifestReader := ManifestReadWriteStub{
+				manifest: manifest.Manifest{
+					Applications: []manifest.Application{
+						{},
 					},
 				},
 			}
 
-			manifestReaderWriter := ManifestReadWriteStub{manifest: applicationManifest}
-			push := NewPlanner(&manifestReaderWriter, fs, []cfclient.AppSummary{})
+			planner := NewPlanner(&manifestReader, afero.Afero{Fs: afero.NewMemMapFs()}, nil, &fakePushPlanner{
+				plan: Plan{
+					NewCfCommand("yay"),
+				},
+			})
 
-			request := validRequest
-			request.Params.DockerUsername = "username"
-			request.Params.DockerPassword = "superSecret"
-			request.Params.DockerTag = tagFile
+			r := validRequest
+			r.Params.BuildVersionPath = ""
+			r.Params.GitRefPath = ""
+			p, err := planner.Plan(r, concourseRoot)
 
-			p, err := push.Plan(request, "")
+			assert.NoError(t, err)
 
-			assert.Nil(t, err)
-			assert.Len(t, p, 4)
-			assert.Equal(t, p[0].String(), "cf login -a a -u d -p ******** -o b -s c")
-			assert.Equal(t, p[1].String(), fmt.Sprintf("CF_DOCKER_PASSWORD=... cf push MyApp-CANDIDATE -f manifest.yml --docker-image someCool/image:%s --docker-username username", tagContent))
-			assert.Equal(t, p[2].String(), "cf map-route MyApp-CANDIDATE kehe.com -n MyApp-c-CANDIDATE")
-			assert.Equal(t, p[3].String(), "cf start MyApp-CANDIDATE || cf logs MyApp-CANDIDATE --recent")
+			assert.Len(t, p, 2)
+			assert.Equal(t, "cf login -a a -u d -p ******** -o b -s c", p[0].String())
+			assert.Equal(t, "cf yay", p[1].String())
+			assert.Equal(t, expectedPath, manifestReader.readPath)
+			assert.Equal(t, expectedPath, manifestReader.writePath)
+			assert.Equal(t, expectedManifest, manifestReader.savedManifest)
+		})
+
+		t.Run("Docker app", func(t *testing.T) {
+			expectedPath := path.Join(concourseRoot, validRequest.Params.ManifestPath)
+
+			expectedManifest := manifest.Manifest{
+				Applications: []manifest.Application{
+					{
+						Docker: manifest.DockerInfo{
+							Image: "yo/sup",
+						},
+						EnvironmentVariables: validRequest.Params.Vars,
+					},
+				},
+			}
+
+			manifestReader := ManifestReadWriteStub{
+				manifest: manifest.Manifest{
+					Applications: []manifest.Application{
+						{
+							Docker: manifest.DockerInfo{
+								Image: "yo/sup",
+							},
+						},
+					},
+				},
+			}
+			fs := afero.Afero{Fs: afero.NewMemMapFs()}
+
+			r := validRequest
+			r.Params.DockerTag = "something"
+			r.Params.GitRefPath = ""
+			r.Params.BuildVersionPath = ""
+			fullDockerTagPath := path.Join(concourseRoot, r.Params.DockerTag)
+
+			expectedDockerTag := "this is a cool uuid"
+			fs.WriteFile(fullDockerTagPath, []byte(expectedDockerTag), 0777)
+
+			pushPlanner := fakePushPlanner{
+				plan: Plan{
+					NewCfCommand("yay"),
+				},
+			}
+			planner := NewPlanner(&manifestReader, fs, nil, &pushPlanner)
+
+			p, err := planner.Plan(r, concourseRoot)
+
+			assert.NoError(t, err)
+
+			assert.Len(t, p, 2)
+			assert.Equal(t, "cf login -a a -u d -p ******** -o b -s c", p[0].String())
+			assert.Equal(t, "cf yay", p[1].String())
+			assert.Equal(t, expectedPath, manifestReader.readPath)
+			assert.Equal(t, expectedPath, manifestReader.writePath)
+			assert.Equal(t, expectedManifest, manifestReader.savedManifest)
+			assert.Equal(t, expectedDockerTag, pushPlanner.dockerTag)
 		})
 	})
-}
-
-func TestErrorsIfTheGitRefPathIsSpecifiedButDoesntExist(t *testing.T) {
-	fs := afero.Afero{Fs: afero.NewMemMapFs()}
-
-	push := NewPlanner(&ManifestReadWriteStub{
-		manifest: manifest.Manifest{[]manifest.Application{{}}},
-	}, fs, []cfclient.AppSummary{})
-	request := Request{
-		Source: Source{
-			API:      "a",
-			Org:      "b",
-			Space:    "c",
-			Username: "d",
-			Password: "e",
-		},
-		Params: Params{
-			ManifestPath: "manifest.yml",
-			GitRefPath:   "git/.git/ref",
-			AppPath:      "",
-			TestDomain:   "kehe.com",
-			Command:      config.PUSH,
-		},
-	}
-	_, err := push.Plan(request, "/some/path")
-
-	assert.Error(t, err)
-}
-
-func TestPutsGitRefInTheManifest(t *testing.T) {
-	fs := afero.Afero{Fs: afero.NewMemMapFs()}
-	concourseRoot := "/some/path"
-	gitRefPath := "git/.git/ref"
-	gitRef := "wiiiie\n"
-	fs.WriteFile(path.Join(concourseRoot, gitRefPath), []byte(gitRef), 0700)
-
-	applicationManifest := manifest.Manifest{
-		Applications: []manifest.Application{
-			{
-				Name: "MyApp",
-				EnvironmentVariables: map[string]string{
-					"VAR1": "a",
-					"VAR2": "b",
-					"VAR3": "c",
-				},
-			},
-		},
-	}
-
-	stub := ManifestReadWriteStub{manifest: applicationManifest}
-	push := NewPlanner(&stub, fs, []cfclient.AppSummary{})
-
-	request := Request{
-		Source: Source{
-			API:      "a",
-			Org:      "b",
-			Space:    "c",
-			Username: "d",
-			Password: "e",
-		},
-		Params: Params{
-			ManifestPath: "manifest.yml",
-			GitRefPath:   gitRefPath,
-			AppPath:      "",
-			TestDomain:   "kehe.com",
-			Command:      config.PUSH,
-		},
-	}
-
-	_, err := push.Plan(request, concourseRoot)
-
-	assert.Nil(t, err)
-	assert.Equal(t, stub.savedManifest.Applications[0].EnvironmentVariables["GIT_REVISION"], "wiiiie")
-}
-
-func TestPutsBuildVersionInTheManifest(t *testing.T) {
-	fs := afero.Afero{Fs: afero.NewMemMapFs()}
-	concourseRoot := "/some/path"
-	gitRefPath := "git/.git/ref"
-	buildVersionPath := "version/version"
-	gitRef := "wiiiie\n"
-	buildVersion := "1.1.0\n"
-	fs.WriteFile(path.Join(concourseRoot, gitRefPath), []byte(gitRef), 0700)
-	fs.WriteFile(path.Join(concourseRoot, buildVersionPath), []byte(buildVersion), 0700)
-
-	applicationManifest := manifest.Manifest{
-		Applications: []manifest.Application{
-			{
-				Name: "MyApp",
-				EnvironmentVariables: map[string]string{
-					"VAR1": "a",
-					"VAR2": "b",
-					"VAR3": "c",
-				},
-			},
-		},
-	}
-
-	stub := ManifestReadWriteStub{manifest: applicationManifest}
-	push := NewPlanner(&stub, fs, []cfclient.AppSummary{})
-
-	request := Request{
-		Source: Source{
-			API:      "a",
-			Org:      "b",
-			Space:    "c",
-			Username: "d",
-			Password: "e",
-		},
-		Params: Params{
-			ManifestPath:     "manifest.yml",
-			GitRefPath:       gitRefPath,
-			BuildVersionPath: buildVersionPath,
-			AppPath:          "",
-			TestDomain:       "kehe.com",
-			Command:          config.PUSH,
-		},
-	}
-
-	_, err := push.Plan(request, concourseRoot)
-
-	assert.Nil(t, err)
-	assert.Equal(t, stub.savedManifest.Applications[0].EnvironmentVariables["GIT_REVISION"], "wiiiie")
-	assert.Equal(t, stub.savedManifest.Applications[0].EnvironmentVariables["BUILD_VERSION"], "1.1.0")
 }

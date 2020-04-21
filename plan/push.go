@@ -6,9 +6,13 @@ import (
 	"strings"
 )
 
-type PushPlan struct{}
+type PushPlan interface {
+	Plan(manifest manifest.Application, request Request, dockerTag string) (pl Plan)
+}
 
-func (p PushPlan) Plan(manifest manifest.Application, request Request, dockerTag string) (pl Plan) {
+type pushPlan struct{}
+
+func (p pushPlan) Plan(manifest manifest.Application, request Request, dockerTag string) (pl Plan) {
 	pl = append(pl, p.pushCommand(manifest, request, dockerTag))
 
 	if !manifest.NoRoute {
@@ -39,7 +43,7 @@ func (p PushPlan) Plan(manifest manifest.Application, request Request, dockerTag
 	return
 }
 
-func (p PushPlan) pushCommand(manifest manifest.Application, request Request, dockerTag string) Command {
+func (p pushPlan) pushCommand(manifest manifest.Application, request Request, dockerTag string) Command {
 	pushCommand := NewCfCommand("push").
 		AddToArgs(p.getCandidateAppName(manifest)).
 		AddToArgs("-f", request.Params.ManifestPath)
@@ -65,14 +69,14 @@ func (p PushPlan) pushCommand(manifest manifest.Application, request Request, do
 	return pushCommand
 }
 
-func (p PushPlan) getCandidateAppName(manifest manifest.Application) string {
+func (p pushPlan) getCandidateAppName(manifest manifest.Application) string {
 	return fmt.Sprintf("%s-CANDIDATE", manifest.Name)
 }
 
-func (p PushPlan) getCandidateHostname(manifest manifest.Application, request Request) string {
+func (p pushPlan) getCandidateHostname(manifest manifest.Application, request Request) string {
 	return strings.Join([]string{manifest.Name, request.Source.Space, "CANDIDATE"}, "-")
 }
 
 func NewPushPlan() PushPlan {
-	return PushPlan{}
+	return pushPlan{}
 }
