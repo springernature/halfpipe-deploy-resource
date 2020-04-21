@@ -17,9 +17,11 @@ func (p promotePlan) Plan(manifest manifest.Application, request Request, summar
 
 	if currentLive.Name != "" {
 		pl = append(pl, NewCfCommand("rename", manifest.Name, createOldAppName(manifest.Name)))
-
+		if currentLive.State == "started" {
+			pl = append(pl, NewCfCommand("stop", createOldAppName(manifest.Name)))
+		}
 	}
-	pl = append(pl, NewCfCommand("rename", createCandidateAppName(manifest), manifest.Name))
+	pl = append(pl, NewCfCommand("rename", createCandidateAppName(manifest.Name), manifest.Name))
 	return pl
 }
 

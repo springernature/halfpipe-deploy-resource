@@ -17,7 +17,7 @@ func (p pushPlan) Plan(manifest manifest.Application, request Request, dockerTag
 
 	if !manifest.NoRoute {
 		pl = append(pl, NewCfCommand("map-route").
-			AddToArgs(createCandidateAppName(manifest)).
+			AddToArgs(createCandidateAppName(manifest.Name)).
 			AddToArgs(request.Params.TestDomain).
 			AddToArgs("-n", createCandidateHostname(manifest, request)))
 	}
@@ -31,9 +31,9 @@ func (p pushPlan) Plan(manifest manifest.Application, request Request, dockerTag
 
 	pl = append(pl, NewCompoundCommand(
 		NewCfCommand("start").
-			AddToArgs(createCandidateAppName(manifest)),
+			AddToArgs(createCandidateAppName(manifest.Name)),
 		NewCfCommand("logs",
-			createCandidateAppName(manifest),
+			createCandidateAppName(manifest.Name),
 			"--recent",
 		),
 		func(log []byte) bool {
@@ -45,7 +45,7 @@ func (p pushPlan) Plan(manifest manifest.Application, request Request, dockerTag
 
 func (p pushPlan) pushCommand(manifest manifest.Application, request Request, dockerTag string) Command {
 	pushCommand := NewCfCommand("push").
-		AddToArgs(createCandidateAppName(manifest)).
+		AddToArgs(createCandidateAppName(manifest.Name)).
 		AddToArgs("-f", request.Params.ManifestPath)
 
 	if manifest.Docker.Image != "" {

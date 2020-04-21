@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-func createCandidateAppName(manifest manifest.Application) string {
-	return fmt.Sprintf("%s-CANDIDATE", manifest.Name)
+func createCandidateAppName(name string) string {
+	return fmt.Sprintf("%s-CANDIDATE", name)
 }
 
 func createCandidateHostname(manifest manifest.Application, request Request) string {
