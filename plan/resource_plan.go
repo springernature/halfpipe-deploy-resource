@@ -68,12 +68,6 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 	// We lint that there is only one app.
 	appUnderDeployment := readManifest.Applications[0]
 
-	if request.Params.Command == config.PUSH {
-		if err = p.updateManifestWithVars(request); err != nil {
-			return
-		}
-	}
-
 	pl = append(pl, NewCfCommand("login",
 		"-a", request.Source.API,
 		"-u", request.Source.Username,
@@ -83,6 +77,9 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 
 	switch request.Params.Command {
 	case config.PUSH:
+		if err = p.updateManifestWithVars(request); err != nil {
+			return
+		}
 		var dockerTag string
 		if request.Params.DockerTag != "" {
 			content, e := p.fs.ReadFile(request.Params.DockerTag)
