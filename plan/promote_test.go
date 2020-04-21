@@ -146,4 +146,47 @@ func TestWorkerApp(t *testing.T) {
 		plan := NewPromotePlan().Plan(man, validRequest, summary)
 		assert.Equal(t, expectedPlan, plan)
 	})
+
+	t.Run("One previously deployed started version with an stopped old version and a couple of uncleaned DELETE apps", func(t *testing.T) {
+		summary := []cfclient.AppSummary{
+			{
+				Name:  "myApp-CANDIDATE",
+				State: "started",
+			},
+			{
+				Name:  "myApp",
+				State: "started",
+			},
+			{
+				Name:  "myApp-OLD",
+				State: "stopped",
+			},
+			{
+				Name:  "myApp-DELETE",
+				State: "stopped",
+			},
+			{
+				Name:  "myApp-DELETE-1",
+				State: "stopped",
+			},
+			{
+				Name:  "myApp-DELETE-2",
+				State: "stopped",
+			},
+		}
+
+		man := manifest.Application{
+			Name:    "myApp",
+			NoRoute: true,
+		}
+		expectedPlan := Plan{
+			NewCfCommand("rename", createOldAppName(man.Name), createDeleteName(man.Name, 3)),
+			NewCfCommand("rename", man.Name, createOldAppName(man.Name)),
+			NewCfCommand("stop", createOldAppName(man.Name)),
+			NewCfCommand("rename", createCandidateAppName(man.Name), man.Name),
+		}
+
+		plan := NewPromotePlan().Plan(man, validRequest, summary)
+		assert.Equal(t, expectedPlan, plan)
+	})
 }
