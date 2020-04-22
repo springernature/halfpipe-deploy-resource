@@ -10,11 +10,15 @@ type PromotePlan interface {
 	Plan(manifest manifest.Application, request Request, summary []cfclient.AppSummary) (pl Plan)
 }
 
-type promotePlan struct{}
+type promotePlan struct {
+	privateDomainsInOrg []cfclient.Domain
+}
 
 func (p promotePlan) Plan(manifest manifest.Application, request Request, summary []cfclient.AppSummary) (pl Plan) {
 	currentLive, currentOld, currentDeletes := p.getPreviousAppState(manifest.Name, summary)
 
+	pl = append(pl, p.addManifestRoutes(manifest)...)
+	pl = append(pl, p.unmapTestRoute(manifest, request)...)
 	pl = append(pl, p.renameOldApp(manifest, currentOld, currentDeletes)...)
 	pl = append(pl, p.renameAndStopCurrentApp(manifest, currentLive)...)
 	pl = append(pl, p.renameCandidateToLive(manifest))
@@ -70,6 +74,49 @@ func (p promotePlan) getPreviousAppState(manifestAppName string, summary []cfcli
 	return
 }
 
-func NewPromotePlan() PromotePlan {
-	return promotePlan{}
+func (p promotePlan) addManifestRoutes(man manifest.Application) (cmds []Command) {
+	isPrivateDomain := func(r string) bool {
+		for _, domain := range p.privateDomainsInOrg {
+			if r == domain.Name {
+				return true
+			}
+		}
+		return false
+	}
+
+	for _, route := range man.Routes {
+		if isPrivateDomain(route.Route) {
+			mapRoute := NewCfCommand("map-route", createCandidateAppName(man.Name), route.Route)
+			cmds = append(cmds, mapRoute)
+		} else {
+			parts := strings.Split(route.Route, ".")
+			hostname := parts[0]
+			domain := strings.Join(parts[1:], ".")
+			if strings.Contains(domain, "/") {
+				partsWithPath := strings.Split(domain, "/")
+				domain = partsWithPath[0]
+				path := strings.Join(partsWithPath[1:], "/")
+				mapRoute := NewCfCommand("map-route", createCandidateAppName(man.Name), domain, "--hostname", hostname, "--path", path)
+				cmds = append(cmds, mapRoute)
+			} else {
+				mapRoute := NewCfCommand("map-route", createCandidateAppName(man.Name), domain, "--hostname", hostname)
+				cmds = append(cmds, mapRoute)
+			}
+		}
+	}
+	return
+}
+
+func (p promotePlan) unmapTestRoute(man manifest.Application, request Request) (cmds []Command) {
+	if !man.NoRoute {
+		unmapRoute := NewCfCommand("unmap-route", createCandidateAppName(man.Name), request.Params.TestDomain, "--hostname", createCandidateHostname(man, request))
+		cmds = append(cmds, unmapRoute)
+	}
+	return
+}
+
+func NewPromotePlan(privateDomainsInOrg []cfclient.Domain) PromotePlan {
+	return promotePlan{
+		privateDomainsInOrg: privateDomainsInOrg,
+	}
 }

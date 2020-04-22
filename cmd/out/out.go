@@ -42,7 +42,7 @@ func main() {
 		syscall.Exit(1)
 	}
 
-	appsSummary, err := getApps(request)
+	appsSummary, privateDomains, err := getApps(request)
 	if err != nil {
 		logger.Println(err)
 		syscall.Exit(1)
@@ -62,7 +62,7 @@ func main() {
 			manifest.NewManifestReadWrite(fs),
 			fs,
 			plan.NewPushPlan(),
-			plan.NewPromotePlan(),
+			plan.NewPromotePlan(privateDomains),
 		).Plan(request, concourseRoot, appsSummary)
 	default:
 		panic(fmt.Sprintf("Command '%s' not supported", request.Params.Command))
@@ -103,7 +103,7 @@ func main() {
 	}
 }
 
-func getApps(request plan.Request) (appSummary []cfclient.AppSummary, err error) {
+func getApps(request plan.Request) (appSummary []cfclient.AppSummary, privateDomains []cfclient.Domain, err error) {
 	c := &cfclient.Config{
 		ApiAddress: request.Source.API,
 		Username:   request.Source.Username,
@@ -125,7 +125,12 @@ func getApps(request plan.Request) (appSummary []cfclient.AppSummary, err error)
 	if err != nil {
 		return
 	}
-
 	appSummary = spaceSummary.Apps
+
+	privateDomains, err = org.ListPrivateDomains()
+	if err != nil {
+		return
+	}
+
 	return
 }
