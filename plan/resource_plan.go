@@ -20,15 +20,17 @@ type planner struct {
 	pushPlan            PushPlan
 	promotePlan         PromotePlan
 	cleanupPlan         CleanupPlan
+	checkPlan           CheckPlan
 }
 
-func NewPlanner(manifestReaderWrite manifest.ReaderWriter, fs afero.Afero, pushPlan PushPlan, promotePlan PromotePlan, cleanupPlan CleanupPlan) ResourcePlan {
+func NewPlanner(manifestReaderWrite manifest.ReaderWriter, fs afero.Afero, pushPlan PushPlan, checkPlan CheckPlan, promotePlan PromotePlan, cleanupPlan CleanupPlan) ResourcePlan {
 	return planner{
 		manifestReaderWrite: manifestReaderWrite,
 		fs:                  fs,
 		pushPlan:            pushPlan,
 		promotePlan:         promotePlan,
 		cleanupPlan:         cleanupPlan,
+		checkPlan: checkPlan,
 	}
 }
 
@@ -95,6 +97,8 @@ func (p planner) Plan(request Request, concourseRoot string, appsSummary []cfcli
 		}
 
 		pl = append(pl, p.pushPlan.Plan(appUnderDeployment, request, dockerTag)...)
+	case config.CHECK:
+		pl = append(pl, p.checkPlan.Plan(appUnderDeployment, appsSummary)...)
 	case config.PROMOTE:
 		pl = append(pl, p.promotePlan.Plan(appUnderDeployment, request, appsSummary)...)
 	case config.CLEANUP, config.DELETE:

@@ -2,6 +2,7 @@ package plan
 
 import (
 	"fmt"
+	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/springernature/halfpipe-deploy-resource/logger"
 )
 
@@ -20,7 +21,7 @@ func (p Plan) String() (s string) {
 	return
 }
 
-func (p Plan) Execute(executor Executor, logger *logger.CapturingWriter) (err error) {
+func (p Plan) Execute(executor Executor, cfClient cfclient.Client, logger *logger.CapturingWriter) (err error) {
 	for _, c := range p {
 		logger.Println(fmt.Sprintf("$ %s", c))
 
@@ -35,6 +36,9 @@ func (p Plan) Execute(executor Executor, logger *logger.CapturingWriter) (err er
 			shouldExecuteOnFailure = cmd.shouldExecute
 		case Command:
 			command = cmd
+		case clientCommand:
+			err = cmd.CallWithCfClient(cfClient, logger)
+			return
 		}
 
 		_, err = executor.CliCommand(command)

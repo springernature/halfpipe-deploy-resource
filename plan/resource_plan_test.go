@@ -66,7 +66,7 @@ func TestErrorsReadingAppManifest(t *testing.T) {
 	expectedPath := path.Join(concourseRoot, validRequest.Params.ManifestPath)
 	manifestReader := ManifestReadWriteStub{readError: expectedErr}
 
-	planner := NewPlanner(&manifestReader, afero.Afero{}, nil, nil, nil)
+	planner := NewPlanner(&manifestReader, afero.Afero{}, nil, nil, nil, nil)
 
 	_, err := planner.Plan(validRequest, concourseRoot, nil)
 	assert.Equal(t, expectedErr, err)
@@ -82,7 +82,7 @@ func TestErrorsWhenWeFailToReadGitRef(t *testing.T) {
 		},
 	}
 
-	planner := NewPlanner(&manifestReader, afero.Afero{Fs: afero.NewMemMapFs()}, nil, nil, nil)
+	planner := NewPlanner(&manifestReader, afero.Afero{Fs: afero.NewMemMapFs()}, nil, nil, nil, nil)
 
 	_, err := planner.Plan(validRequest, concourseRoot, nil)
 	assert.Equal(t, "open /tmp/some/path/gitRefPath: file does not exist", err.Error())
@@ -99,7 +99,7 @@ func TestErrorsWhenWeFailToReadBuildVersion(t *testing.T) {
 
 	fs := afero.Afero{Fs: afero.NewMemMapFs()}
 	fs.WriteFile(path.Join(concourseRoot, validRequest.Params.GitRefPath), []byte(""), 0777)
-	planner := NewPlanner(&manifestReader, fs, nil, nil, nil)
+	planner := NewPlanner(&manifestReader, fs, nil, nil, nil, nil)
 
 	_, err := planner.Plan(validRequest, concourseRoot, nil)
 	assert.Equal(t, "open /tmp/some/path/buildVersionPath: file does not exist", err.Error())
@@ -121,7 +121,7 @@ func TestErrorsWhenSavingManifestWithUpdatedVars(t *testing.T) {
 	fs.WriteFile(path.Join(concourseRoot, validRequest.Params.GitRefPath), []byte(""), 0777)
 	fs.WriteFile(path.Join(concourseRoot, validRequest.Params.BuildVersionPath), []byte(""), 0777)
 
-	planner := NewPlanner(&manifestReader, fs, nil, nil, nil)
+	planner := NewPlanner(&manifestReader, fs, nil, nil, nil, nil)
 
 	_, err := planner.Plan(validRequest, concourseRoot, nil)
 	assert.Equal(t, expectedErr, err)
@@ -147,7 +147,7 @@ func TestErrorsWhenReadingDockerTag(t *testing.T) {
 	fs.WriteFile(path.Join(concourseRoot, validRequest.Params.GitRefPath), []byte(""), 0777)
 	fs.WriteFile(path.Join(concourseRoot, validRequest.Params.BuildVersionPath), []byte(""), 0777)
 
-	planner := NewPlanner(&manifestReader, fs, nil, nil, nil)
+	planner := NewPlanner(&manifestReader, fs, nil, nil, nil, nil)
 
 	r := validRequest
 	r.Params.DockerTag = "/some/path/to/a/DockerTagFile"
@@ -164,12 +164,20 @@ type fakePushPlanner struct {
 	dockerTag string
 }
 
+type fakeCheckPlanner struct {
+	plan Plan
+}
+
 type fakePromotePlanner struct {
 	plan Plan
 }
 
 type fakeCleanupPlanner struct {
 	plan Plan
+}
+
+func (f fakeCheckPlanner) Plan(manifest manifest.Application, summary []cfclient.AppSummary) (pl Plan) {
+	return f.plan
 }
 
 func (f fakePromotePlanner) Plan(manifest manifest.Application, request Request, summary []cfclient.AppSummary) (pl Plan) {
@@ -211,7 +219,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 				plan: Plan{
 					NewCfCommand("yay"),
 				},
-			}, nil, nil)
+			}, nil, nil, nil)
 
 			r := validRequest
 			r.Params.BuildVersionPath = ""
@@ -269,7 +277,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 					NewCfCommand("yay"),
 				},
 			}
-			planner := NewPlanner(&manifestReader, fs, &pushPlanner, nil, nil)
+			planner := NewPlanner(&manifestReader, fs, &pushPlanner, nil, nil, nil)
 
 			p, err := planner.Plan(r, concourseRoot, nil)
 
@@ -285,6 +293,33 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 		})
 	})
 
+	t.Run("Check planner", func(t *testing.T) {
+		manifestReader := ManifestReadWriteStub{
+			manifest: manifest.Manifest{
+				Applications: []manifest.Application{
+					{},
+				},
+			},
+		}
+
+		planner := NewPlanner(&manifestReader, afero.Afero{Fs: afero.NewMemMapFs()}, nil, fakeCheckPlanner{
+			plan: Plan{
+				NewCfCommand("yay"),
+			},
+		}, nil, nil)
+
+		r := validRequest
+		r.Params.Command = config.CHECK
+
+		p, err := planner.Plan(r, concourseRoot, nil)
+
+		assert.NoError(t, err)
+
+		assert.Len(t, p, 2)
+		assert.Equal(t, "cf login -a a -u d -p ******** -o b -s c", p[0].String())
+		assert.Equal(t, "cf yay", p[1].String())
+	})
+
 	t.Run("Promote planner", func(t *testing.T) {
 		manifestReader := ManifestReadWriteStub{
 			manifest: manifest.Manifest{
@@ -294,7 +329,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			},
 		}
 
-		planner := NewPlanner(&manifestReader, afero.Afero{Fs: afero.NewMemMapFs()}, nil, fakePromotePlanner{
+		planner := NewPlanner(&manifestReader, afero.Afero{Fs: afero.NewMemMapFs()}, nil, nil, fakePromotePlanner{
 			plan: Plan{
 				NewCfCommand("yay"),
 			},
@@ -321,7 +356,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			},
 		}
 
-		planner := NewPlanner(&manifestReader, afero.Afero{Fs: afero.NewMemMapFs()}, nil, nil, fakeCleanupPlanner{
+		planner := NewPlanner(&manifestReader, afero.Afero{Fs: afero.NewMemMapFs()}, nil, nil, nil, fakeCleanupPlanner{
 			plan: Plan{
 				NewCfCommand("yay"),
 			},
@@ -352,8 +387,6 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			assert.Equal(t, "cf login -a a -u d -p ******** -o b -s c", p[0].String())
 			assert.Equal(t, "cf yay", p[1].String())
 		})
-
-
 
 	})
 }

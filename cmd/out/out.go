@@ -42,7 +42,7 @@ func main() {
 		syscall.Exit(1)
 	}
 
-	appsSummary, privateDomains, err := getApps(request)
+	cfClient, appsSummary, privateDomains, err := getApps(request)
 	if err != nil {
 		logger.Println(err)
 		syscall.Exit(1)
@@ -62,6 +62,7 @@ func main() {
 			manifest.NewManifestReadWrite(fs),
 			fs,
 			plan.NewPushPlan(),
+			plan.NewCheckPlan(),
 			plan.NewPromotePlan(privateDomains),
 			plan.NewCleanupPlan(),
 		).Plan(request, concourseRoot, appsSummary)
@@ -76,7 +77,7 @@ func main() {
 
 	logger.Println(p.String())
 
-	if err = p.Execute(plan.NewCFCliExecutor(&logger), &logger); err != nil {
+	if err = p.Execute(plan.NewCFCliExecutor(&logger), cfClient, &logger); err != nil {
 		logger.Println(err)
 		logger.Println("")
 		for _, fix := range fixes.SuggestFix(logger.BytesWritten, request) {
@@ -104,7 +105,7 @@ func main() {
 	}
 }
 
-func getApps(request plan.Request) (appSummary []cfclient.AppSummary, privateDomains []cfclient.Domain, err error) {
+func getApps(request plan.Request) (cfClient cfclient.Client, appSummary []cfclient.AppSummary, privateDomains []cfclient.Domain, err error) {
 	c := &cfclient.Config{
 		ApiAddress: request.Source.API,
 		Username:   request.Source.Username,
