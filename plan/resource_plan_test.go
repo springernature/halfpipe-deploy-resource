@@ -176,7 +176,7 @@ func (f fakePromotePlanner) Plan(manifest manifest.Application, request Request,
 	return f.plan
 }
 
-func (f fakeCleanupPlanner) Plan(manifest manifest.Application, request Request, summary []cfclient.AppSummary) (pl Plan) {
+func (f fakeCleanupPlanner) Plan(manifest manifest.Application, summary []cfclient.AppSummary) (pl Plan) {
 	return f.plan
 }
 
@@ -321,7 +321,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			},
 		}
 
-		planner := NewPlanner(&manifestReader, afero.Afero{Fs: afero.NewMemMapFs()}, nil, nil, fakePromotePlanner{
+		planner := NewPlanner(&manifestReader, afero.Afero{Fs: afero.NewMemMapFs()}, nil, nil, fakeCleanupPlanner{
 			plan: Plan{
 				NewCfCommand("yay"),
 			},

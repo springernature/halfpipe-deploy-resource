@@ -98,7 +98,7 @@ func (p planner) Plan(request Request, concourseRoot string, appsSummary []cfcli
 	case config.PROMOTE:
 		pl = append(pl, p.promotePlan.Plan(appUnderDeployment, request, appsSummary)...)
 	case config.CLEANUP, config.DELETE:
-		pl = append(pl, p.cleanupPlan.Plan(appUnderDeployment, request, appsSummary)...)
+		pl = append(pl, p.cleanupPlan.Plan(appUnderDeployment, appsSummary)...)
 	}
 
 	return
