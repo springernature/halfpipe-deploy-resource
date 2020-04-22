@@ -21,7 +21,7 @@ func (p Plan) String() (s string) {
 	return
 }
 
-func (p Plan) Execute(executor Executor, cfClient cfclient.Client, logger *logger.CapturingWriter) (err error) {
+func (p Plan) Execute(executor Executor, cfClient *cfclient.Client, logger *logger.CapturingWriter) (err error) {
 	for _, c := range p {
 		logger.Println(fmt.Sprintf("$ %s", c))
 

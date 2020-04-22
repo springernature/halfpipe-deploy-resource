@@ -1,9 +1,11 @@
 package plan
 
 import (
+	"fmt"
 	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/springernature/halfpipe-deploy-resource/logger"
 	"github.com/springernature/halfpipe-deploy-resource/manifest"
+	"time"
 )
 
 type CheckPlan interface {
@@ -26,15 +28,29 @@ func (p checkPlan) Plan(manifest manifest.Application, summary []cfclient.AppSum
 	return
 }
 
-func (p checkPlan) createFunc(appGuid string) func(client cfclient.Client, logger *logger.CapturingWriter) error {
-	return func(client cfclient.Client, logger *logger.CapturingWriter) error {
-		logger.Println("Checking that all app instances are in running state")
-		logger.Println(appGuid)
-		logger.Println("Yay, this is actually called")
-		app, _ := client.GetAppByGuid(appGuid)
-		logger.Println(app.Name)
-		logger.Println(app.Instances)
-		logger.Println(app.State)
+func (p checkPlan) createFunc(appGuid string) func(*cfclient.Client, *logger.CapturingWriter) error {
+	return func(cfClient *cfclient.Client, logger *logger.CapturingWriter) error {
+		for true {
+			instances, err := cfClient.GetAppInstances(appGuid)
+			if err != nil {
+				return err
+			}
+
+			numRunning := 0
+			for _, instance := range instances {
+				if instance.State == "RUNNING" {
+					numRunning += 1
+				}
+			}
+
+			logger.Println(fmt.Sprintf(`%d/%d instances running`, numRunning, len(instances)))
+
+			if len(instances) != numRunning {
+				time.Sleep(10 * time.Second)
+				continue
+			}
+			break
+		}
 		return nil
 	}
 }

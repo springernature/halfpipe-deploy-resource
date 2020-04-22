@@ -105,13 +105,13 @@ func main() {
 	}
 }
 
-func getApps(request plan.Request) (cfClient cfclient.Client, appSummary []cfclient.AppSummary, privateDomains []cfclient.Domain, err error) {
+func getApps(request plan.Request) (client *cfclient.Client, appSummary []cfclient.AppSummary, privateDomains []cfclient.Domain, err error) {
 	c := &cfclient.Config{
 		ApiAddress: request.Source.API,
 		Username:   request.Source.Username,
 		Password:   request.Source.Password,
 	}
-	client, err := cfclient.NewClient(c)
+	client, err = cfclient.NewClient(c)
 	if err != nil {
 		return
 	}

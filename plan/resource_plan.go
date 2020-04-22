@@ -30,7 +30,7 @@ func NewPlanner(manifestReaderWrite manifest.ReaderWriter, fs afero.Afero, pushP
 		pushPlan:            pushPlan,
 		promotePlan:         promotePlan,
 		cleanupPlan:         cleanupPlan,
-		checkPlan: checkPlan,
+		checkPlan:           checkPlan,
 	}
 }
 
@@ -98,7 +98,8 @@ func (p planner) Plan(request Request, concourseRoot string, appsSummary []cfcli
 
 		pl = append(pl, p.pushPlan.Plan(appUnderDeployment, request, dockerTag)...)
 	case config.CHECK:
-		pl = append(pl, p.checkPlan.Plan(appUnderDeployment, appsSummary)...)
+		// We dont actually need to login for this as we are using a cf client for this specific task..
+		pl = p.checkPlan.Plan(appUnderDeployment, appsSummary)
 	case config.PROMOTE:
 		pl = append(pl, p.promotePlan.Plan(appUnderDeployment, request, appsSummary)...)
 	case config.CLEANUP, config.DELETE:

@@ -315,9 +315,8 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		assert.Len(t, p, 2)
-		assert.Equal(t, "cf login -a a -u d -p ******** -o b -s c", p[0].String())
-		assert.Equal(t, "cf yay", p[1].String())
+		assert.Len(t, p, 1)
+		assert.Equal(t, "cf yay", p[0].String())
 	})
 
 	t.Run("Promote planner", func(t *testing.T) {

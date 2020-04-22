@@ -6,14 +6,14 @@ import (
 )
 
 type ClientCommand interface {
-	CallWithCfClient(client cfclient.Client, logger *logger.CapturingWriter) error
+	CallWithCfClient(client *cfclient.Client, logger *logger.CapturingWriter) error
 }
 
 type clientCommand struct {
-	fun func(client cfclient.Client, logger *logger.CapturingWriter) error
+	fun func(client *cfclient.Client, logger *logger.CapturingWriter) error
 }
 
-func (c clientCommand) CallWithCfClient(client cfclient.Client, logger *logger.CapturingWriter) error {
+func (c clientCommand) CallWithCfClient(client *cfclient.Client, logger *logger.CapturingWriter) error {
 	return c.fun(client, logger)
 }
 
@@ -37,7 +37,7 @@ func (c clientCommand) AddToEnv(env ...string) Command {
 	panic("AddToEnv should never be called on a clientCommand")
 }
 
-func NewClientCommand(fun func(client cfclient.Client, logger *logger.CapturingWriter) error) Command {
+func NewClientCommand(fun func(client *cfclient.Client, logger *logger.CapturingWriter) error) Command {
 	return clientCommand{
 		fun: fun,
 	}
