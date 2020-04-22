@@ -18,7 +18,7 @@ func (c clientCommand) CallWithCfClient(client cfclient.Client, logger *logger.C
 }
 
 func (c clientCommand) String() string {
-	panic("implement me")
+	return "Checking that all app instances are in running state"
 }
 
 func (c clientCommand) Args() []string {

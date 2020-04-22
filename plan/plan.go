@@ -30,15 +30,15 @@ func (p Plan) Execute(executor Executor, cfClient cfclient.Client, logger *logge
 		var shouldExecuteOnFailure ShouldExecute
 
 		switch cmd := c.(type) {
+		case clientCommand:
+			err = cmd.CallWithCfClient(cfClient, logger)
+			return
 		case compoundCommand:
 			command = cmd.left
 			onFailure = cmd.right
 			shouldExecuteOnFailure = cmd.shouldExecute
 		case Command:
 			command = cmd
-		case clientCommand:
-			err = cmd.CallWithCfClient(cfClient, logger)
-			return
 		}
 
 		_, err = executor.CliCommand(command)
