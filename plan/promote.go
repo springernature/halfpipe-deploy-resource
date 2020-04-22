@@ -13,22 +13,36 @@ type PromotePlan interface {
 type promotePlan struct{}
 
 func (p promotePlan) Plan(manifest manifest.Application, request Request, summary []cfclient.AppSummary) (pl Plan) {
-	currentLive, currentOld, currentDelete := p.getPreviousAppState(manifest.Name, summary)
+	currentLive, currentOld, currentDeletes := p.getPreviousAppState(manifest.Name, summary)
 
-	if currentOld.Name != "" {
-		i := len(currentDelete)
-		pl = append(pl, NewCfCommand("rename", createOldAppName(manifest.Name), createDeleteName(manifest.Name, i)))
+	pl = append(pl, p.renameOldApp(manifest, currentOld, currentDeletes)...)
+	pl = append(pl, p.renameAndStopCurrentApp(manifest, currentLive)...)
+	pl = append(pl, p.renameCandidateToLive(manifest))
+
+	return
+}
+
+func (p promotePlan) renameOldApp(manifest manifest.Application, oldApp cfclient.AppSummary, currentDeletes []cfclient.AppSummary) (cmds []Command) {
+	if oldApp.Name != "" {
+		i := len(currentDeletes)
+		cmds = append(cmds, NewCfCommand("rename", createOldAppName(manifest.Name), createDeleteName(manifest.Name, i)))
 	}
 
+	return
+}
+
+func (p promotePlan) renameAndStopCurrentApp(manifest manifest.Application, currentLive cfclient.AppSummary) (cmds []Command) {
 	if currentLive.Name != "" {
-		pl = append(pl, NewCfCommand("rename", manifest.Name, createOldAppName(manifest.Name)))
+		cmds = append(cmds, NewCfCommand("rename", manifest.Name, createOldAppName(manifest.Name)))
 		if currentLive.State == "started" {
-			pl = append(pl, NewCfCommand("stop", createOldAppName(manifest.Name)))
+			cmds = append(cmds, NewCfCommand("stop", createOldAppName(manifest.Name)))
 		}
 	}
+	return
+}
 
-	pl = append(pl, NewCfCommand("rename", createCandidateAppName(manifest.Name), manifest.Name))
-	return pl
+func (p promotePlan) renameCandidateToLive(manifest manifest.Application) Command {
+	return NewCfCommand("rename", createCandidateAppName(manifest.Name), manifest.Name)
 }
 
 func (p promotePlan) getPreviousAppState(manifestAppName string, summary []cfclient.AppSummary) (currentLive, currentOld cfclient.AppSummary, currentDeletes []cfclient.AppSummary) {
