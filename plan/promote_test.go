@@ -201,7 +201,7 @@ func TestPromoteNormalApp(t *testing.T) {
 		}
 
 		man := manifest.Application{
-			Name:    "myApp",
+			Name: "myApp",
 			Routes: []manifest.Route{
 				{
 					Route: "myroute.domain1.com",
@@ -231,7 +231,7 @@ func TestPromoteNormalApp(t *testing.T) {
 		}
 
 		man := manifest.Application{
-			Name:    "myApp",
+			Name: "myApp",
 			Routes: []manifest.Route{
 				{
 					Route: "myroute.domain1.com",
@@ -261,7 +261,7 @@ func TestPromoteNormalApp(t *testing.T) {
 		}
 
 		man := manifest.Application{
-			Name:    "myApp",
+			Name: "myApp",
 			Routes: []manifest.Route{
 				{
 					Route: "myroute.domain1.com",
@@ -273,13 +273,49 @@ func TestPromoteNormalApp(t *testing.T) {
 		}
 		privateRoutesInOrg := []cfclient.Domain{
 			{
-				Name:                   "thisIsASpaceOwnedDomain.com",
+				Name: "thisIsASpaceOwnedDomain.com",
 			},
 		}
 
 		expectedPlan := Plan{
 			NewCfCommand("map-route", createCandidateAppName(man.Name), "domain1.com", "--hostname", "myroute"),
 			NewCfCommand("map-route", createCandidateAppName(man.Name), "thisIsASpaceOwnedDomain.com"),
+			NewCfCommand("unmap-route", createCandidateAppName(man.Name), validRequest.Params.TestDomain, "--hostname", createCandidateHostname(man, validRequest)),
+			NewCfCommand("rename", createCandidateAppName(man.Name), man.Name),
+		}
+
+		plan := NewPromotePlan(privateRoutesInOrg).Plan(man, validRequest, summary)
+		assert.Equal(t, expectedPlan, plan)
+	})
+
+	t.Run("No previously deployed version and a route that is a sub domain", func(t *testing.T) {
+		summary := []cfclient.AppSummary{
+			{
+				Name:  "myApp-CANDIDATE",
+				State: "started",
+			},
+		}
+
+		man := manifest.Application{
+			Name: "myApp",
+			Routes: []manifest.Route{
+				{
+					Route: "myroute.domain1.com",
+				},
+				{
+					Route: "subroute.thisIsASpaceOwnedDomain.com",
+				},
+			},
+		}
+		privateRoutesInOrg := []cfclient.Domain{
+			{
+				Name: "thisIsASpaceOwnedDomain.com",
+			},
+		}
+
+		expectedPlan := Plan{
+			NewCfCommand("map-route", createCandidateAppName(man.Name), "domain1.com", "--hostname", "myroute"),
+			NewCfCommand("map-route", createCandidateAppName(man.Name), "thisIsASpaceOwnedDomain.com", "--hostname", "subroute"),
 			NewCfCommand("unmap-route", createCandidateAppName(man.Name), validRequest.Params.TestDomain, "--hostname", createCandidateHostname(man, validRequest)),
 			NewCfCommand("rename", createCandidateAppName(man.Name), man.Name),
 		}
