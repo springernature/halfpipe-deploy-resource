@@ -77,7 +77,13 @@ func main() {
 
 	logger.Println(p.String())
 
-	if err = p.Execute(plan.NewCFCliExecutor(&logger), cfClient, &logger); err != nil {
+	timeout, err := time.ParseDuration(request.Params.Timeout)
+	if err != nil {
+		logger.Println(err)
+		os.Exit(1)
+	}
+
+	if err = p.Execute(plan.NewCFCliExecutor(&logger), cfClient, &logger, timeout); err != nil {
 		logger.Println(err)
 		logger.Println("")
 		for _, fix := range fixes.SuggestFix(logger.BytesWritten, request) {
