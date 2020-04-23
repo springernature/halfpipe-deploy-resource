@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestDoesNothingWhenNoAppsToCleanup(t *testing.T)  {
+func TestDoesNothingWhenNoAppsToCleanup(t *testing.T) {
 	summary := []cfclient.AppSummary{
 		{
 			Name:  "myApp",
@@ -24,12 +24,12 @@ func TestDoesNothingWhenNoAppsToCleanup(t *testing.T)  {
 
 }
 
-func TestDeletesAppThatNeedsACleanup(t *testing.T)  {
+func TestDeletesAppThatNeedsACleanup(t *testing.T) {
 	summary := []cfclient.AppSummary{
 		{
 			Name:  "myApp",
 			State: "started",
-		},	{
+		}, {
 			Name:  "myApp-DELETE",
 			State: "stopped",
 		},
@@ -40,7 +40,7 @@ func TestDeletesAppThatNeedsACleanup(t *testing.T)  {
 	}
 
 	expectedPlan := Plan{
-		NewCfCommand("delete", "myApp-DELETE"),
+		NewCfCommand("delete", "myApp-DELETE", "-f"),
 	}
 
 	p := NewCleanupPlan().Plan(man, summary)
@@ -48,8 +48,7 @@ func TestDeletesAppThatNeedsACleanup(t *testing.T)  {
 	assert.Equal(t, expectedPlan, p)
 }
 
-
-func TestDeletesAppsThatNeedsACleanup(t *testing.T)  {
+func TestDeletesAppsThatNeedsACleanup(t *testing.T) {
 	summary := []cfclient.AppSummary{
 		{
 			Name:  "myApp",
@@ -58,13 +57,13 @@ func TestDeletesAppsThatNeedsACleanup(t *testing.T)  {
 		{
 			Name:  "myApp-DELETE",
 			State: "stopped",
-		},{
+		}, {
 			Name:  "myApp-DELETE-1",
 			State: "stopped",
 		}, {
 			Name:  "myApp-DELETE-2",
 			State: "stopped",
-		},{
+		}, {
 			Name:  "somethingElse-DELETE-2",
 			State: "stopped",
 		},
@@ -75,9 +74,9 @@ func TestDeletesAppsThatNeedsACleanup(t *testing.T)  {
 	}
 
 	expectedPlan := Plan{
-		NewCfCommand("delete", "myApp-DELETE"),
-		NewCfCommand("delete", "myApp-DELETE-1"),
-		NewCfCommand("delete", "myApp-DELETE-2"),
+		NewCfCommand("delete", "myApp-DELETE", "-f"),
+		NewCfCommand("delete", "myApp-DELETE-1", "-f"),
+		NewCfCommand("delete", "myApp-DELETE-2", "-f"),
 	}
 
 	p := NewCleanupPlan().Plan(man, summary)
