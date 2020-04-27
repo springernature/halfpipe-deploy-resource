@@ -20,7 +20,7 @@ RUN chmod +x /opt/resource/*
 FROM golang:alpine AS resource
 RUN apk add --no-cache bash tzdata ca-certificates jq libc6-compat
 COPY --from=builder /opt/resource/* /opt/resource/
-COPY --from=builder /bin/cf /bin/cf
-COPY --from=builder /root/.cf /root/.cf
+COPY --from=builder /bin/cf6 /bin/cf6
+COPY --from=builder /bin/cf7 /bin/cf7
 
 FROM resource

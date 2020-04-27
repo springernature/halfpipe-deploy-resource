@@ -99,19 +99,23 @@ jobs:
         gitRefPath: git/.git/ref
         manifestPath: git/.integration_test/manifest-cf7.yml
         testDomain: springernature.app
+        cliVersion: cf7
     - put: cf
       params:
         command: halfpipe-check
         manifestPath: git/.integration_test/manifest-cf7.yml
+        cliVersion: cf7
     - put: cf
       params:
         command: halfpipe-promote
         manifestPath: git/.integration_test/manifest-cf7.yml
         testDomain: springernature.app
+        cliVersion: cf7
   ensure:
     put: cf
     params:
       command: halfpipe-cleanup
+      cliVersion: cf7
       manifestPath: git/.integration_test/manifest-cf7.yml
 
 - name: Create stable docker image
