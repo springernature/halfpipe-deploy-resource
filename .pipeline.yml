@@ -157,7 +157,8 @@ jobs:
     trigger: true
   - get: cf-plugin-release
     passed:
-    - Test resource
+    - Test resource cf6
+    - Test resource cf7
     trigger: true
   - task: Create temp folder with both resource src and plugin from release
     config:
