@@ -3,7 +3,7 @@ applications:
   buildpack: staticfile_buildpack
   env:
     GIT_REVISION: asdf
-  instances: 100
+  instances: 1
   routes:
   - route: integration-test-app1.springernature.app
   - route: integration-test-app2.springernature.app
