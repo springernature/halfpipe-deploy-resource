@@ -48,6 +48,7 @@ jobs:
   - put: docker-registry-image-dev
     params:
       tag_file: git/.docker-dev-tag
+      build: git
 
 - name: Test resource cf6
   serial: true
@@ -123,5 +124,5 @@ jobs:
     trigger: true
   - put: docker-registry-image-stable
     params:
-      build: build
+      build: git
       tag_file: git/.docker-stable-tag
