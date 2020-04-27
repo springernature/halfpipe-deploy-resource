@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/fatih/color"
+"github.com/gookit/color"
 	"github.com/springernature/halfpipe-deploy-resource/fixes"
 	"github.com/springernature/halfpipe-deploy-resource/logger"
 	"io/ioutil"
@@ -76,7 +76,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	color.New(color.FgGreen).Fprintln(logger.Writer, p.String())
+	logger.Println(color.New(color.FgGreen).Sprintf("%s", p.String()))
 
 	timeout, err := getTimeout(request)
 	if err != nil {
