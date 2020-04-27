@@ -57,7 +57,7 @@ func TestPlan_ExecutePassesOnError(t *testing.T) {
 		NewCfCommand("error"),
 	}
 
-	err := p.Execute(newMockExecutorWithError(expectedError), &cfclient.Client{}, &discardLogger, 1)
+	err := p.Execute(newMockExecutorWithError(expectedError), &cfclient.Client{}, &discardLogger, 1*time.Second)
 
 	assert.Equal(t, expectedError, err)
 }
@@ -79,7 +79,7 @@ func TestPlan_ExecutePassesOnErrorIfItHappensInTheMiddleOfThePlan(t *testing.T) 
 			return []string{}, expectedError
 		}
 		return []string{}, nil
-	}), &cfclient.Client{}, &discardLogger, 1)
+	}), &cfclient.Client{}, &discardLogger, 1*time.Minute)
 
 	assert.Equal(t, 3, numberOfCalls)
 	assert.Equal(t, expectedError, err)
