@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cloudfoundry-community/go-cfclient"
+	"github.com/fatih/color"
 	"github.com/springernature/halfpipe-deploy-resource/logger"
 	"time"
 )
@@ -25,7 +26,7 @@ func (p Plan) String() (s string) {
 
 func (p Plan) Execute(executor Executor, cfClient *cfclient.Client, logger *logger.CapturingWriter, timeout time.Duration) (err error) {
 	for _, c := range p {
-		logger.Println(fmt.Sprintf("$ %s", c))
+		color.New(color.FgGreen).Fprintln(logger.Writer, fmt.Sprintf("$ %s", c))
 
 		errChan := make(chan error, 1)
 

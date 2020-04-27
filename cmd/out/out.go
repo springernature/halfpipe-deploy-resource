@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/fatih/color"
 	"github.com/springernature/halfpipe-deploy-resource/fixes"
 	"github.com/springernature/halfpipe-deploy-resource/logger"
 	"io/ioutil"
@@ -75,7 +76,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	logger.Println(p.String())
+	color.New(color.FgGreen).Fprintln(logger.Writer, p.String())
 
 	timeout, err := getTimeout(request)
 	if err != nil {
@@ -113,7 +114,7 @@ func main() {
 
 func getTimeout(request plan.Request) (time.Duration, error) {
 	if request.Params.Timeout == "" {
-		return 5*time.Minute, nil
+		return 5 * time.Minute, nil
 	}
 	return time.ParseDuration(request.Params.Timeout)
 }
