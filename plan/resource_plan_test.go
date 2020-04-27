@@ -228,9 +228,10 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 
 			assert.NoError(t, err)
 
-			assert.Len(t, p, 2)
-			assert.Equal(t, "cf login -a a -u d -p ******** -o b -s c", p[0].String())
-			assert.Equal(t, "cf yay", p[1].String())
+			assert.Len(t, p, 3)
+			assert.Equal(t, "cf --version", p[0].String())
+			assert.Equal(t, "cf login -a a -u d -p ******** -o b -s c", p[1].String())
+			assert.Equal(t, "cf yay", p[2].String())
 			assert.Equal(t, expectedPath, manifestReader.readPath)
 			assert.Equal(t, expectedPath, manifestReader.writePath)
 			assert.Equal(t, expectedManifest, manifestReader.savedManifest)
@@ -283,9 +284,10 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 
 			assert.NoError(t, err)
 
-			assert.Len(t, p, 2)
-			assert.Equal(t, "cf login -a a -u d -p ******** -o b -s c", p[0].String())
-			assert.Equal(t, "cf yay", p[1].String())
+			assert.Len(t, p, 3)
+			assert.Equal(t, "cf --version", p[0].String())
+			assert.Equal(t, "cf login -a a -u d -p ******** -o b -s c", p[1].String())
+			assert.Equal(t, "cf yay", p[2].String())
 			assert.Equal(t, expectedPath, manifestReader.readPath)
 			assert.Equal(t, expectedPath, manifestReader.writePath)
 			assert.Equal(t, expectedManifest, manifestReader.savedManifest)
@@ -341,9 +343,10 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		assert.Len(t, p, 2)
-		assert.Equal(t, "cf login -a a -u d -p ******** -o b -s c", p[0].String())
-		assert.Equal(t, "cf yay", p[1].String())
+		assert.Len(t, p, 3)
+		assert.Equal(t, "cf --version", p[0].String())
+		assert.Equal(t, "cf login -a a -u d -p ******** -o b -s c", p[1].String())
+		assert.Equal(t, "cf yay", p[2].String())
 	})
 
 	t.Run("Cleanup planner", func(t *testing.T) {
@@ -369,9 +372,10 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 
 			assert.NoError(t, err)
 
-			assert.Len(t, p, 2)
-			assert.Equal(t, "cf login -a a -u d -p ******** -o b -s c", p[0].String())
-			assert.Equal(t, "cf yay", p[1].String())
+			assert.Len(t, p, 3)
+			assert.Equal(t, "cf --version", p[0].String())
+			assert.Equal(t, "cf login -a a -u d -p ******** -o b -s c", p[1].String())
+			assert.Equal(t, "cf yay", p[2].String())
 		})
 
 		t.Run("Works with a delete command", func(t *testing.T) {
@@ -382,9 +386,10 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 
 			assert.NoError(t, err)
 
-			assert.Len(t, p, 2)
-			assert.Equal(t, "cf login -a a -u d -p ******** -o b -s c", p[0].String())
-			assert.Equal(t, "cf yay", p[1].String())
+			assert.Len(t, p, 3)
+			assert.Equal(t, "cf --version", p[0].String())
+			assert.Equal(t, "cf login -a a -u d -p ******** -o b -s c", p[1].String())
+			assert.Equal(t, "cf yay", p[2].String())
 		})
 
 	})

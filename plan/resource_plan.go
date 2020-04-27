@@ -74,12 +74,16 @@ func (p planner) Plan(request Request, concourseRoot string, appsSummary []cfcli
 	// We lint that there is only one app.
 	appUnderDeployment := readManifest.Applications[0]
 
+	pl = append(pl, NewCfCommand("--version"))
+
 	pl = append(pl, NewCfCommand("login",
 		"-a", request.Source.API,
 		"-u", request.Source.Username,
 		"-p", request.Source.Password,
 		"-o", request.Source.Org,
 		"-s", request.Source.Space))
+
+
 
 	switch request.Params.Command {
 	case config.PUSH:
