@@ -1,0 +1,8 @@
+applications:
+- name: integration-test-app-cf7
+  buildpack: staticfile_buildpack
+  instances: 1
+  routes:
+  - route: integration-test-app1-cf7.springernature.app
+  - route: integration-test-app2-cf7.springernature.app
+  - route: integration-test-app2-cf7.springernature.app/hello

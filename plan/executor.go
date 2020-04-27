@@ -11,19 +11,22 @@ type Executor interface {
 }
 
 type cfCLIExecutor struct {
-	logger *logger.CapturingWriter
+	logger    *logger.CapturingWriter
+	cfVersion string
 }
 
 // This executor differs from the executor used in the plugin in that it
 // executes CF binary through the operating system rather than through the plugin system.
-func NewCFCliExecutor(logger *logger.CapturingWriter) Executor {
+func NewCFCliExecutor(logger *logger.CapturingWriter, request Request) Executor {
+	version := "cf6"
 	return cfCLIExecutor{
-		logger: logger,
+		logger:    logger,
+		cfVersion: version,
 	}
 }
 
 func (c cfCLIExecutor) CliCommand(command Command) (out []string, err error) {
-	execCmd := exec.Command("cf", command.Args()...) // #nosec disables the gas warning for this line.
+	execCmd := exec.Command(c.cfVersion, command.Args()...) // #nosec disables the gas warning for this line.
 	execCmd.Stdout = c.logger
 	execCmd.Stderr = c.logger
 	execCmd.Env = append(os.Environ(), command.Env()...)

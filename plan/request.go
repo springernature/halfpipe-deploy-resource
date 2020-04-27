@@ -35,6 +35,7 @@ type Params struct {
 	DockerUsername   string
 	DockerPassword   string
 	DockerTag        string
+	CliVersion       string
 }
 
 func SourceMissingError(field string) error {
@@ -43,6 +44,10 @@ func SourceMissingError(field string) error {
 
 func ParamsMissingError(field string) error {
 	return errors.New(fmt.Sprintf("Params config must contain %s", field))
+}
+
+func ParamsInvalidError(field string, reason string) error {
+	return errors.New(fmt.Sprintf("Params '%s': %s", field, reason))
 }
 
 func PreStartCommandError(preStartCommand string) error {
@@ -92,6 +97,10 @@ func VerifyRequestParams(params Params) error {
 
 	if params.ManifestPath == "" {
 		return ParamsMissingError("manifestPath")
+	}
+
+	if params.CliVersion != "cf6" && params.CliVersion != "cf7" {
+		return ParamsInvalidError("cliVersion", "must be either 'cf6' or 'cf7'")
 	}
 
 	switch params.Command {

@@ -76,7 +76,8 @@ jobs:
     params:
       build: build
       tag_file: git/.docker-dev-tag
-- name: Test resource
+
+- name: Test resource cf6
   serial: true
   plan:
   - get: git
@@ -94,28 +95,65 @@ jobs:
       appPath: git/.integration_test
       command: halfpipe-push
       gitRefPath: git/.git/ref
-      manifestPath: git/.integration_test/manifest.yml
+      manifestPath: git/.integration_test/manifest-cf6.yml
       testDomain: springernature.app
   - put: cf
     params:
       command: halfpipe-check
-      manifestPath: git/.integration_test/manifest.yml
+      manifestPath: git/.integration_test/manifest-cf6.yml
   - put: cf
     params:
       command: halfpipe-promote
-      manifestPath: git/.integration_test/manifest.yml
+      manifestPath: git/.integration_test/manifest-cf6.yml
       testDomain: springernature.app
   ensure:
     put: cf
     params:
       command: halfpipe-cleanup
-      manifestPath: git/.integration_test/manifest.yml
+      manifestPath: git/.integration_test/manifest-cf6.yml
+
+- name: Test resource cf7
+  serial: true
+  plan:
+    - get: git
+      passed:
+        - Create test docker image
+    - get: cf-plugin-release
+      passed:
+        - Create test docker image
+    - get: docker-registry-image-dev
+      passed:
+        - Create test docker image
+      trigger: true
+    - put: cf
+      params:
+        appPath: git/.integration_test
+        command: halfpipe-push
+        gitRefPath: git/.git/ref
+        manifestPath: git/.integration_test/manifest-cf7.yml
+        testDomain: springernature.app
+    - put: cf
+      params:
+        command: halfpipe-check
+        manifestPath: git/.integration_test/manifest-cf7.yml
+    - put: cf
+      params:
+        command: halfpipe-promote
+        manifestPath: git/.integration_test/manifest-cf7.yml
+        testDomain: springernature.app
+  ensure:
+    put: cf
+    params:
+      command: halfpipe-cleanup
+      manifestPath: git/.integration_test/manifest-cf7.yml
+
 - name: Create stable docker image
   serial: true
   plan:
   - get: git
     passed:
-    - Test resource
+    - Test resource cf6
+    - Test resource cf7
     trigger: true
   - get: cf-plugin-release
     passed:

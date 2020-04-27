@@ -80,6 +80,7 @@ func TestVerifyErrorsIfNotAllRequiredParamsFieldsAreFilledOut(t *testing.T) {
 func TestVerifyErrorsIfNotAllRequiredParamsFieldsForPushFilledOut(t *testing.T) {
 	missingTestDomain := Params{
 		Command:      config.PUSH,
+		CliVersion:   "cf6",
 		ManifestPath: "path",
 		TestDomain:   "",
 	}
@@ -87,6 +88,7 @@ func TestVerifyErrorsIfNotAllRequiredParamsFieldsForPushFilledOut(t *testing.T) 
 
 	missingAppPath := Params{
 		Command:      config.PUSH,
+		CliVersion:   "cf7",
 		ManifestPath: "path",
 		TestDomain:   "test.com",
 		AppPath:      "",
@@ -95,6 +97,7 @@ func TestVerifyErrorsIfNotAllRequiredParamsFieldsForPushFilledOut(t *testing.T) 
 
 	missingGitRefPath := Params{
 		Command:      config.PUSH,
+		CliVersion:   "cf6",
 		ManifestPath: "path",
 		TestDomain:   "test.com",
 		AppPath:      "path",
@@ -104,6 +107,7 @@ func TestVerifyErrorsIfNotAllRequiredParamsFieldsForPushFilledOut(t *testing.T) 
 
 	allesOk := Params{
 		Command:      config.PUSH,
+		CliVersion:   "cf6",
 		ManifestPath: "path",
 		TestDomain:   "test.com",
 		AppPath:      "path",
@@ -115,6 +119,7 @@ func TestVerifyErrorsIfNotAllRequiredParamsFieldsForPushFilledOut(t *testing.T) 
 func TestVerifyErrorsIfNotAllRequiredParamsFieldsForPromoteFilledOut(t *testing.T) {
 	missingTestDomain := Params{
 		Command:      config.PROMOTE,
+		CliVersion:   "cf6",
 		ManifestPath: "path",
 		TestDomain:   "",
 	}
@@ -122,6 +127,7 @@ func TestVerifyErrorsIfNotAllRequiredParamsFieldsForPromoteFilledOut(t *testing.
 
 	allesOk := Params{
 		Command:      config.PROMOTE,
+		CliVersion:   "cf6",
 		ManifestPath: "path",
 		TestDomain:   "test.com",
 	}
@@ -131,6 +137,7 @@ func TestVerifyErrorsIfNotAllRequiredParamsFieldsForPromoteFilledOut(t *testing.
 func TestVerifyErrorsIfNotAllRequiredParamsFieldsForCleanupFilledOut(t *testing.T) {
 	allesOk := Params{
 		Command:      config.CLEANUP,
+		CliVersion:   "cf6",
 		ManifestPath: "path",
 	}
 	assert.Nil(t, VerifyRequestParams(allesOk))
@@ -140,6 +147,7 @@ func TestPreStartCommandForPush(t *testing.T) {
 	t.Run("Invalid preStartCommand", func(t *testing.T) {
 		invalidParams := Params{
 			Command:         config.PUSH,
+			CliVersion:      "cf6",
 			ManifestPath:    "path",
 			TestDomain:      "test.com",
 			AppPath:         "path",
@@ -155,6 +163,7 @@ func TestPreStartCommandForPush(t *testing.T) {
 	t.Run("Valid preStartCommand", func(t *testing.T) {
 		allesOk := Params{
 			Command:         config.PUSH,
+			CliVersion:      "cf6",
 			ManifestPath:    "path",
 			TestDomain:      "test.com",
 			AppPath:         "path",
@@ -169,6 +178,7 @@ func TestPreStartCommandForPush(t *testing.T) {
 func TestVerifyItDoesntErrorIfAppPathIsEmptyButDockerSpecified(t *testing.T) {
 	allesOk := Params{
 		Command:        config.PUSH,
+		CliVersion:     "cf6",
 		ManifestPath:   "path",
 		TestDomain:     "test.com",
 		GitRefPath:     "path",
