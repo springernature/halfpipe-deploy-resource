@@ -7,12 +7,6 @@ resources:
     uri: git@github.com:springernature/halfpipe-deploy-resource.git
     branch: refactor
   check_every: 10m
-- name: cf-plugin-release
-  type: github-release
-  source:
-    access_token: ((api-keys.halfpipe-cf-plugin))
-    owner: springernature
-    repository: halfpipe-cf-plugin
 - name: docker-registry-image-dev
   type: docker-image
   source:
@@ -51,39 +45,14 @@ jobs:
   plan:
   - get: git
     trigger: true
-  - get: cf-plugin-release
-    trigger: true
-  - task: Create temp folder with both resource src and plugin from release
-    config:
-      platform: linux
-      image_resource:
-        type: registry-image
-        source:
-          repository: alpine
-      run:
-        path: /bin/sh
-        args:
-        - -ec
-        - |
-          cp -r git/. build
-          cp cf-plugin-release/halfpipe_cf_plugin_linux build/halfpipe_cf_plugin_linux
-      inputs:
-      - name: git
-      - name: cf-plugin-release
-      outputs:
-      - name: build
   - put: docker-registry-image-dev
     params:
-      build: build
       tag_file: git/.docker-dev-tag
 
 - name: Test resource cf6
   serial: true
   plan:
   - get: git
-    passed:
-    - Create test docker image
-  - get: cf-plugin-release
     passed:
     - Create test docker image
   - get: docker-registry-image-dev
@@ -116,9 +85,6 @@ jobs:
   serial: true
   plan:
     - get: git
-      passed:
-        - Create test docker image
-    - get: cf-plugin-release
       passed:
         - Create test docker image
     - get: docker-registry-image-dev
@@ -155,32 +121,7 @@ jobs:
     - Test resource cf6
     - Test resource cf7
     trigger: true
-  - get: cf-plugin-release
-    passed:
-    - Test resource cf6
-    - Test resource cf7
-    trigger: true
-  - task: Create temp folder with both resource src and plugin from release
-    config:
-      platform: linux
-      image_resource:
-        type: registry-image
-        source:
-          repository: alpine
-      run:
-        path: /bin/sh
-        args:
-        - -ec
-        - |
-          cp -r git/. build
-          cp cf-plugin-release/halfpipe_cf_plugin_linux build/halfpipe_cf_plugin_linux
-      inputs:
-      - name: git
-      - name: cf-plugin-release
-      outputs:
-      - name: build
   - put: docker-registry-image-stable
     params:
-      additional_tags: cf-plugin-release/tag
       build: build
       tag_file: git/.docker-stable-tag
