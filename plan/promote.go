@@ -38,7 +38,7 @@ func (p promotePlan) renameOldApp(manifest manifest.Application, oldApp cfclient
 func (p promotePlan) renameAndStopCurrentApp(manifest manifest.Application, currentLive cfclient.AppSummary) (cmds []Command) {
 	if currentLive.Name != "" {
 		cmds = append(cmds, NewCfCommand("rename", manifest.Name, createOldAppName(manifest.Name)))
-		if currentLive.State == "started" {
+		if currentLive.State == "STARTED" {
 			cmds = append(cmds, NewCfCommand("stop", createOldAppName(manifest.Name)))
 		}
 	}

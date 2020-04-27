@@ -12,7 +12,7 @@ func TestPromoteWorkerApp(t *testing.T) {
 		summary := []cfclient.AppSummary{
 			{
 				Name:  "myApp-CANDIDATE",
-				State: "started",
+				State: "STARTED",
 			},
 		}
 
@@ -33,7 +33,7 @@ func TestPromoteWorkerApp(t *testing.T) {
 		summary := []cfclient.AppSummary{
 			{
 				Name:  "myApp-CANDIDATE",
-				State: "started",
+				State: "STARTED",
 			},
 			{
 				Name:  "myApp",
@@ -59,11 +59,11 @@ func TestPromoteWorkerApp(t *testing.T) {
 		summary := []cfclient.AppSummary{
 			{
 				Name:  "myApp-CANDIDATE",
-				State: "started",
+				State: "STARTED",
 			},
 			{
 				Name:  "myApp",
-				State: "started",
+				State: "STARTED",
 			},
 		}
 
@@ -85,11 +85,11 @@ func TestPromoteWorkerApp(t *testing.T) {
 		summary := []cfclient.AppSummary{
 			{
 				Name:  "myApp-CANDIDATE",
-				State: "started",
+				State: "STARTED",
 			},
 			{
 				Name:  "myApp",
-				State: "started",
+				State: "STARTED",
 			},
 			{
 				Name:  "myApp-OLD",
@@ -116,11 +116,11 @@ func TestPromoteWorkerApp(t *testing.T) {
 		summary := []cfclient.AppSummary{
 			{
 				Name:  "myApp-CANDIDATE",
-				State: "started",
+				State: "STARTED",
 			},
 			{
 				Name:  "myApp",
-				State: "started",
+				State: "STARTED",
 			},
 			{
 				Name:  "myApp-OLD",
@@ -151,11 +151,11 @@ func TestPromoteWorkerApp(t *testing.T) {
 		summary := []cfclient.AppSummary{
 			{
 				Name:  "myApp-CANDIDATE",
-				State: "started",
+				State: "STARTED",
 			},
 			{
 				Name:  "myApp",
-				State: "started",
+				State: "STARTED",
 			},
 			{
 				Name:  "myApp-OLD",
@@ -196,7 +196,7 @@ func TestPromoteNormalApp(t *testing.T) {
 		summary := []cfclient.AppSummary{
 			{
 				Name:  "myApp-CANDIDATE",
-				State: "started",
+				State: "STARTED",
 			},
 		}
 
@@ -226,7 +226,7 @@ func TestPromoteNormalApp(t *testing.T) {
 		summary := []cfclient.AppSummary{
 			{
 				Name:  "myApp-CANDIDATE",
-				State: "started",
+				State: "STARTED",
 			},
 		}
 
@@ -256,7 +256,7 @@ func TestPromoteNormalApp(t *testing.T) {
 		summary := []cfclient.AppSummary{
 			{
 				Name:  "myApp-CANDIDATE",
-				State: "started",
+				State: "STARTED",
 			},
 		}
 
@@ -292,7 +292,7 @@ func TestPromoteNormalApp(t *testing.T) {
 		summary := []cfclient.AppSummary{
 			{
 				Name:  "myApp-CANDIDATE",
-				State: "started",
+				State: "STARTED",
 			},
 		}
 
