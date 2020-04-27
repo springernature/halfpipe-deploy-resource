@@ -18,10 +18,9 @@ type cfCLIExecutor struct {
 // This executor differs from the executor used in the plugin in that it
 // executes CF binary through the operating system rather than through the plugin system.
 func NewCFCliExecutor(logger *logger.CapturingWriter, request Request) Executor {
-	version := "cf6"
 	return cfCLIExecutor{
 		logger:    logger,
-		cfVersion: version,
+		cfVersion: request.Params.CliVersion,
 	}
 }
 
