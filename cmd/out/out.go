@@ -77,7 +77,7 @@ func main() {
 
 	logger.Println(p.String())
 
-	timeout, err := time.ParseDuration(request.Params.Timeout)
+	timeout, err := getTimeout(request)
 	if err != nil {
 		logger.Println(err)
 		os.Exit(1)
@@ -109,6 +109,13 @@ func main() {
 	if err = json.NewEncoder(os.Stdout).Encode(response); err != nil {
 		panic(err)
 	}
+}
+
+func getTimeout(request plan.Request) (time.Duration, error) {
+	if request.Params.Timeout == "" {
+		return 5*time.Minute, nil
+	}
+	return time.ParseDuration(request.Params.Timeout)
 }
 
 func getApps(request plan.Request) (client *cfclient.Client, appSummary []cfclient.AppSummary, privateDomains []cfclient.Domain, err error) {
