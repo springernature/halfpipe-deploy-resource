@@ -55,6 +55,9 @@ func main() {
 		panic("params.command must not be empty")
 	case config.PUSH, config.CHECK, config.PROMOTE, config.DELETE, config.CLEANUP:
 		fs := afero.Afero{Fs: afero.NewOsFs()}
+		if request.Params.CliVersion == "" {
+			request.Params.CliVersion = "cf6"
+		}
 		if err = plan.VerifyRequest(request); err != nil {
 			break
 		}
