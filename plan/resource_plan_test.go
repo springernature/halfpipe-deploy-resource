@@ -66,7 +66,7 @@ func TestErrorsReadingAppManifest(t *testing.T) {
 	expectedPath := path.Join(concourseRoot, validRequest.Params.ManifestPath)
 	manifestReader := ManifestReadWriteStub{readError: expectedErr}
 
-	planner := NewPlanner(&manifestReader, afero.Afero{}, nil, nil, nil, nil, nil)
+	planner := NewPlanner(&manifestReader, afero.Afero{}, nil, nil, nil, nil, nil, nil)
 
 	_, err := planner.Plan(validRequest, concourseRoot, nil)
 	assert.Equal(t, expectedErr, err)
@@ -82,7 +82,7 @@ func TestErrorsWhenWeFailToReadGitRef(t *testing.T) {
 		},
 	}
 
-	planner := NewPlanner(&manifestReader, afero.Afero{Fs: afero.NewMemMapFs()}, nil, nil, nil, nil, nil)
+	planner := NewPlanner(&manifestReader, afero.Afero{Fs: afero.NewMemMapFs()}, nil, nil, nil, nil, nil, nil)
 
 	_, err := planner.Plan(validRequest, concourseRoot, nil)
 	assert.Equal(t, "open /tmp/some/path/gitRefPath: file does not exist", err.Error())
@@ -99,7 +99,7 @@ func TestErrorsWhenWeFailToReadBuildVersion(t *testing.T) {
 
 	fs := afero.Afero{Fs: afero.NewMemMapFs()}
 	fs.WriteFile(path.Join(concourseRoot, validRequest.Params.GitRefPath), []byte(""), 0777)
-	planner := NewPlanner(&manifestReader, fs, nil, nil, nil, nil, nil)
+	planner := NewPlanner(&manifestReader, fs, nil, nil, nil, nil, nil, nil)
 
 	_, err := planner.Plan(validRequest, concourseRoot, nil)
 	assert.Equal(t, "open /tmp/some/path/buildVersionPath: file does not exist", err.Error())
@@ -121,7 +121,7 @@ func TestErrorsWhenSavingManifestWithUpdatedVars(t *testing.T) {
 	fs.WriteFile(path.Join(concourseRoot, validRequest.Params.GitRefPath), []byte(""), 0777)
 	fs.WriteFile(path.Join(concourseRoot, validRequest.Params.BuildVersionPath), []byte(""), 0777)
 
-	planner := NewPlanner(&manifestReader, fs, nil, nil, nil, nil, nil)
+	planner := NewPlanner(&manifestReader, fs, nil, nil, nil, nil, nil, nil)
 
 	_, err := planner.Plan(validRequest, concourseRoot, nil)
 	assert.Equal(t, expectedErr, err)
@@ -147,7 +147,7 @@ func TestErrorsWhenReadingDockerTag(t *testing.T) {
 	fs.WriteFile(path.Join(concourseRoot, validRequest.Params.GitRefPath), []byte(""), 0777)
 	fs.WriteFile(path.Join(concourseRoot, validRequest.Params.BuildVersionPath), []byte(""), 0777)
 
-	planner := NewPlanner(&manifestReader, fs, nil, nil, nil, nil, nil)
+	planner := NewPlanner(&manifestReader, fs, nil, nil, nil, nil, nil, nil)
 
 	r := validRequest
 	r.Params.DockerTag = "/some/path/to/a/DockerTagFile"
@@ -181,6 +181,10 @@ type fakeCleanupPlanner struct {
 	plan Plan
 }
 
+type fakeDeleteCandidatePlanner struct {
+	plan Plan
+}
+
 func (f fakeCheckPlanner) Plan(manifest manifest.Application, summary []cfclient.AppSummary) (pl Plan) {
 	return f.plan
 }
@@ -190,6 +194,10 @@ func (f fakePromotePlanner) Plan(manifest manifest.Application, request Request,
 }
 
 func (f fakeCleanupPlanner) Plan(manifest manifest.Application, summary []cfclient.AppSummary) (pl Plan) {
+	return f.plan
+}
+
+func (f fakeDeleteCandidatePlanner) Plan(manifest manifest.Application, summary []cfclient.AppSummary) (pl Plan) {
 	return f.plan
 }
 
@@ -229,7 +237,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 				plan: Plan{
 					NewCfCommand("yay"),
 				},
-			}, nil, nil, nil, nil)
+			}, nil, nil, nil, nil, nil)
 
 			r := validRequest
 			r.Params.BuildVersionPath = ""
@@ -288,7 +296,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 					NewCfCommand("yay"),
 				},
 			}
-			planner := NewPlanner(&manifestReader, fs, &pushPlanner, nil, nil, nil, nil)
+			planner := NewPlanner(&manifestReader, fs, &pushPlanner, nil, nil, nil, nil, nil)
 
 			p, err := planner.Plan(r, concourseRoot, nil)
 
@@ -330,7 +338,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 				plan: Plan{
 					NewCfCommand("yay"),
 				},
-			})
+			}, nil)
 
 			r := validRequest
 			r.Params.Command = config.ROLLING_DEPLOY
@@ -391,7 +399,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 					NewCfCommand("yay"),
 				},
 			}
-			planner := NewPlanner(&manifestReader, fs, nil, nil, nil, nil, &pl)
+			planner := NewPlanner(&manifestReader, fs, nil, nil, nil, nil, &pl, nil)
 
 			p, err := planner.Plan(r, concourseRoot, nil)
 
@@ -421,7 +429,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			plan: Plan{
 				NewCfCommand("yay"),
 			},
-		}, nil, nil, nil)
+		}, nil, nil, nil, nil)
 
 		r := validRequest
 		r.Params.Command = config.CHECK
@@ -447,7 +455,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			plan: Plan{
 				NewCfCommand("yay"),
 			},
-		}, nil, nil)
+		}, nil, nil, nil)
 
 		r := validRequest
 		r.Params.Command = config.PROMOTE
@@ -475,7 +483,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			plan: Plan{
 				NewCfCommand("yay"),
 			},
-		}, nil)
+		}, nil, nil)
 
 		t.Run("Works with cleanup command", func(t *testing.T) {
 			r := validRequest
@@ -505,5 +513,33 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			assert.Equal(t, "cf yay", p[2].String())
 		})
 
+	})
+
+	t.Run("Delete Candidate planner", func(t *testing.T) {
+		manifestReader := ManifestReadWriteStub{
+			manifest: manifest.Manifest{
+				Applications: []manifest.Application{
+					{},
+				},
+			},
+		}
+
+		planner := NewPlanner(&manifestReader, afero.Afero{Fs: afero.NewMemMapFs()}, nil, nil, nil, nil, nil, &fakeDeleteCandidatePlanner{
+			plan: Plan{
+				NewCfCommand("yay"),
+			},
+		})
+
+		r := validRequest
+		r.Params.Command = config.DELETE_CANDIDATE
+
+		p, err := planner.Plan(r, concourseRoot, nil)
+
+		assert.NoError(t, err)
+
+		assert.Len(t, p, 3)
+		assert.Equal(t, "cf --version", p[0].String())
+		assert.Equal(t, "cf login -a a -u d -p ******** -o b -s c", p[1].String())
+		assert.Equal(t, "cf yay", p[2].String())
 	})
 }

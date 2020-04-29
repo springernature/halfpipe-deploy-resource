@@ -22,9 +22,10 @@ type planner struct {
 	promotePlan         PromotePlan
 	cleanupPlan         CleanupPlan
 	checkPlan           CheckPlan
+	deleteCandidatePlan DeleteCandidatePlan
 }
 
-func NewPlanner(manifestReaderWrite manifest.ReaderWriter, fs afero.Afero, pushPlan PushPlan, checkPlan CheckPlan, promotePlan PromotePlan, cleanupPlan CleanupPlan, rollingDeployPlan RollingDeployPlan) ResourcePlan {
+func NewPlanner(manifestReaderWrite manifest.ReaderWriter, fs afero.Afero, pushPlan PushPlan, checkPlan CheckPlan, promotePlan PromotePlan, cleanupPlan CleanupPlan, rollingDeployPlan RollingDeployPlan, deleteCandidatePlan DeleteCandidatePlan) ResourcePlan {
 	return planner{
 		manifestReaderWrite: manifestReaderWrite,
 		fs:                  fs,
@@ -33,6 +34,7 @@ func NewPlanner(manifestReaderWrite manifest.ReaderWriter, fs afero.Afero, pushP
 		cleanupPlan:         cleanupPlan,
 		checkPlan:           checkPlan,
 		rollingDeployPlan:   rollingDeployPlan,
+		deleteCandidatePlan: deleteCandidatePlan,
 	}
 }
 
@@ -113,6 +115,8 @@ func (p planner) Plan(request Request, concourseRoot string, appsSummary []cfcli
 		pl = append(pl, p.promotePlan.Plan(appUnderDeployment, request, appsSummary)...)
 	case config.CLEANUP, config.DELETE:
 		pl = append(pl, p.cleanupPlan.Plan(appUnderDeployment, appsSummary)...)
+	case config.DELETE_CANDIDATE:
+		pl = append(pl, p.deleteCandidatePlan.Plan(appUnderDeployment, appsSummary)...)
 	}
 
 	return

@@ -62,7 +62,7 @@ func main() {
 			break
 		}
 
-		p, err = plan.NewPlanner(manifest.NewManifestReadWrite(fs), fs, plan.NewPushPlan(), plan.NewCheckPlan(), plan.NewPromotePlan(privateDomains), plan.NewCleanupPlan(), plan.NewRollingDeployPlan()).Plan(request, concourseRoot, appsSummary)
+		p, err = plan.NewPlanner(manifest.NewManifestReadWrite(fs), fs, plan.NewPushPlan(), plan.NewCheckPlan(), plan.NewPromotePlan(privateDomains), plan.NewCleanupPlan(), plan.NewRollingDeployPlan(), plan.NewDeleteCandidatePlan()).Plan(request, concourseRoot, appsSummary)
 	default:
 		panic(fmt.Sprintf("Command '%s' not supported", request.Params.Command))
 	}
