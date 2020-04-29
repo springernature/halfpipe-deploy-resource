@@ -13,44 +13,10 @@ type RollingDeployPlan interface {
 type rollingDeployPlan struct{}
 
 func (p rollingDeployPlan) Plan(manifest manifest.Application, request Request, dockerTag string) (pl Plan) {
-	pl = append(pl, p.pushCommand(manifest, request, dockerTag))
-
-	if !manifest.NoRoute {
-		pl = append(pl, NewCfCommand("map-route").
-			AddToArgs(createCandidateAppName(manifest.Name)).
-			AddToArgs(request.Params.TestDomain).
-			AddToArgs("-n", createCandidateHostname(manifest, request)))
-	}
-
-	if preStartArs := strings.Split(request.Params.PreStartCommand, "; "); request.Params.PreStartCommand != "" && len(preStartArs) > 0 {
-		for _, prestartArg := range preStartArs {
-			args := strings.Split(prestartArg, " ")[1:]
-			pl = append(pl, NewCfCommand(args...))
-		}
-	}
-
-	pl = append(pl, NewCompoundCommand(
-		NewCfCommand("start").
-			AddToArgs(createCandidateAppName(manifest.Name)),
-		NewCfCommand("logs",
-			createCandidateAppName(manifest.Name),
-			"--recent",
-		),
-		func(log []byte) bool {
-			return strings.Contains(string(log), `TIP: use 'cf logs`)
-		}))
-
-	return
-}
-
-func (p rollingDeployPlan) pushCommand(manifest manifest.Application, request Request, dockerTag string) Command {
 	pushCommand := NewCfCommand("push").
-		AddToArgs(createCandidateAppName(manifest.Name)).
-		AddToArgs("-f", request.Params.ManifestPath)
-
-	if request.Params.Instances != "" {
-		pushCommand = pushCommand.AddToArgs("-i", request.Params.Instances)
-	}
+		AddToArgs("--manifest", request.Params.ManifestPath).
+		AddToArgs("--strategy", "rolling").
+		AddToArgs("--path", request.Params.AppPath)
 
 	if manifest.Docker.Image != "" {
 		image := manifest.Docker.Image
@@ -64,13 +30,11 @@ func (p rollingDeployPlan) pushCommand(manifest manifest.Application, request Re
 			AddToArgs("--docker-image", image).
 			AddToArgs("--docker-username", request.Params.DockerUsername).
 			AddToEnv(fmt.Sprintf("CF_DOCKER_PASSWORD=%s", request.Params.DockerPassword))
-	} else {
-		pushCommand = pushCommand.AddToArgs("-p", request.Params.AppPath).
-			AddToArgs("--no-route").
-			AddToArgs("--no-start")
 	}
 
-	return pushCommand
+	pl = append(pl, pushCommand)
+
+	return
 }
 
 func NewRollingDeployPlan() RollingDeployPlan {
