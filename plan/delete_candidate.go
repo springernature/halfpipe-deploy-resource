@@ -3,7 +3,6 @@ package plan
 import (
 	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/springernature/halfpipe-deploy-resource/manifest"
-	"strings"
 )
 
 type DeleteCandidatePlan interface {
@@ -14,9 +13,11 @@ type deleteCandidatePlan struct {
 }
 
 func (p deleteCandidatePlan) Plan(manifest manifest.Application, summary []cfclient.AppSummary) (pl Plan) {
-	for _, app := range summary {
-		if strings.HasPrefix(app.Name, createDeleteName(manifest.Name, 0)) {
-			pl = append(pl, NewCfCommand("delete", app.Name, "-f"))
+	pl = Plan{}
+
+	for _, appSummary := range summary {
+		if appSummary.Name == createCandidateAppName(manifest.Name) {
+			pl = append(pl, NewCfCommand("delete", createCandidateAppName(manifest.Name), "-f"))
 		}
 	}
 	return
