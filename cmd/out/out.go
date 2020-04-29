@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-"github.com/gookit/color"
+	"github.com/gookit/color"
 	"github.com/springernature/halfpipe-deploy-resource/fixes"
 	"github.com/springernature/halfpipe-deploy-resource/logger"
 	"io/ioutil"
@@ -62,14 +62,7 @@ func main() {
 			break
 		}
 
-		p, err = plan.NewPlanner(
-			manifest.NewManifestReadWrite(fs),
-			fs,
-			plan.NewPushPlan(),
-			plan.NewCheckPlan(),
-			plan.NewPromotePlan(privateDomains),
-			plan.NewCleanupPlan(),
-		).Plan(request, concourseRoot, appsSummary)
+		p, err = plan.NewPlanner(manifest.NewManifestReadWrite(fs), fs, plan.NewPushPlan(), plan.NewCheckPlan(), plan.NewPromotePlan(privateDomains), plan.NewCleanupPlan(), plan.NewRollingDeployPlan()).Plan(request, concourseRoot, appsSummary)
 	default:
 		panic(fmt.Sprintf("Command '%s' not supported", request.Params.Command))
 	}

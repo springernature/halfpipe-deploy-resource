@@ -18,12 +18,13 @@ type planner struct {
 	manifestReaderWrite manifest.ReaderWriter
 	fs                  afero.Afero
 	pushPlan            PushPlan
+	rollingDeployPlan   RollingDeployPlan
 	promotePlan         PromotePlan
 	cleanupPlan         CleanupPlan
 	checkPlan           CheckPlan
 }
 
-func NewPlanner(manifestReaderWrite manifest.ReaderWriter, fs afero.Afero, pushPlan PushPlan, checkPlan CheckPlan, promotePlan PromotePlan, cleanupPlan CleanupPlan) ResourcePlan {
+func NewPlanner(manifestReaderWrite manifest.ReaderWriter, fs afero.Afero, pushPlan PushPlan, checkPlan CheckPlan, promotePlan PromotePlan, cleanupPlan CleanupPlan, rollingDeployPlan RollingDeployPlan) ResourcePlan {
 	return planner{
 		manifestReaderWrite: manifestReaderWrite,
 		fs:                  fs,
@@ -31,6 +32,7 @@ func NewPlanner(manifestReaderWrite manifest.ReaderWriter, fs afero.Afero, pushP
 		promotePlan:         promotePlan,
 		cleanupPlan:         cleanupPlan,
 		checkPlan:           checkPlan,
+		rollingDeployPlan:   rollingDeployPlan,
 	}
 }
 
@@ -83,10 +85,8 @@ func (p planner) Plan(request Request, concourseRoot string, appsSummary []cfcli
 		"-o", request.Source.Org,
 		"-s", request.Source.Space))
 
-
-
 	switch request.Params.Command {
-	case config.PUSH:
+	case config.PUSH, config.ROLLING_DEPLOY:
 		if err = p.updateManifestWithVars(request); err != nil {
 			return
 		}
@@ -100,7 +100,12 @@ func (p planner) Plan(request Request, concourseRoot string, appsSummary []cfcli
 			dockerTag = string(content)
 		}
 
-		pl = append(pl, p.pushPlan.Plan(appUnderDeployment, request, dockerTag)...)
+		switch request.Params.Command {
+		case config.PUSH:
+			pl = append(pl, p.pushPlan.Plan(appUnderDeployment, request, dockerTag)...)
+		case config.ROLLING_DEPLOY:
+			pl = append(pl, p.rollingDeployPlan.Plan(appUnderDeployment, request, dockerTag)...)
+		}
 	case config.CHECK:
 		// We dont actually need to login for this as we are using a cf client for this specific task..
 		pl = p.checkPlan.Plan(appUnderDeployment, appsSummary)
