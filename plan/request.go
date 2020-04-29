@@ -36,6 +36,7 @@ type Params struct {
 	DockerPassword   string
 	DockerTag        string
 	CliVersion       string
+	Instances        string
 }
 
 func SourceMissingError(field string) error {

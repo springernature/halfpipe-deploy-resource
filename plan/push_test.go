@@ -40,6 +40,19 @@ func TestNormalApp(t *testing.T) {
 			assert.Equal(t, "cf map-route MyApp-CANDIDATE kehe.com -n MyApp-c-CANDIDATE", p[1].String())
 			assert.Equal(t, "cf start MyApp-CANDIDATE || cf logs MyApp-CANDIDATE --recent", p[2].String())
 		})
+
+		t.Run("Instances set", func(t *testing.T) {
+			applicationManifest := manifest.Application{
+				Name: "MyApp",
+			}
+			r := request
+			r.Params.Instances = "1"
+			p := NewPushPlan().Plan(applicationManifest, r, "")
+			assert.Len(t, p, 3)
+			assert.Equal(t, "cf push MyApp-CANDIDATE -f path/to/manifest.yml -i 1 -p path/to/app --no-route --no-start", p[0].String())
+			assert.Equal(t, "cf map-route MyApp-CANDIDATE kehe.com -n MyApp-c-CANDIDATE", p[1].String())
+			assert.Equal(t, "cf start MyApp-CANDIDATE || cf logs MyApp-CANDIDATE --recent", p[2].String())
+		})
 		t.Run("With pre start", func(t *testing.T) {
 			applicationManifest := manifest.Application{
 				Name: "MyApp",

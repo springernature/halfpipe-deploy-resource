@@ -48,6 +48,10 @@ func (p pushPlan) pushCommand(manifest manifest.Application, request Request, do
 		AddToArgs(createCandidateAppName(manifest.Name)).
 		AddToArgs("-f", request.Params.ManifestPath)
 
+	if request.Params.Instances != "" {
+		pushCommand = pushCommand.AddToArgs("-i", request.Params.Instances)
+	}
+
 	if manifest.Docker.Image != "" {
 		image := manifest.Docker.Image
 		if dockerTag != "" {
