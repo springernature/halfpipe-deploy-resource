@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gookit/color"
+	"github.com/fatih/color"
 	"github.com/springernature/halfpipe-deploy-resource/fixes"
 	"github.com/springernature/halfpipe-deploy-resource/logger"
 	"io/ioutil"
@@ -18,6 +18,9 @@ import (
 	"github.com/springernature/halfpipe-deploy-resource/plan"
 )
 
+var InfoColor = color.New(color.FgGreen).FprintlnFunc()
+var ErrorColor = color.New(color.FgRed, color.Bold).FprintlnFunc()
+
 func main() {
 	concourseRoot := os.Args[1]
 
@@ -27,25 +30,25 @@ func main() {
 
 	data, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
-		logger.Println(err)
+		ErrorColor(logger, err)
 		syscall.Exit(1)
 	}
 
 	if err := ioutil.WriteFile("/tmp/request", data, 0777); err != nil {
-		logger.Println(err)
+		ErrorColor(logger, err)
 		syscall.Exit(1)
 	}
 
 	request := plan.Request{}
 	err = json.Unmarshal(data, &request)
 	if err != nil {
-		logger.Println(err)
+		ErrorColor(logger, err)
 		syscall.Exit(1)
 	}
 
 	cfClient, appsSummary, privateDomains, err := getApps(request)
 	if err != nil {
-		logger.Println(err)
+		ErrorColor(logger, err)
 		syscall.Exit(1)
 	}
 
@@ -68,20 +71,20 @@ func main() {
 	}
 
 	if err != nil {
-		logger.Println(err)
+		ErrorColor(logger, err)
 		os.Exit(1)
 	}
 
-	logger.Println(color.New(color.FgGreen).Sprintf("%s", p.String()))
+	InfoColor(logger, p.String())
 
 	timeout, err := getTimeout(request)
 	if err != nil {
-		logger.Println(err)
+		ErrorColor(logger, err)
 		os.Exit(1)
 	}
 
 	if err = p.Execute(plan.NewCFCliExecutor(&logger, request), cfClient, &logger, timeout); err != nil {
-		logger.Println(err)
+		ErrorColor(logger, err)
 		logger.Println("")
 		for _, fix := range fixes.SuggestFix(logger.BytesWritten, request) {
 			logger.Println(fix)
