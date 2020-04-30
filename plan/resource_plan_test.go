@@ -131,7 +131,6 @@ func TestErrorsWhenSavingManifestWithUpdatedVars(t *testing.T) {
 
 func TestErrorsWhenReadingDockerTag(t *testing.T) {
 	expectedErr := errors.New("open /tmp/some/path/some/path/to/a/DockerTagFile: file does not exist")
-	expectedPath := path.Join(concourseRoot, validRequest.Params.ManifestPath)
 	manifestReader := ManifestReadWriteStub{
 		manifest: manifest.Manifest{
 			Applications: []manifest.Application{
@@ -145,7 +144,7 @@ func TestErrorsWhenReadingDockerTag(t *testing.T) {
 	}
 	fs := afero.Afero{Fs: afero.NewMemMapFs()}
 	fs.WriteFile(path.Join(concourseRoot, validRequest.Params.GitRefPath), []byte(""), 0777)
-	fs.WriteFile(path.Join(concourseRoot, validRequest.Params.BuildVersionPath), []byte(""), 0777)
+	fs.WriteFile(path.Join(concourseRoot, validRequest.Params.DockerTag), []byte(""), 0777)
 
 	planner := NewPlanner(&manifestReader, fs, nil, nil, nil, nil, nil, nil)
 
@@ -155,13 +154,40 @@ func TestErrorsWhenReadingDockerTag(t *testing.T) {
 	_, err := planner.Plan(r, concourseRoot, nil)
 
 	assert.Equal(t, expectedErr.Error(), err.Error())
-	assert.Equal(t, expectedPath, manifestReader.readPath)
-	assert.Equal(t, expectedPath, manifestReader.writePath)
+}
+
+func TestWhenReadingDockerTagContainsNewLines(t *testing.T) {
+	r := validRequest
+	r.Params.DockerTag = "/some/path/to/a/DockerTagFile"
+
+	manifestReader := ManifestReadWriteStub{
+		manifest: manifest.Manifest{
+			Applications: []manifest.Application{
+				{
+					Docker: manifest.DockerInfo{
+						Image: "yo/brawh",
+					},
+				},
+			},
+		},
+	}
+	fs := afero.Afero{Fs: afero.NewMemMapFs()}
+	fs.WriteFile(path.Join(concourseRoot, r.Params.GitRefPath), []byte(""), 0777)
+	fs.WriteFile(path.Join(concourseRoot, r.Params.BuildVersionPath), []byte(""), 0777)
+	fs.WriteFile(path.Join(concourseRoot, r.Params.DockerTag), []byte("\n\n\n\nyo\n\n\n\n\n"), 0777)
+
+	plan := fakePushPlanner{}
+	planner := NewPlanner(&manifestReader, fs, &plan, nil, nil, nil, nil, nil)
+
+	_, err := planner.Plan(r, concourseRoot, nil)
+
+	assert.NoError(t, err)
+	assert.Equal(t, "yo", plan.dockerTag)
 }
 
 type fakePushPlanner struct {
-	plan      Plan
-	dockerTag string
+	plan          Plan
+	dockerTag     string
 }
 
 type fakeRollingDeployPlanner struct {

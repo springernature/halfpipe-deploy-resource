@@ -87,20 +87,22 @@ func (p planner) Plan(request Request, concourseRoot string, appsSummary []cfcli
 		"-o", request.Source.Org,
 		"-s", request.Source.Space))
 
+	var dockerTag string
+	if request.Params.DockerTag != "" {
+		content, e := p.fs.ReadFile(request.Params.DockerTag)
+		if e != nil {
+			err = e
+			return
+		}
+		dockerTag = strings.TrimSpace(string(content))
+	}
+
 	switch request.Params.Command {
 	case config.PUSH, config.ROLLING_DEPLOY:
 		if err = p.updateManifestWithVars(request); err != nil {
 			return
 		}
-		var dockerTag string
-		if request.Params.DockerTag != "" {
-			content, e := p.fs.ReadFile(request.Params.DockerTag)
-			if e != nil {
-				err = e
-				return
-			}
-			dockerTag = string(content)
-		}
+
 
 		switch request.Params.Command {
 		case config.PUSH:
