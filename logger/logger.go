@@ -16,11 +16,11 @@ func NewLogger(writer io.Writer) CapturingWriter {
 	}
 }
 
-func (k CapturingWriter) Write(p []byte) (n int, err error) {
+func (k *CapturingWriter) Write(p []byte) (n int, err error) {
 	k.BytesWritten = append(k.BytesWritten, p...)
 	return k.Writer.Write(p)
 }
 
-func (k CapturingWriter) Println(v ...interface{}) (n int, err error) {
+func (k *CapturingWriter) Println(v ...interface{}) (n int, err error) {
 	return k.Write([]byte(fmt.Sprintln(v...)))
 }
