@@ -52,25 +52,30 @@ func (p pushPlan) pushCommand(manifest manifest.Application, request Request, do
 		pushCommand = pushCommand.AddToArgs("-i", request.Params.Instances)
 	}
 
-	if manifest.Docker.Image != "" {
-		image := manifest.Docker.Image
-		if dockerTag != "" {
-			if strings.Contains(image, ":") {
-				image = strings.Split(image, ":")[0]
-			}
-			image = fmt.Sprintf("%s:%s", image, dockerTag)
-		}
+	if manifest.Docker.Image == "" {
+		pushCommand = pushCommand.AddToArgs("-p", request.Params.AppPath)
+	} else {
 		pushCommand = pushCommand.
-			AddToArgs("--docker-image", image).
+			AddToArgs("--docker-image", p.formatDockerImage(manifest, dockerTag)).
 			AddToArgs("--docker-username", request.Params.DockerUsername).
 			AddToEnv(fmt.Sprintf("CF_DOCKER_PASSWORD=%s", request.Params.DockerPassword))
-	} else {
-		pushCommand = pushCommand.AddToArgs("-p", request.Params.AppPath).
-			AddToArgs("--no-route").
-			AddToArgs("--no-start")
 	}
 
+	pushCommand = pushCommand.
+		AddToArgs("--no-route").
+		AddToArgs("--no-start")
 	return pushCommand
+}
+
+func (p pushPlan) formatDockerImage(man manifest.Application, dockerTag string) string {
+	image := man.Docker.Image
+	if dockerTag != "" {
+		if strings.Contains(image, ":") {
+			image = strings.Split(image, ":")[0]
+		}
+		image = fmt.Sprintf("%s:%s", image, dockerTag)
+	}
+	return image
 }
 
 func NewPushPlan() PushPlan {

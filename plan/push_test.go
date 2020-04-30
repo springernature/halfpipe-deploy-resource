@@ -98,7 +98,7 @@ func TestDocker(t *testing.T) {
 
 		p := NewPushPlan().Plan(applicationManifest, r, "")
 		assert.Len(t, p, 3)
-		assert.Equal(t, "CF_DOCKER_PASSWORD=... cf push MyApp-CANDIDATE -f path/to/manifest.yml --docker-image wheep/whuup --docker-username asd", p[0].String())
+		assert.Equal(t, "CF_DOCKER_PASSWORD=... cf push MyApp-CANDIDATE -f path/to/manifest.yml --docker-image wheep/whuup --docker-username asd --no-route --no-start", p[0].String())
 		assert.Equal(t, "cf map-route MyApp-CANDIDATE kehe.com -n MyApp-c-CANDIDATE", p[1].String())
 		assert.Equal(t, "cf start MyApp-CANDIDATE || cf logs MyApp-CANDIDATE --recent", p[2].String())
 	})
@@ -117,7 +117,7 @@ func TestDocker(t *testing.T) {
 
 		p := NewPushPlan().Plan(applicationManifest, r, "")
 		assert.Len(t, p, 2)
-		assert.Equal(t, "CF_DOCKER_PASSWORD=... cf push MyApp-CANDIDATE -f path/to/manifest.yml --docker-image wheep/whuup --docker-username kehe", p[0].String())
+		assert.Equal(t, "CF_DOCKER_PASSWORD=... cf push MyApp-CANDIDATE -f path/to/manifest.yml --docker-image wheep/whuup --docker-username kehe --no-route --no-start", p[0].String())
 		assert.Equal(t, "cf start MyApp-CANDIDATE || cf logs MyApp-CANDIDATE --recent", p[1].String())
 	})
 
@@ -135,7 +135,7 @@ func TestDocker(t *testing.T) {
 
 			p := NewPushPlan().Plan(applicationManifest, r, "")
 			assert.Len(t, p, 3)
-			assert.Equal(t, "CF_DOCKER_PASSWORD=... cf push MyApp-CANDIDATE -f path/to/manifest.yml --docker-image wheep/whuup --docker-username asd", p[0].String())
+			assert.Equal(t, "CF_DOCKER_PASSWORD=... cf push MyApp-CANDIDATE -f path/to/manifest.yml --docker-image wheep/whuup --docker-username asd --no-route --no-start", p[0].String())
 			assert.Equal(t, "cf map-route MyApp-CANDIDATE kehe.com -n MyApp-c-CANDIDATE", p[1].String())
 			assert.Equal(t, "cf start MyApp-CANDIDATE || cf logs MyApp-CANDIDATE --recent", p[2].String())
 		})
@@ -155,7 +155,7 @@ func TestDocker(t *testing.T) {
 
 			p := NewPushPlan().Plan(applicationManifest, r, "")
 			assert.Len(t, p, 3)
-			assert.Equal(t, fmt.Sprintf("CF_DOCKER_PASSWORD=... cf push MyApp-CANDIDATE -f path/to/manifest.yml --docker-image wheep/whuup:%s --docker-username asd", dockerTag), p[0].String())
+			assert.Equal(t, fmt.Sprintf("CF_DOCKER_PASSWORD=... cf push MyApp-CANDIDATE -f path/to/manifest.yml --docker-image wheep/whuup:%s --docker-username asd --no-route --no-start", dockerTag), p[0].String())
 			assert.Equal(t, "cf map-route MyApp-CANDIDATE kehe.com -n MyApp-c-CANDIDATE", p[1].String())
 			assert.Equal(t, "cf start MyApp-CANDIDATE || cf logs MyApp-CANDIDATE --recent", p[2].String())
 		})
@@ -175,7 +175,7 @@ func TestDocker(t *testing.T) {
 
 			p := NewPushPlan().Plan(applicationManifest, r, dockerTag)
 			assert.Len(t, p, 3)
-			assert.Equal(t, fmt.Sprintf("CF_DOCKER_PASSWORD=... cf push MyApp-CANDIDATE -f path/to/manifest.yml --docker-image wheep/whuup:%s --docker-username asd", dockerTag), p[0].String())
+			assert.Equal(t, fmt.Sprintf("CF_DOCKER_PASSWORD=... cf push MyApp-CANDIDATE -f path/to/manifest.yml --docker-image wheep/whuup:%s --docker-username asd --no-route --no-start", dockerTag), p[0].String())
 			assert.Equal(t, "cf map-route MyApp-CANDIDATE kehe.com -n MyApp-c-CANDIDATE", p[1].String())
 			assert.Equal(t, "cf start MyApp-CANDIDATE || cf logs MyApp-CANDIDATE --recent", p[2].String())
 		})
@@ -195,7 +195,7 @@ func TestDocker(t *testing.T) {
 
 			p := NewPushPlan().Plan(applicationManifest, r, dockerTag)
 			assert.Len(t, p, 3)
-			assert.Equal(t, fmt.Sprintf("CF_DOCKER_PASSWORD=... cf push MyApp-CANDIDATE -f path/to/manifest.yml --docker-image wheep/whuup:%s --docker-username asd", dockerTag), p[0].String())
+			assert.Equal(t, fmt.Sprintf("CF_DOCKER_PASSWORD=... cf push MyApp-CANDIDATE -f path/to/manifest.yml --docker-image wheep/whuup:%s --docker-username asd --no-route --no-start", dockerTag), p[0].String())
 			assert.Equal(t, "cf map-route MyApp-CANDIDATE kehe.com -n MyApp-c-CANDIDATE", p[1].String())
 			assert.Equal(t, "cf start MyApp-CANDIDATE || cf logs MyApp-CANDIDATE --recent", p[2].String())
 		})
