@@ -36,7 +36,7 @@ func TestRollingDeployNormalApp(t *testing.T) {
 
 			p := NewRollingDeployPlan().Plan(applicationManifest, rollingRequest, "")
 			assert.Len(t, p, 1)
-			assert.Equal(t, "cf push --manifest path/to/manifest.yml --strategy rolling --path path/to/app", p[0].String())
+			assert.Equal(t, "cf push --manifest path/to/manifest.yml --strategy rolling --path path/to/app || cf logs MyApp --recent", p[0].String())
 		})
 	})
 }
@@ -55,7 +55,7 @@ func TestRollingDeployDocker(t *testing.T) {
 
 		p := NewRollingDeployPlan().Plan(applicationManifest, r, "")
 		assert.Len(t, p, 1)
-		assert.Equal(t, "CF_DOCKER_PASSWORD=... cf push --manifest path/to/manifest.yml --strategy rolling --path path/to/app --docker-image wheep/whuup --docker-username asd", p[0].String())
+		assert.Equal(t, "CF_DOCKER_PASSWORD=... cf push --manifest path/to/manifest.yml --strategy rolling --path path/to/app --docker-image wheep/whuup --docker-username asd || cf logs MyApp --recent", p[0].String())
 	})
 
 	t.Run("Docker tag", func(t *testing.T) {
@@ -72,7 +72,7 @@ func TestRollingDeployDocker(t *testing.T) {
 
 			p := NewRollingDeployPlan().Plan(applicationManifest, r, "")
 			assert.Len(t, p, 1)
-			assert.Equal(t, "CF_DOCKER_PASSWORD=... cf push --manifest path/to/manifest.yml --strategy rolling --path path/to/app --docker-image wheep/whuup --docker-username asd", p[0].String())
+			assert.Equal(t, "CF_DOCKER_PASSWORD=... cf push --manifest path/to/manifest.yml --strategy rolling --path path/to/app --docker-image wheep/whuup --docker-username asd || cf logs MyApp --recent", p[0].String())
 		})
 
 		t.Run("When it's set in the manifest, and we dont pass in an override", func(t *testing.T) {
@@ -90,7 +90,7 @@ func TestRollingDeployDocker(t *testing.T) {
 
 			p := NewRollingDeployPlan().Plan(applicationManifest, r, "")
 			assert.Len(t, p, 1)
-			assert.Equal(t, fmt.Sprintf("CF_DOCKER_PASSWORD=... cf push --manifest path/to/manifest.yml --strategy rolling --path path/to/app --docker-image wheep/whuup:%s --docker-username asd", dockerTag), p[0].String())
+			assert.Equal(t, fmt.Sprintf("CF_DOCKER_PASSWORD=... cf push --manifest path/to/manifest.yml --strategy rolling --path path/to/app --docker-image wheep/whuup:%s --docker-username asd || cf logs MyApp --recent", dockerTag), p[0].String())
 		})
 
 		t.Run("When it's not set in the manifest, and we pass in an override", func(t *testing.T) {
@@ -108,7 +108,7 @@ func TestRollingDeployDocker(t *testing.T) {
 
 			p := NewRollingDeployPlan().Plan(applicationManifest, r, dockerTag)
 			assert.Len(t, p, 1)
-			assert.Equal(t, fmt.Sprintf("CF_DOCKER_PASSWORD=... cf push --manifest path/to/manifest.yml --strategy rolling --path path/to/app --docker-image wheep/whuup:%s --docker-username asd", dockerTag), p[0].String())
+			assert.Equal(t, fmt.Sprintf("CF_DOCKER_PASSWORD=... cf push --manifest path/to/manifest.yml --strategy rolling --path path/to/app --docker-image wheep/whuup:%s --docker-username asd || cf logs MyApp --recent", dockerTag), p[0].String())
 
 		})
 
@@ -127,7 +127,7 @@ func TestRollingDeployDocker(t *testing.T) {
 
 			p := NewRollingDeployPlan().Plan(applicationManifest, r, dockerTag)
 			assert.Len(t, p, 1)
-			assert.Equal(t, fmt.Sprintf("CF_DOCKER_PASSWORD=... cf push --manifest path/to/manifest.yml --strategy rolling --path path/to/app --docker-image wheep/whuup:%s --docker-username asd", dockerTag), p[0].String())
+			assert.Equal(t, fmt.Sprintf("CF_DOCKER_PASSWORD=... cf push --manifest path/to/manifest.yml --strategy rolling --path path/to/app --docker-image wheep/whuup:%s --docker-username asd || cf logs MyApp --recent", dockerTag), p[0].String())
 		})
 
 	})

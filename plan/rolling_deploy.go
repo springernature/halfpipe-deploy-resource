@@ -32,7 +32,12 @@ func (p rollingDeployPlan) Plan(manifest manifest.Application, request Request, 
 			AddToEnv(fmt.Sprintf("CF_DOCKER_PASSWORD=%s", request.Params.DockerPassword))
 	}
 
-	pl = append(pl, pushCommand)
+	pl = append(pl, NewCompoundCommand(pushCommand, NewCfCommand("logs",
+		manifest.Name,
+		"--recent",
+	), func(log []byte) bool {
+		return strings.Contains(string(log), `TIP: use 'cf logs`)
+	}))
 
 	return
 }
