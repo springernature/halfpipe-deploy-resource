@@ -36,7 +36,7 @@ func TestRollingDeployNormalApp(t *testing.T) {
 
 			p := NewRollingDeployPlan().Plan(applicationManifest, rollingRequest, "")
 			assert.Len(t, p, 1)
-			assert.Equal(t, "cf push --manifest path/to/manifest.yml --strategy rolling || cf logs MyApp --recent", p[0].String())
+			assert.Equal(t, "cf push --manifest path/to/manifest.yml --strategy rolling --path path/to/app || cf logs MyApp --recent", p[0].String())
 		})
 	})
 }

@@ -29,6 +29,8 @@ func (p rollingDeployPlan) Plan(manifest manifest.Application, request Request, 
 			AddToArgs("--docker-image", image).
 			AddToArgs("--docker-username", request.Params.DockerUsername).
 			AddToEnv(fmt.Sprintf("CF_DOCKER_PASSWORD=%s", request.Params.DockerPassword))
+	} else {
+		pushCommand = pushCommand.AddToArgs("--path", request.Params.AppPath)
 	}
 
 	pl = append(pl, NewCompoundCommand(pushCommand, NewCfCommand("logs",
