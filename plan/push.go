@@ -3,6 +3,7 @@ package plan
 import (
 	"fmt"
 	"github.com/springernature/halfpipe-deploy-resource/manifest"
+	"strconv"
 	"strings"
 )
 
@@ -48,8 +49,8 @@ func (p pushPlan) pushCommand(manifest manifest.Application, request Request, do
 		AddToArgs(createCandidateAppName(manifest.Name)).
 		AddToArgs("-f", request.Params.ManifestPath)
 
-	if request.Params.Instances != "" {
-		pushCommand = pushCommand.AddToArgs("-i", request.Params.Instances)
+	if request.Params.Instances != 0 {
+		pushCommand = pushCommand.AddToArgs("-i", strconv.Itoa(request.Params.Instances))
 	}
 
 	if manifest.Docker.Image == "" {

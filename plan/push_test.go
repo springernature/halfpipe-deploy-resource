@@ -46,7 +46,7 @@ func TestNormalApp(t *testing.T) {
 				Name: "MyApp",
 			}
 			r := request
-			r.Params.Instances = "1"
+			r.Params.Instances = 1
 			p := NewPushPlan().Plan(applicationManifest, r, "")
 			assert.Len(t, p, 3)
 			assert.Equal(t, "cf push MyApp-CANDIDATE -f path/to/manifest.yml -i 1 -p path/to/app --no-route --no-start", p[0].String())
