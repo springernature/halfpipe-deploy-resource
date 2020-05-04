@@ -15,8 +15,7 @@ type rollingDeployPlan struct{}
 func (p rollingDeployPlan) Plan(manifest manifest.Application, request Request, dockerTag string) (pl Plan) {
 	pushCommand := NewCfCommand("push").
 		AddToArgs("--manifest", request.Params.ManifestPath).
-		AddToArgs("--strategy", "rolling").
-		AddToArgs("--path", request.Params.AppPath)
+		AddToArgs("--strategy", "rolling")
 
 	if manifest.Docker.Image != "" {
 		image := manifest.Docker.Image
