@@ -19,8 +19,6 @@ resource_types:
     tag: stable
 ```
 
-If you want to use a specific version of the halfpipe-push command simply set `version` to a tag version [from here](https://github.com/springernature/halfpipe-cf-plugin/releases)
-
 # Source Configuration
 
 * `api`: _required_. The CF API you wish to deploy to.
@@ -99,6 +97,46 @@ jobs:
         manifestPath: my-apps-git-repo/manifest.yml
 ```
 
+# How do the rolling deploys work?
+
+This resource supports the use of the [rolling strategy](https://docs.cloudfoundry.org/devguide/deploy-apps/rolling-deploy.html) introduced in cf api v3.
+One of the benefits of this strategy is that the amount of resources needed to deploy is significantly less.
+
+### How do I still use a candidate app with rolling deploys?
+To still make use of the candidate-app to do smoke tests against, simply first use `halfpipe-push` command.
+After that you can do a rolling deploy with `halfpipe-rolling-deploy`. 
+To cleanup the test app created by `halfpipe-push` use `halfpipe-delete-test`.
+
+### Example
+```
+jobs:
+- name: deploy-to-dev
+  plan:
+    - get: my-apps-git-repo
+    - put: cf-resource
+      params:
+        appPath: my-apps-git-repo/target/distribution/artifact.zip
+        command: halfpipe-push
+        manifestPath: my-apps-git-repo/manifest.yml
+        testDomain: some.random.domain.com
+        gitRefPath: my-apps-git-repo/.git/ref
+        vars:
+          EXTRA_VAR: "Yo, im a env var in the CF app"
+          SECRET_VAR: ((some.secret))
+    - put: cf-resource
+      params:
+        put: cf rolling deploy
+        manifestPath: my-apps-git-repo/manifest.yml
+        timeout: 10m
+    - put: remove test app
+      resource: rolling cf snpaas halfpipe-examples
+      params:
+        command: halfpipe-delete-test
+        manifestPath: my-apps-git-repo/manifest.yml
+        timeout: 1h
+        attempts: 2
+```
+
 # What do the different commands do?
 
 ## halfpipe-push
@@ -121,5 +159,14 @@ Checks that all instances of the app is up and running, useful to stick between 
 ## halfpipe-cleanup
 
 Simply deletes the app `app-name-DELETE`
+
+## halfpipe-rolling-deploy
+
+This command pushes an app with the [rolling strategy](https://docs.cloudfoundry.org/devguide/deploy-apps/rolling-deploy.html).
+This command also supports the rolling deployment of docker images in cf.
+
+## halfpipe-delete-test
+
+Use in conjunction with `halfpipe-rolling-deploy` to delete any test-app pushed with `halfpipe-push`
 
 
