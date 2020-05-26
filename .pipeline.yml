@@ -1,3 +1,5 @@
+# fly -t engineering-enablement set-pipeline -p halfpipe-deploy-resource-v2 -c .pipeline.yml
+
 groups: []
 resources:
 - name: git
@@ -5,7 +7,6 @@ resources:
   source:
     private_key: ((halfpipe-github.private_key))
     uri: git@github.com:springernature/halfpipe-deploy-resource.git
-    branch: refactor
   check_every: 10m
 - name: docker-registry-image-dev
   type: docker-image
