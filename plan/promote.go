@@ -85,8 +85,15 @@ func (p promotePlan) addManifestRoutes(man manifest.Application) (cmds []Command
 	}
 
 	for _, route := range man.Routes {
-		if isPrivateDomain(route.Route) {
-			mapRoute := NewCfCommand("map-route", createCandidateAppName(man.Name), route.Route)
+		splitOnPath := strings.Split(route.Route, "/")
+		if isPrivateDomain(splitOnPath[0]) {
+			var mapRoute Command
+			if strings.Contains(route.Route, "/") {
+				mapRoute = NewCfCommand("map-route", createCandidateAppName(man.Name), splitOnPath[0], "--path", splitOnPath[1])
+			} else {
+				mapRoute = NewCfCommand("map-route", createCandidateAppName(man.Name), route.Route)
+			}
+
 			cmds = append(cmds, mapRoute)
 		} else {
 			parts := strings.Split(route.Route, ".")

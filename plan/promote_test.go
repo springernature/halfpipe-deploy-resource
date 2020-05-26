@@ -288,6 +288,42 @@ func TestPromoteNormalApp(t *testing.T) {
 		assert.Equal(t, expectedPlan, plan)
 	})
 
+	t.Run("No previously deployed version and a route that is a domain with a path", func(t *testing.T) {
+		summary := []cfclient.AppSummary{
+			{
+				Name:  "myApp-CANDIDATE",
+				State: "STARTED",
+			},
+		}
+
+		man := manifest.Application{
+			Name: "myApp",
+			Routes: []manifest.Route{
+				{
+					Route: "myroute.domain1.com",
+				},
+				{
+					Route: "thisIsASpaceOwnedDomain.com/mypath",
+				},
+			},
+		}
+		privateRoutesInOrg := []cfclient.Domain{
+			{
+				Name: "thisIsASpaceOwnedDomain.com",
+			},
+		}
+
+		expectedPlan := Plan{
+			NewCfCommand("map-route", createCandidateAppName(man.Name), "domain1.com", "--hostname", "myroute"),
+			NewCfCommand("map-route", createCandidateAppName(man.Name), "thisIsASpaceOwnedDomain.com", "--path", "mypath"),
+			NewCfCommand("unmap-route", createCandidateAppName(man.Name), validRequest.Params.TestDomain, "--hostname", createCandidateHostname(man, validRequest)),
+			NewCfCommand("rename", createCandidateAppName(man.Name), man.Name),
+		}
+
+		plan := NewPromotePlan(privateRoutesInOrg).Plan(man, validRequest, summary)
+		assert.Equal(t, expectedPlan, plan)
+	})
+
 	t.Run("No previously deployed version and a route that is a sub domain", func(t *testing.T) {
 		summary := []cfclient.AppSummary{
 			{
