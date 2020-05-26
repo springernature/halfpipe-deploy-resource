@@ -1,3 +1,5 @@
+# fly -t engineering-enablement set-pipeline -p halfpipe-deploy-resource-v1 -c .pipeline.yml
+
 groups: []
 resources:
 - name: git
@@ -5,6 +7,7 @@ resources:
   source:
     private_key: ((halfpipe-github.private_key))
     uri: git@github.com:springernature/halfpipe-deploy-resource.git
+    branch: v1
   check_every: 10m
 - name: cf-plugin-release
   type: github-release
@@ -52,6 +55,7 @@ resource_types:
     username: _json_key
 
 jobs:
+- name: THIS IS THE OLD RESOURCE
 - name: Create test docker image
   serial: true
   plan:
