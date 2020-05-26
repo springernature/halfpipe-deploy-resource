@@ -1,12 +1,12 @@
 module github.com/springernature/halfpipe-deploy-resource
 
 require (
-	github.com/davecgh/go-spew v1.1.0 // indirect
+	github.com/cloudfoundry-community/go-cfclient v0.0.0-20200413172050-18981bf12b4b
+	github.com/fatih/color v1.9.0
 	github.com/google/uuid v1.1.1
-	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/gookit/color v1.2.5
 	github.com/spf13/afero v1.1.1
-	github.com/stretchr/testify v1.2.2
-	golang.org/x/text v0.0.0-20180805044716-cb6730876b98 // indirect
+	github.com/stretchr/testify v1.3.0
 	gopkg.in/yaml.v2 v2.2.1
 )
 

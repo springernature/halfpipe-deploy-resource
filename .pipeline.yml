@@ -5,34 +5,22 @@ resources:
   source:
     private_key: ((halfpipe-github.private_key))
     uri: git@github.com:springernature/halfpipe-deploy-resource.git
+    branch: refactor
   check_every: 10m
-- name: cf-plugin-release
-  type: github-release
-  source:
-    access_token: ((api-keys.halfpipe-cf-plugin))
-    owner: springernature
-    repository: halfpipe-cf-plugin
 - name: docker-registry-image-dev
   type: docker-image
   source:
-    repository: eu.gcr.io/halfpipe-io/cf-resource
+    repository: eu.gcr.io/halfpipe-io/cf-resource-v2
     tag: dev
     password: ((halfpipe-gcr.private_key))
     username: _json_key
 - name: docker-registry-image-stable
   type: docker-image
   source:
-    repository: eu.gcr.io/halfpipe-io/cf-resource
+    repository: eu.gcr.io/halfpipe-io/cf-resource-v2
     tag: stable
     password: ((halfpipe-gcr.private_key))
     username: _json_key
-- name: docker-registry-image-stable-legacy
-  type: docker-image
-  source:
-    password: ((docker-hub-pe.password))
-    repository: platformengineering/cf-resource
-    tag: stable
-    username: platformengineering
 - name: cf
   type: cf-resource
   source:
@@ -46,7 +34,7 @@ resource_types:
 - name: cf-resource
   type: registry-image
   source:
-    repository: eu.gcr.io/halfpipe-io/cf-resource
+    repository: eu.gcr.io/halfpipe-io/cf-resource-v2
     tag: dev
     password: ((halfpipe-gcr.private_key))
     username: _json_key
@@ -57,38 +45,15 @@ jobs:
   plan:
   - get: git
     trigger: true
-  - get: cf-plugin-release
-    trigger: true
-  - task: Create temp folder with both resource src and plugin from release
-    config:
-      platform: linux
-      image_resource:
-        type: registry-image
-        source:
-          repository: alpine
-      run:
-        path: /bin/sh
-        args:
-        - -ec
-        - |
-          cp -r git/. build
-          cp cf-plugin-release/halfpipe_cf_plugin_linux build/halfpipe_cf_plugin_linux
-      inputs:
-      - name: git
-      - name: cf-plugin-release
-      outputs:
-      - name: build
   - put: docker-registry-image-dev
     params:
-      build: build
       tag_file: git/.docker-dev-tag
-- name: Test resource
+      build: git
+
+- name: Test resource cf6
   serial: true
   plan:
   - get: git
-    passed:
-    - Create test docker image
-  - get: cf-plugin-release
     passed:
     - Create test docker image
   - get: docker-registry-image-dev
@@ -100,59 +65,68 @@ jobs:
       appPath: git/.integration_test
       command: halfpipe-push
       gitRefPath: git/.git/ref
-      manifestPath: git/.integration_test/manifest.yml
+      manifestPath: git/.integration_test/manifest-cf6.yml
       testDomain: springernature.app
   - put: cf
     params:
       command: halfpipe-check
-      manifestPath: git/.integration_test/manifest.yml
+      manifestPath: git/.integration_test/manifest-cf6.yml
   - put: cf
     params:
       command: halfpipe-promote
-      manifestPath: git/.integration_test/manifest.yml
+      manifestPath: git/.integration_test/manifest-cf6.yml
       testDomain: springernature.app
   ensure:
     put: cf
     params:
       command: halfpipe-cleanup
-      manifestPath: git/.integration_test/manifest.yml
+      manifestPath: git/.integration_test/manifest-cf6.yml
+
+- name: Test resource cf7
+  serial: true
+  plan:
+    - get: git
+      passed:
+        - Create test docker image
+    - get: docker-registry-image-dev
+      passed:
+        - Create test docker image
+      trigger: true
+    - put: cf
+      params:
+        appPath: git/.integration_test
+        command: halfpipe-push
+        gitRefPath: git/.git/ref
+        manifestPath: git/.integration_test/manifest-cf7.yml
+        testDomain: springernature.app
+        cliVersion: cf7
+    - put: cf
+      params:
+        command: halfpipe-check
+        manifestPath: git/.integration_test/manifest-cf7.yml
+        cliVersion: cf7
+    - put: cf
+      params:
+        command: halfpipe-promote
+        manifestPath: git/.integration_test/manifest-cf7.yml
+        testDomain: springernature.app
+        cliVersion: cf7
+  ensure:
+    put: cf
+    params:
+      command: halfpipe-cleanup
+      cliVersion: cf7
+      manifestPath: git/.integration_test/manifest-cf7.yml
+
 - name: Create stable docker image
   serial: true
   plan:
   - get: git
     passed:
-    - Test resource
+    - Test resource cf6
+    - Test resource cf7
     trigger: true
-  - get: cf-plugin-release
-    passed:
-    - Test resource
-    trigger: true
-  - task: Create temp folder with both resource src and plugin from release
-    config:
-      platform: linux
-      image_resource:
-        type: registry-image
-        source:
-          repository: alpine
-      run:
-        path: /bin/sh
-        args:
-        - -ec
-        - |
-          cp -r git/. build
-          cp cf-plugin-release/halfpipe_cf_plugin_linux build/halfpipe_cf_plugin_linux
-      inputs:
-      - name: git
-      - name: cf-plugin-release
-      outputs:
-      - name: build
   - put: docker-registry-image-stable
     params:
-      additional_tags: cf-plugin-release/tag
-      build: build
-      tag_file: git/.docker-stable-tag
-  - put: docker-registry-image-stable-legacy
-    params:
-      additional_tags: cf-plugin-release/tag
-      build: build
+      build: git
       tag_file: git/.docker-stable-tag

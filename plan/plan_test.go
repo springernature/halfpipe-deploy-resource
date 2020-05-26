@@ -1,8 +1,10 @@
 package plan
 
 import (
+	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/springernature/halfpipe-deploy-resource/logger"
 	"testing"
+	"time"
 
 	"errors"
 	"github.com/stretchr/testify/assert"
@@ -55,7 +57,7 @@ func TestPlan_ExecutePassesOnError(t *testing.T) {
 		NewCfCommand("error"),
 	}
 
-	err := p.Execute(newMockExecutorWithError(expectedError), &discardLogger)
+	err := p.Execute(newMockExecutorWithError(expectedError), &cfclient.Client{}, &discardLogger, 1*time.Second)
 
 	assert.Equal(t, expectedError, err)
 }
@@ -77,9 +79,56 @@ func TestPlan_ExecutePassesOnErrorIfItHappensInTheMiddleOfThePlan(t *testing.T) 
 			return []string{}, expectedError
 		}
 		return []string{}, nil
-	}), &discardLogger)
+	}), &cfclient.Client{}, &discardLogger, 1*time.Minute)
 
 	assert.Equal(t, 3, numberOfCalls)
+	assert.Equal(t, expectedError, err)
+}
+
+func TestPlan_ExecuteErrorsWhenACommandTimesOut(t *testing.T) {
+	expectedError := errors.New("command time out after 5ms")
+
+	p := Plan{
+		NewCfCommand("timeout"),
+	}
+
+	err := p.Execute(newMockExecutorWithFunction(func(command Command) ([]string, error) {
+		time.Sleep(10 * time.Millisecond)
+		return []string{}, nil
+	}), &cfclient.Client{}, &discardLogger, 5*time.Millisecond)
+
+	assert.Equal(t, expectedError, err)
+}
+
+func TestPlan_ExecuteErrorsWhenACompoundCommandTimesOut(t *testing.T) {
+	expectedError := errors.New("command time out after 5ms")
+
+	p := Plan{
+		NewCompoundCommand(NewCfCommand("timeout"), NewCfCommand("blah"), func(log []byte) bool {
+			return false
+		}),
+	}
+
+	err := p.Execute(newMockExecutorWithFunction(func(command Command) ([]string, error) {
+		time.Sleep(10 * time.Millisecond)
+		return []string{}, nil
+	}), &cfclient.Client{}, &discardLogger, 5*time.Millisecond)
+
+	assert.Equal(t, expectedError, err)
+}
+
+func TestPlan_ExecuteErrorsWhenACommandWithClientTimesOut(t *testing.T) {
+	expectedError := errors.New("command time out after 5ms")
+
+	p := Plan{
+		NewClientCommand(func(client *cfclient.Client, logger *logger.CapturingWriter) error {
+			time.Sleep(6 * time.Millisecond)
+			return nil
+		}),
+	}
+
+	err := p.Execute(nil, &cfclient.Client{}, &discardLogger, 5*time.Millisecond)
+
 	assert.Equal(t, expectedError, err)
 }
 
@@ -96,7 +145,7 @@ func TestPlan_Execute(t *testing.T) {
 	err := p.Execute(newMockExecutorWithFunction(func(command Command) ([]string, error) {
 		numberOfCalls++
 		return []string{}, nil
-	}), &discardLogger)
+	}), &cfclient.Client{}, &discardLogger, 1*time.Minute)
 
 	assert.Nil(t, err)
 	assert.Equal(t, 4, numberOfCalls)

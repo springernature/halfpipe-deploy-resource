@@ -3,12 +3,12 @@ FROM golang:1.13-buster as builder
 COPY . /build
 WORKDIR /build
 
-ENV CF_TAR_URL "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=6.38.0&source=github-rel"
-RUN wget -qO- ${CF_TAR_URL} | tar xvz -C /bin > /dev/null
+ENV CF_TAR_URL_V6 "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=6.51.0&source=github-rel"
+RUN wget -qO- ${CF_TAR_URL_V6} | tar xvz -C /bin > /dev/null
+RUN mv /bin/cf /bin/cf6
 
-# This is present as we create a build environment in the Concourse task
-# 'Create temp folder with both resource src and plugin from release'
-RUN cf install-plugin halfpipe_cf_plugin_linux -f
+ENV CF_TAR_URL_V7 "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=7.0.0-beta.30&source=github-rel"
+RUN wget -qO- ${CF_TAR_URL_V7} | tar xvz -C /bin > /dev/null
 
 RUN go test ./...
 RUN go build -o /opt/resource/check cmd/check/check.go
@@ -19,8 +19,9 @@ RUN chmod +x /opt/resource/*
 
 FROM golang:alpine AS resource
 RUN apk add --no-cache bash tzdata ca-certificates jq libc6-compat
+ENV TERM xterm-256color
 COPY --from=builder /opt/resource/* /opt/resource/
-COPY --from=builder /bin/cf /bin/cf
-COPY --from=builder /root/.cf /root/.cf
+COPY --from=builder /bin/cf6 /bin/cf6
+COPY --from=builder /bin/cf7 /bin/cf7
 
 FROM resource

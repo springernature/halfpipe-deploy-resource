@@ -1,7 +1,7 @@
 package plan
 
 import (
-	"fmt"
+	"github.com/cloudfoundry-community/go-cfclient"
 	"path"
 
 	"github.com/spf13/afero"
@@ -11,42 +11,74 @@ import (
 )
 
 type ResourcePlan interface {
-	Plan(request Request, concourseRoot string) (plan Plan, err error)
+	Plan(request Request, concourseRoot string, appsSummary []cfclient.AppSummary) (plan Plan, err error)
 }
 
 type planner struct {
 	manifestReaderWrite manifest.ReaderWriter
 	fs                  afero.Afero
+	pushPlan            PushPlan
+	rollingDeployPlan   RollingDeployPlan
+	promotePlan         PromotePlan
+	cleanupPlan         CleanupPlan
+	checkPlan           CheckPlan
+	deleteCandidatePlan DeleteCandidatePlan
 }
 
-func NewPlanner(manifestReaderWrite manifest.ReaderWriter, fs afero.Afero) ResourcePlan {
+func NewPlanner(manifestReaderWrite manifest.ReaderWriter, fs afero.Afero, pushPlan PushPlan, checkPlan CheckPlan, promotePlan PromotePlan, cleanupPlan CleanupPlan, rollingDeployPlan RollingDeployPlan, deleteCandidatePlan DeleteCandidatePlan) ResourcePlan {
 	return planner{
 		manifestReaderWrite: manifestReaderWrite,
 		fs:                  fs,
+		pushPlan:            pushPlan,
+		promotePlan:         promotePlan,
+		cleanupPlan:         cleanupPlan,
+		checkPlan:           checkPlan,
+		rollingDeployPlan:   rollingDeployPlan,
+		deleteCandidatePlan: deleteCandidatePlan,
 	}
 }
 
-func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error) {
+func (p planner) setFullPathInRequest(request Request, concourseRoot string) Request {
+	updatedRequest := request
+
+	updatedRequest.Params.ManifestPath = path.Join(concourseRoot, updatedRequest.Params.ManifestPath)
+
+	if updatedRequest.Params.AppPath != "" {
+		updatedRequest.Params.AppPath = path.Join(concourseRoot, updatedRequest.Params.AppPath)
+	}
+
+	if updatedRequest.Params.DockerTag != "" {
+		updatedRequest.Params.DockerTag = path.Join(concourseRoot, updatedRequest.Params.DockerTag)
+	}
+
+	if request.Params.GitRefPath != "" {
+		updatedRequest.Params.GitRefPath = path.Join(concourseRoot, request.Params.GitRefPath)
+	}
+
+	if request.Params.BuildVersionPath != "" {
+		updatedRequest.Params.BuildVersionPath = path.Join(concourseRoot, request.Params.BuildVersionPath)
+	}
+
+	return updatedRequest
+}
+
+func (p planner) Plan(request Request, concourseRoot string, appsSummary []cfclient.AppSummary) (pl Plan, err error) {
 	// Here we assume that the request is complete.
 	// It has already been verified in out.go with the help of requests.VerifyRequest.
 
+	// Here we update the paths to take into account concourse root
+	request = p.setFullPathInRequest(request, concourseRoot)
 
-	fullManifestPath := path.Join(concourseRoot, request.Params.ManifestPath)
-
-	if request.Params.Command == config.PUSH {
-		fullGitRefPath := ""
-		if request.Params.GitRefPath != "" {
-			fullGitRefPath = path.Join(concourseRoot, request.Params.GitRefPath)
-		}
-		fullBuildVersionPath := ""
-		if request.Params.BuildVersionPath != "" {
-			fullBuildVersionPath = path.Join(concourseRoot, request.Params.BuildVersionPath)
-		}
-
-		if err = p.updateManifestWithVars(fullManifestPath, fullGitRefPath, request.Params.Vars, fullBuildVersionPath); err != nil {
-			return
-		}
+	readManifest, err := p.readManifest(request.Params.ManifestPath)
+	if err != nil {
+		// todo: test this
+		return
 	}
+
+	// We lint that there is only one app.
+	appUnderDeployment := readManifest.Applications[0]
+
+	pl = append(pl, NewCfCommand("--version"))
 
 	pl = append(pl, NewCfCommand("login",
 		"-a", request.Source.API,
@@ -55,88 +87,40 @@ func (p planner) Plan(request Request, concourseRoot string) (pl Plan, err error
 		"-o", request.Source.Org,
 		"-s", request.Source.Space))
 
-	var halfpipeCommand Command
-	switch request.Params.Command {
-	case config.PUSH:
-		candidateAppName, e := p.getCandidateName(fullManifestPath)
+	var dockerTag string
+	if request.Params.DockerTag != "" {
+		content, e := p.fs.ReadFile(request.Params.DockerTag)
 		if e != nil {
 			err = e
 			return
 		}
+		dockerTag = strings.TrimSpace(string(content))
+	}
 
-		pushCommand := NewCfCommand(
-			request.Params.Command,
-			"-manifestPath", fullManifestPath,
-			"-testDomain", request.Params.TestDomain,
-		)
-
-		isDockerPush := request.Params.DockerPassword != ""
-		if isDockerPush {
-			fullDockerTagPath := ""
-			if request.Params.DockerTag != "" {
-				fullDockerTagPath = path.Join(concourseRoot, request.Params.DockerTag)
-			}
-
-			dockerImage, e := p.getDockerImage(fullManifestPath, fullDockerTagPath)
-			if e != nil {
-				err = e
-				return
-			}
-
-			pushCommand = pushCommand.
-				AddToArgs("-dockerImage", dockerImage).
-				AddToArgs("-dockerUsername", request.Params.DockerUsername).
-				AddToEnv(fmt.Sprintf("CF_DOCKER_PASSWORD=%s", request.Params.DockerPassword))
-
-		} else {
-			pushCommand = pushCommand.AddToArgs("-appPath", path.Join(concourseRoot, request.Params.AppPath))
+	switch request.Params.Command {
+	case config.PUSH, config.ROLLING_DEPLOY:
+		if err = p.updateManifestWithVars(request); err != nil {
+			return
 		}
 
-		if request.Params.PreStartCommand != "" {
-			quotedCommand := fmt.Sprintf(`"%s"`, strings.ReplaceAll(request.Params.PreStartCommand, `"`, `\"`))
-			pushCommand = pushCommand.AddToArgs("-preStartCommand", quotedCommand)
+
+		switch request.Params.Command {
+		case config.PUSH:
+			pl = append(pl, p.pushPlan.Plan(appUnderDeployment, request, dockerTag)...)
+		case config.ROLLING_DEPLOY:
+			pl = append(pl, p.rollingDeployPlan.Plan(appUnderDeployment, request, dockerTag)...)
 		}
-
-		halfpipeCommand = NewCompoundCommand(
-			pushCommand,
-			NewCfCommand("logs",
-				candidateAppName,
-				"--recent",
-			),
-			func(log []byte) bool {
-				return strings.Contains(string(log), `TIP: use 'cf logs`)
-			})
-
+	case config.CHECK:
+		// We dont actually need to login for this as we are using a cf client for this specific task..
+		pl = p.checkPlan.Plan(appUnderDeployment, appsSummary)
 	case config.PROMOTE:
-		halfpipeCommand = NewCfCommand(request.Params.Command,
-			"-manifestPath", fullManifestPath,
-			"-testDomain", request.Params.TestDomain,
-		)
-	case config.CHECK, config.CLEANUP, config.DELETE:
-		halfpipeCommand = NewCfCommand(request.Params.Command,
-			"-manifestPath", fullManifestPath,
-		)
+		pl = append(pl, p.promotePlan.Plan(appUnderDeployment, request, appsSummary)...)
+	case config.CLEANUP, config.DELETE:
+		pl = append(pl, p.cleanupPlan.Plan(appUnderDeployment, appsSummary)...)
+	case config.DELETE_CANDIDATE:
+		pl = append(pl, p.deleteCandidatePlan.Plan(appUnderDeployment, appsSummary)...)
 	}
 
-	if request.Params.Timeout != "" {
-		halfpipeCommand = halfpipeCommand.AddToArgs("-timeout", request.Params.Timeout)
-	}
-
-	pl = append(pl, halfpipeCommand)
-
-	return
-}
-
-func (p planner) getCandidateName(manifestPath string) (candidateName string, err error) {
-	apps, err := p.readManifest(manifestPath)
-	if err != nil {
-		return
-	}
-
-	// We just assume the first app in the manifest is the app under deployment.
-	// We lint that this is the case in the halfpipe linter.
-	app := apps.Applications[0]
-	candidateName = fmt.Sprintf("%s-CANDIDATE", app.Name)
 	return
 }
 
@@ -144,9 +128,9 @@ func (p planner) readManifest(manifestPath string) (manifest.Manifest, error) {
 	return p.manifestReaderWrite.ReadManifest(manifestPath)
 }
 
-func (p planner) updateManifestWithVars(manifestPath string, gitRefPath string, vars map[string]string, buildVersionPath string) (err error) {
-	if len(vars) > 0 || gitRefPath != "" {
-		apps, e := p.readManifest(manifestPath)
+func (p planner) updateManifestWithVars(request Request) (err error) {
+	if len(request.Params.Vars) > 0 || request.Params.GitRefPath != "" {
+		apps, e := p.readManifest(request.Params.ManifestPath)
 		if e != nil {
 			err = e
 			return
@@ -159,12 +143,12 @@ func (p planner) updateManifestWithVars(manifestPath string, gitRefPath string, 
 			app.EnvironmentVariables = map[string]string{}
 		}
 
-		for key, value := range vars {
+		for key, value := range request.Params.Vars {
 			app.EnvironmentVariables[key] = value
 		}
 
-		if gitRefPath != "" {
-			ref, errRead := p.readFile(gitRefPath)
+		if request.Params.GitRefPath != "" {
+			ref, errRead := p.readFile(request.Params.GitRefPath)
 			if errRead != nil {
 				err = errRead
 				return
@@ -172,8 +156,8 @@ func (p planner) updateManifestWithVars(manifestPath string, gitRefPath string, 
 			app.EnvironmentVariables["GIT_REVISION"] = ref
 		}
 
-		if buildVersionPath != "" {
-			version, errRead := p.readFile(buildVersionPath)
+		if request.Params.BuildVersionPath != "" {
+			version, errRead := p.readFile(request.Params.BuildVersionPath)
 			if errRead != nil {
 				err = errRead
 				return
@@ -181,7 +165,7 @@ func (p planner) updateManifestWithVars(manifestPath string, gitRefPath string, 
 			app.EnvironmentVariables["BUILD_VERSION"] = version
 		}
 
-		if err = p.manifestReaderWrite.WriteManifest(manifestPath, app); err != nil {
+		if err = p.manifestReaderWrite.WriteManifest(request.Params.ManifestPath, app); err != nil {
 			return
 		}
 	}
@@ -194,30 +178,5 @@ func (p planner) readFile(gitRefPath string) (ref string, err error) {
 		return
 	}
 	ref = strings.TrimSpace(string(bytes))
-	return
-}
-
-func (p planner) getDockerImage(manifestPath string, tagPath string) (dockerImage string, err error) {
-	apps, err := p.readManifest(manifestPath)
-	if err != nil {
-		return
-	}
-
-	dockerImage = apps.Applications[0].Docker.Image
-
-	if tagPath != "" {
-		content, e := p.fs.ReadFile(tagPath)
-		if e != nil {
-			err = e
-			return
-		}
-
-		if strings.Contains(dockerImage, ":") {
-			dockerImage = strings.Split(dockerImage, ":")[0]
-		}
-
-		dockerImage = fmt.Sprintf("%s:%s", dockerImage, strings.Trim(string(content), "\n"))
-
-	}
 	return
 }

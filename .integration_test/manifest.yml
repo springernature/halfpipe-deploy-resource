@@ -1,9 +1,0 @@
-applications:
-- name: integration-test-app
-  buildpack: staticfile_buildpack
-  env:
-    GIT_REVISION: asdf
-  routes:
-  - route: integration-test-app1.springernature.app
-  - route: integration-test-app2.springernature.app
-  - route: integration-test-app2.springernature.app/hello
