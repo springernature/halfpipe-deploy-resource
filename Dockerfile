@@ -3,7 +3,7 @@ FROM golang:1.13-buster as builder
 COPY . /build
 WORKDIR /build
 
-ENV CF_TAR_URL_V6 "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=6.51.0&source=github-rel"
+ENV CF_TAR_URL_V6 "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=6.49.0&source=github-rel"
 RUN wget -qO- ${CF_TAR_URL_V6} | tar xvz -C /bin > /dev/null
 RUN mv /bin/cf /bin/cf6
 
