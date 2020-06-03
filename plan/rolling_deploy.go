@@ -37,7 +37,7 @@ func (p rollingDeployPlan) Plan(manifest manifest.Application, request Request, 
 		manifest.Name,
 		"--recent",
 	), func(log []byte) bool {
-		return strings.Contains(string(log), `TIP: use 'cf logs`)
+		return strings.Contains(string(log), `--recent' for more information`)
 	}))
 
 	return

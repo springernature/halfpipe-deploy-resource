@@ -38,7 +38,7 @@ func (p pushPlan) Plan(manifest manifest.Application, request Request, dockerTag
 			"--recent",
 		),
 		func(log []byte) bool {
-			return strings.Contains(string(log), `TIP: use 'cf logs`)
+			return strings.Contains(string(log), `--recent' for more information`)
 		}))
 
 	return
