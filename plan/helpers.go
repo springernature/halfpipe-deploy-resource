@@ -11,7 +11,10 @@ func createCandidateAppName(name string) string {
 }
 
 func createCandidateHostname(manifest manifest.Application, request Request) string {
-	return strings.Join([]string{manifest.Name, request.Source.Space, "CANDIDATE"}, "-")
+	return strings.Join([]string{
+		strings.Replace(manifest.Name, "_", "-", -1),
+		strings.Replace(request.Source.Space, "_", "-", -1),
+		"CANDIDATE"}, "-")
 }
 
 func createOldAppName(name string) string {

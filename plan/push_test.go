@@ -30,15 +30,35 @@ var request = Request{
 func TestNormalApp(t *testing.T) {
 	t.Run("Normal app", func(t *testing.T) {
 		t.Run("No pre start", func(t *testing.T) {
-			applicationManifest := manifest.Application{
-				Name: "MyApp",
+
+			var requestWithUnderscore = Request{
+				Source: Source{
+					API:      "a",
+					Org:      "b",
+					Space:    "this_is-a_space",
+					Username: "d",
+					Password: "e",
+				},
+				Params: Params{
+					ManifestPath: "path/to/manifest.yml",
+					AppPath:      "path/to/app",
+					TestDomain:   "kehe.com",
+					Vars: map[string]string{
+						"VAR2": "bb",
+						"VAR4": "cc",
+					},
+				},
 			}
 
-			p := NewPushPlan().Plan(applicationManifest, request, "")
+			applicationManifest := manifest.Application{
+				Name: "My_App",
+			}
+
+			p := NewPushPlan().Plan(applicationManifest, requestWithUnderscore, "")
 			assert.Len(t, p, 3)
-			assert.Equal(t, "cf push MyApp-CANDIDATE -f path/to/manifest.yml -p path/to/app --no-route --no-start", p[0].String())
-			assert.Equal(t, "cf map-route MyApp-CANDIDATE kehe.com -n MyApp-c-CANDIDATE", p[1].String())
-			assert.Equal(t, "cf start MyApp-CANDIDATE || cf logs MyApp-CANDIDATE --recent", p[2].String())
+			assert.Equal(t, "cf push My_App-CANDIDATE -f path/to/manifest.yml -p path/to/app --no-route --no-start", p[0].String())
+			assert.Equal(t, "cf map-route My_App-CANDIDATE kehe.com -n My-App-this-is-a-space-CANDIDATE", p[1].String())
+			assert.Equal(t, "cf start My_App-CANDIDATE || cf logs My_App-CANDIDATE --recent", p[2].String())
 		})
 
 		t.Run("Instances set", func(t *testing.T) {
