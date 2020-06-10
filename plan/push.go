@@ -38,7 +38,8 @@ func (p pushPlan) Plan(manifest manifest.Application, request Request, dockerTag
 			"--recent",
 		),
 		func(log []byte) bool {
-			return strings.Contains(string(log), `--recent' for more information`)
+			return strings.Contains(string(log), `--recent' for more information`) ||
+				strings.Contains(string(log), `insufficient resources: memory`)
 		}))
 
 	return
