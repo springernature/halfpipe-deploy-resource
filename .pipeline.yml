@@ -22,6 +22,12 @@ resources:
     tag: stable
     password: ((halfpipe-gcr.private_key))
     username: _json_key
+- name: docker-registry-image-stable-dockerhub
+  type: docker-image
+  source:
+    repository: platformengineering/cf-resource-v2
+    username: ((platformengineering-dockerhub.username))
+    password: ((platformengineering-dockerhub.password))
 - name: cf
   type: cf-resource
   source:
@@ -128,6 +134,10 @@ jobs:
     - Test resource cf7
     trigger: true
   - put: docker-registry-image-stable
+    params:
+      build: git
+      tag_file: git/.docker-stable-tag
+  - put: docker-registry-image-stable-dockerhub
     params:
       build: git
       tag_file: git/.docker-stable-tag
