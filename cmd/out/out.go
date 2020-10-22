@@ -45,6 +45,8 @@ func main() {
 
 	cfClient, appsSummary, privateDomains, err := getApps(request)
 	if err != nil {
+		errStr := fmt.Sprintf("Unable to login to org: %s, space: %s with user %s", request.Source.Org, request.Source.Space, request.Source.Username)
+		logger.Println(errStr)
 		logger.Println(err)
 		syscall.Exit(1)
 	}
