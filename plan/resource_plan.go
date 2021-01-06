@@ -2,21 +2,16 @@ package plan
 
 import (
 	"github.com/cloudfoundry-community/go-cfclient"
-	"path"
-
-	"github.com/spf13/afero"
 	"github.com/springernature/halfpipe-deploy-resource/config"
 	"github.com/springernature/halfpipe-deploy-resource/manifest"
-	"strings"
 )
 
 type ResourcePlan interface {
-	Plan(request config.Request, baseDir string, appsSummary []cfclient.AppSummary) (plan Plan, err error)
+	Plan(request config.Request, appsSummary []cfclient.AppSummary) (plan Plan, err error)
 }
 
 type planner struct {
 	manifestReaderWrite manifest.ReaderWriter
-	fs                  afero.Afero
 	pushPlan            PushPlan
 	rollingDeployPlan   RollingDeployPlan
 	promotePlan         PromotePlan
@@ -25,10 +20,9 @@ type planner struct {
 	deleteCandidatePlan DeleteCandidatePlan
 }
 
-func NewPlanner(manifestReaderWrite manifest.ReaderWriter, fs afero.Afero, pushPlan PushPlan, checkPlan CheckPlan, promotePlan PromotePlan, cleanupPlan CleanupPlan, rollingDeployPlan RollingDeployPlan, deleteCandidatePlan DeleteCandidatePlan) ResourcePlan {
+func NewPlanner(manifestReaderWrite manifest.ReaderWriter, pushPlan PushPlan, checkPlan CheckPlan, promotePlan PromotePlan, cleanupPlan CleanupPlan, rollingDeployPlan RollingDeployPlan, deleteCandidatePlan DeleteCandidatePlan) ResourcePlan {
 	return planner{
 		manifestReaderWrite: manifestReaderWrite,
-		fs:                  fs,
 		pushPlan:            pushPlan,
 		promotePlan:         promotePlan,
 		cleanupPlan:         cleanupPlan,
@@ -38,36 +32,9 @@ func NewPlanner(manifestReaderWrite manifest.ReaderWriter, fs afero.Afero, pushP
 	}
 }
 
-func (p planner) setFullPathInRequest(request config.Request, baseDir string) config.Request {
-	updatedRequest := request
-
-	updatedRequest.Params.ManifestPath = path.Join(baseDir, updatedRequest.Params.ManifestPath)
-
-	if updatedRequest.Params.AppPath != "" {
-		updatedRequest.Params.AppPath = path.Join(baseDir, updatedRequest.Params.AppPath)
-	}
-
-	if updatedRequest.Params.DockerTag != "" {
-		updatedRequest.Params.DockerTag = path.Join(baseDir, updatedRequest.Params.DockerTag)
-	}
-
-	if request.Params.GitRefPath != "" {
-		updatedRequest.Params.GitRefPath = path.Join(baseDir, request.Params.GitRefPath)
-	}
-
-	if request.Params.BuildVersionPath != "" {
-		updatedRequest.Params.BuildVersionPath = path.Join(baseDir, request.Params.BuildVersionPath)
-	}
-
-	return updatedRequest
-}
-
-func (p planner) Plan(request config.Request, baseDir string, appsSummary []cfclient.AppSummary) (pl Plan, err error) {
+func (p planner) Plan(request config.Request, appsSummary []cfclient.AppSummary) (pl Plan, err error) {
 	// Here we assume that the request is complete.
-	// It has already been verified in out.go with the help of requests.VerifyRequest.
-
-	// Here we update the paths to take into account baseDir root
-	request = p.setFullPathInRequest(request, baseDir)
+	// It has already been verified.
 
 	readManifest, err := p.readManifest(request.Params.ManifestPath)
 	if err != nil {
@@ -87,16 +54,6 @@ func (p planner) Plan(request config.Request, baseDir string, appsSummary []cfcl
 		"-o", request.Source.Org,
 		"-s", request.Source.Space))
 
-	var dockerTag string
-	if request.Params.DockerTag != "" {
-		content, e := p.fs.ReadFile(request.Params.DockerTag)
-		if e != nil {
-			err = e
-			return
-		}
-		dockerTag = strings.TrimSpace(string(content))
-	}
-
 	switch request.Params.Command {
 	case config.PUSH, config.ROLLING_DEPLOY:
 		if err = p.updateManifestWithVars(request); err != nil {
@@ -106,9 +63,9 @@ func (p planner) Plan(request config.Request, baseDir string, appsSummary []cfcl
 
 		switch request.Params.Command {
 		case config.PUSH:
-			pl = append(pl, p.pushPlan.Plan(appUnderDeployment, request, dockerTag)...)
+			pl = append(pl, p.pushPlan.Plan(appUnderDeployment, request)...)
 		case config.ROLLING_DEPLOY:
-			pl = append(pl, p.rollingDeployPlan.Plan(appUnderDeployment, request, dockerTag)...)
+			pl = append(pl, p.rollingDeployPlan.Plan(appUnderDeployment, request)...)
 		}
 	case config.CHECK:
 		// We dont actually need to login for this as we are using a cf client for this specific task..
@@ -147,36 +104,17 @@ func (p planner) updateManifestWithVars(request config.Request) (err error) {
 			app.EnvironmentVariables[key] = value
 		}
 
-		if request.Params.GitRefPath != "" {
-			ref, errRead := p.readFile(request.Params.GitRefPath)
-			if errRead != nil {
-				err = errRead
-				return
-			}
-			app.EnvironmentVariables["GIT_REVISION"] = ref
+		if request.Metadata.GitRef != "" {
+			app.EnvironmentVariables["GIT_REVISION"] = request.Metadata.GitRef
 		}
 
-		if request.Params.BuildVersionPath != "" {
-			version, errRead := p.readFile(request.Params.BuildVersionPath)
-			if errRead != nil {
-				err = errRead
-				return
-			}
-			app.EnvironmentVariables["BUILD_VERSION"] = version
+		if request.Metadata.Version != "" {
+			app.EnvironmentVariables["BUILD_VERSION"] = request.Metadata.Version
 		}
 
 		if err = p.manifestReaderWrite.WriteManifest(request.Params.ManifestPath, app); err != nil {
 			return
 		}
 	}
-	return
-}
-
-func (p planner) readFile(gitRefPath string) (ref string, err error) {
-	bytes, err := p.fs.ReadFile(gitRefPath)
-	if err != nil {
-		return
-	}
-	ref = strings.TrimSpace(string(bytes))
 	return
 }

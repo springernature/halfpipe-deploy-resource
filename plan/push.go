@@ -9,13 +9,13 @@ import (
 )
 
 type PushPlan interface {
-	Plan(manifest manifest.Application, request config.Request, dockerTag string) (pl Plan)
+	Plan(manifest manifest.Application, request config.Request) (pl Plan)
 }
 
 type pushPlan struct{}
 
-func (p pushPlan) Plan(manifest manifest.Application, request config.Request, dockerTag string) (pl Plan) {
-	pl = append(pl, p.pushCommand(manifest, request, dockerTag))
+func (p pushPlan) Plan(manifest manifest.Application, request config.Request) (pl Plan) {
+	pl = append(pl, p.pushCommand(manifest, request))
 
 	if !manifest.NoRoute {
 		pl = append(pl, NewCfCommand("map-route").
@@ -46,7 +46,7 @@ func (p pushPlan) Plan(manifest manifest.Application, request config.Request, do
 	return
 }
 
-func (p pushPlan) pushCommand(manifest manifest.Application, request config.Request, dockerTag string) Command {
+func (p pushPlan) pushCommand(manifest manifest.Application, request config.Request) Command {
 	pushCommand := NewCfCommand("push").
 		AddToArgs(createCandidateAppName(manifest.Name)).
 		AddToArgs("-f", request.Params.ManifestPath)
@@ -59,7 +59,7 @@ func (p pushPlan) pushCommand(manifest manifest.Application, request config.Requ
 		pushCommand = pushCommand.AddToArgs("-p", request.Params.AppPath)
 	} else {
 		pushCommand = pushCommand.
-			AddToArgs("--docker-image", p.formatDockerImage(manifest, dockerTag)).
+			AddToArgs("--docker-image", p.formatDockerImage(manifest, request.Metadata.DockerTag)).
 			AddToArgs("--docker-username", request.Params.DockerUsername).
 			AddToEnv(fmt.Sprintf("CF_DOCKER_PASSWORD=%s", request.Params.DockerPassword))
 	}

@@ -8,23 +8,23 @@ import (
 )
 
 type RollingDeployPlan interface {
-	Plan(manifest manifest.Application, request config.Request, dockerTag string) (pl Plan)
+	Plan(manifest manifest.Application, request config.Request) (pl Plan)
 }
 
 type rollingDeployPlan struct{}
 
-func (p rollingDeployPlan) Plan(manifest manifest.Application, request config.Request, dockerTag string) (pl Plan) {
+func (p rollingDeployPlan) Plan(manifest manifest.Application, request config.Request) (pl Plan) {
 	pushCommand := NewCfCommand("push").
 		AddToArgs("--manifest", request.Params.ManifestPath).
 		AddToArgs("--strategy", "rolling")
 
 	if manifest.Docker.Image != "" {
 		image := manifest.Docker.Image
-		if dockerTag != "" {
+		if request.Metadata.DockerTag != "" {
 			if strings.Contains(image, ":") {
 				image = strings.Split(image, ":")[0]
 			}
-			image = fmt.Sprintf("%s:%s", image, dockerTag)
+			image = fmt.Sprintf("%s:%s", image, request.Metadata.DockerTag)
 		}
 		pushCommand = pushCommand.
 			AddToArgs("--docker-image", image).

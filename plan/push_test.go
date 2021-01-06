@@ -55,7 +55,7 @@ func TestNormalApp(t *testing.T) {
 				Name: "My_App",
 			}
 
-			p := NewPushPlan().Plan(applicationManifest, requestWithUnderscore, "")
+			p := NewPushPlan().Plan(applicationManifest, requestWithUnderscore)
 			assert.Len(t, p, 3)
 			assert.Equal(t, "cf push My_App-CANDIDATE -f path/to/manifest.yml -p path/to/app --no-route --no-start", p[0].String())
 			assert.Equal(t, "cf map-route My_App-CANDIDATE kehe.com -n My-App-this-is-a-space-CANDIDATE", p[1].String())
@@ -68,7 +68,7 @@ func TestNormalApp(t *testing.T) {
 			}
 			r := request
 			r.Params.Instances = 1
-			p := NewPushPlan().Plan(applicationManifest, r, "")
+			p := NewPushPlan().Plan(applicationManifest, r)
 			assert.Len(t, p, 3)
 			assert.Equal(t, "cf push MyApp-CANDIDATE -f path/to/manifest.yml -i 1 -p path/to/app --no-route --no-start", p[0].String())
 			assert.Equal(t, "cf map-route MyApp-CANDIDATE kehe.com -n MyApp-c-CANDIDATE", p[1].String())
@@ -81,7 +81,7 @@ func TestNormalApp(t *testing.T) {
 
 			r := request
 			r.Params.PreStartCommand = "cf something; cf somethingElse"
-			p := NewPushPlan().Plan(applicationManifest, r, "")
+			p := NewPushPlan().Plan(applicationManifest, r)
 
 			assert.Len(t, p, 5)
 			assert.Equal(t, "cf push MyApp-CANDIDATE -f path/to/manifest.yml -p path/to/app --no-route --no-start", p[0].String())
@@ -98,7 +98,7 @@ func TestNormalApp(t *testing.T) {
 			NoRoute: true,
 		}
 
-		p := NewPushPlan().Plan(applicationManifest, request, "")
+		p := NewPushPlan().Plan(applicationManifest, request)
 		assert.Len(t, p, 2)
 		assert.Equal(t, "cf push MyApp-CANDIDATE -f path/to/manifest.yml -p path/to/app --no-route --no-start", p[0].String())
 		assert.Equal(t, "cf start MyApp-CANDIDATE || cf logs MyApp-CANDIDATE --recent", p[1].String())
@@ -117,7 +117,7 @@ func TestDocker(t *testing.T) {
 		r := request
 		r.Params.DockerUsername = "asd"
 
-		p := NewPushPlan().Plan(applicationManifest, r, "")
+		p := NewPushPlan().Plan(applicationManifest, r)
 		assert.Len(t, p, 3)
 		assert.Equal(t, "CF_DOCKER_PASSWORD=... cf push MyApp-CANDIDATE -f path/to/manifest.yml --docker-image wheep/whuup --docker-username asd --no-route --no-start", p[0].String())
 		assert.Equal(t, "cf map-route MyApp-CANDIDATE kehe.com -n MyApp-c-CANDIDATE", p[1].String())
@@ -136,7 +136,7 @@ func TestDocker(t *testing.T) {
 		r := request
 		r.Params.DockerUsername = "kehe"
 
-		p := NewPushPlan().Plan(applicationManifest, r, "")
+		p := NewPushPlan().Plan(applicationManifest, r)
 		assert.Len(t, p, 2)
 		assert.Equal(t, "CF_DOCKER_PASSWORD=... cf push MyApp-CANDIDATE -f path/to/manifest.yml --docker-image wheep/whuup --docker-username kehe --no-route --no-start", p[0].String())
 		assert.Equal(t, "cf start MyApp-CANDIDATE || cf logs MyApp-CANDIDATE --recent", p[1].String())
@@ -154,7 +154,7 @@ func TestDocker(t *testing.T) {
 			r := request
 			r.Params.DockerUsername = "asd"
 
-			p := NewPushPlan().Plan(applicationManifest, r, "")
+			p := NewPushPlan().Plan(applicationManifest, r)
 			assert.Len(t, p, 3)
 			assert.Equal(t, "CF_DOCKER_PASSWORD=... cf push MyApp-CANDIDATE -f path/to/manifest.yml --docker-image wheep/whuup --docker-username asd --no-route --no-start", p[0].String())
 			assert.Equal(t, "cf map-route MyApp-CANDIDATE kehe.com -n MyApp-c-CANDIDATE", p[1].String())
@@ -174,7 +174,7 @@ func TestDocker(t *testing.T) {
 			r := request
 			r.Params.DockerUsername = "asd"
 
-			p := NewPushPlan().Plan(applicationManifest, r, "")
+			p := NewPushPlan().Plan(applicationManifest, r)
 			assert.Len(t, p, 3)
 			assert.Equal(t, fmt.Sprintf("CF_DOCKER_PASSWORD=... cf push MyApp-CANDIDATE -f path/to/manifest.yml --docker-image wheep/whuup:%s --docker-username asd --no-route --no-start", dockerTag), p[0].String())
 			assert.Equal(t, "cf map-route MyApp-CANDIDATE kehe.com -n MyApp-c-CANDIDATE", p[1].String())
@@ -193,8 +193,9 @@ func TestDocker(t *testing.T) {
 
 			r := request
 			r.Params.DockerUsername = "asd"
+			r.Metadata.DockerTag = dockerTag
 
-			p := NewPushPlan().Plan(applicationManifest, r, dockerTag)
+			p := NewPushPlan().Plan(applicationManifest, r)
 			assert.Len(t, p, 3)
 			assert.Equal(t, fmt.Sprintf("CF_DOCKER_PASSWORD=... cf push MyApp-CANDIDATE -f path/to/manifest.yml --docker-image wheep/whuup:%s --docker-username asd --no-route --no-start", dockerTag), p[0].String())
 			assert.Equal(t, "cf map-route MyApp-CANDIDATE kehe.com -n MyApp-c-CANDIDATE", p[1].String())
@@ -213,8 +214,9 @@ func TestDocker(t *testing.T) {
 
 			r := request
 			r.Params.DockerUsername = "asd"
+			r.Metadata.DockerTag = dockerTag
 
-			p := NewPushPlan().Plan(applicationManifest, r, dockerTag)
+			p := NewPushPlan().Plan(applicationManifest, r)
 			assert.Len(t, p, 3)
 			assert.Equal(t, fmt.Sprintf("CF_DOCKER_PASSWORD=... cf push MyApp-CANDIDATE -f path/to/manifest.yml --docker-image wheep/whuup:%s --docker-username asd --no-route --no-start", dockerTag), p[0].String())
 			assert.Equal(t, "cf map-route MyApp-CANDIDATE kehe.com -n MyApp-c-CANDIDATE", p[1].String())

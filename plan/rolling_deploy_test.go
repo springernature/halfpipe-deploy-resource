@@ -35,7 +35,7 @@ func TestRollingDeployNormalApp(t *testing.T) {
 				Name: "MyApp",
 			}
 
-			p := NewRollingDeployPlan().Plan(applicationManifest, rollingRequest, "")
+			p := NewRollingDeployPlan().Plan(applicationManifest, rollingRequest)
 			assert.Len(t, p, 1)
 			assert.Equal(t, "cf push --manifest path/to/manifest.yml --strategy rolling --path path/to/app || cf logs MyApp --recent", p[0].String())
 		})
@@ -54,7 +54,7 @@ func TestRollingDeployDocker(t *testing.T) {
 		r := request
 		r.Params.DockerUsername = "asd"
 
-		p := NewRollingDeployPlan().Plan(applicationManifest, r, "")
+		p := NewRollingDeployPlan().Plan(applicationManifest, r)
 		assert.Len(t, p, 1)
 		assert.Equal(t, "CF_DOCKER_PASSWORD=... cf push --manifest path/to/manifest.yml --strategy rolling --docker-image wheep/whuup --docker-username asd || cf logs MyApp --recent", p[0].String())
 	})
@@ -71,7 +71,7 @@ func TestRollingDeployDocker(t *testing.T) {
 			r := request
 			r.Params.DockerUsername = "asd"
 
-			p := NewRollingDeployPlan().Plan(applicationManifest, r, "")
+			p := NewRollingDeployPlan().Plan(applicationManifest, r)
 			assert.Len(t, p, 1)
 			assert.Equal(t, "CF_DOCKER_PASSWORD=... cf push --manifest path/to/manifest.yml --strategy rolling --docker-image wheep/whuup --docker-username asd || cf logs MyApp --recent", p[0].String())
 		})
@@ -89,7 +89,7 @@ func TestRollingDeployDocker(t *testing.T) {
 			r := request
 			r.Params.DockerUsername = "asd"
 
-			p := NewRollingDeployPlan().Plan(applicationManifest, r, "")
+			p := NewRollingDeployPlan().Plan(applicationManifest, r)
 			assert.Len(t, p, 1)
 			assert.Equal(t, fmt.Sprintf("CF_DOCKER_PASSWORD=... cf push --manifest path/to/manifest.yml --strategy rolling --docker-image wheep/whuup:%s --docker-username asd || cf logs MyApp --recent", dockerTag), p[0].String())
 		})
@@ -106,8 +106,9 @@ func TestRollingDeployDocker(t *testing.T) {
 
 			r := request
 			r.Params.DockerUsername = "asd"
+			r.Metadata.DockerTag = dockerTag
 
-			p := NewRollingDeployPlan().Plan(applicationManifest, r, dockerTag)
+			p := NewRollingDeployPlan().Plan(applicationManifest, r)
 			assert.Len(t, p, 1)
 			assert.Equal(t, fmt.Sprintf("CF_DOCKER_PASSWORD=... cf push --manifest path/to/manifest.yml --strategy rolling --docker-image wheep/whuup:%s --docker-username asd || cf logs MyApp --recent", dockerTag), p[0].String())
 
@@ -125,8 +126,9 @@ func TestRollingDeployDocker(t *testing.T) {
 
 			r := request
 			r.Params.DockerUsername = "asd"
+			r.Metadata.DockerTag = dockerTag
 
-			p := NewRollingDeployPlan().Plan(applicationManifest, r, dockerTag)
+			p := NewRollingDeployPlan().Plan(applicationManifest, r)
 			assert.Len(t, p, 1)
 			assert.Equal(t, fmt.Sprintf("CF_DOCKER_PASSWORD=... cf push --manifest path/to/manifest.yml --strategy rolling --docker-image wheep/whuup:%s --docker-username asd || cf logs MyApp --recent", dockerTag), p[0].String())
 		})

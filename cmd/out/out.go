@@ -56,7 +56,7 @@ func main() {
 			requestConfig.Params.CliVersion = "cf6"
 		}
 
-		p, err = plan.NewPlanner(manifest.NewManifestReadWrite(fs), fs, plan.NewPushPlan(), plan.NewCheckPlan(), plan.NewPromotePlan(privateDomains), plan.NewCleanupPlan(), plan.NewRollingDeployPlan(), plan.NewDeleteCandidatePlan()).Plan(requestConfig, "", appsSummary)
+		p, err = plan.NewPlanner(manifest.NewManifestReadWrite(fs), plan.NewPushPlan(), plan.NewCheckPlan(), plan.NewPromotePlan(privateDomains), plan.NewCleanupPlan(), plan.NewRollingDeployPlan(), plan.NewDeleteCandidatePlan()).Plan(requestConfig, appsSummary)
 	default:
 		panic(fmt.Sprintf("Command '%s' not supported", requestConfig.Params.Command))
 	}
