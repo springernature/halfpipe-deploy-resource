@@ -2,17 +2,18 @@ package plan
 
 import (
 	"fmt"
+	"github.com/springernature/halfpipe-deploy-resource/config"
 	"github.com/springernature/halfpipe-deploy-resource/manifest"
 	"strings"
 )
 
 type RollingDeployPlan interface {
-	Plan(manifest manifest.Application, request Request, dockerTag string) (pl Plan)
+	Plan(manifest manifest.Application, request config.Request, dockerTag string) (pl Plan)
 }
 
 type rollingDeployPlan struct{}
 
-func (p rollingDeployPlan) Plan(manifest manifest.Application, request Request, dockerTag string) (pl Plan) {
+func (p rollingDeployPlan) Plan(manifest manifest.Application, request config.Request, dockerTag string) (pl Plan) {
 	pushCommand := NewCfCommand("push").
 		AddToArgs("--manifest", request.Params.ManifestPath).
 		AddToArgs("--strategy", "rolling")

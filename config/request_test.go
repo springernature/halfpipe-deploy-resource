@@ -1,7 +1,6 @@
-package plan
+package config
 
 import (
-	"github.com/springernature/halfpipe-deploy-resource/config"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -50,7 +49,7 @@ func TestVerifyErrorsIfNotAllSourceFieldsAreFilledOut(t *testing.T) {
 	}
 
 	for _, source := range invalidSourceRequests {
-		assert.Error(t, VerifyRequestSource(source))
+		assert.Error(t, source.Verify())
 	}
 
 	validSource := Source{
@@ -61,92 +60,92 @@ func TestVerifyErrorsIfNotAllSourceFieldsAreFilledOut(t *testing.T) {
 		Password: "c",
 	}
 
-	assert.Nil(t, VerifyRequestSource(validSource))
+	assert.Nil(t, validSource.Verify())
 }
 
 func TestVerifyErrorsIfNotAllRequiredParamsFieldsAreFilledOut(t *testing.T) {
 	missingCommand := Params{
 		Command: "",
 	}
-	assert.Equal(t, ParamsMissingError("command"), VerifyRequestParams(missingCommand))
+	assert.Equal(t, ParamsMissingError("command"), missingCommand.Verify())
 
 	missingManifestPath := Params{
 		Command: "Something",
 	}
-	assert.Equal(t, ParamsMissingError("manifestPath"), VerifyRequestParams(missingManifestPath))
+	assert.Equal(t, ParamsMissingError("manifestPath"), missingManifestPath.Verify())
 
 }
 
 func TestVerifyErrorsIfNotAllRequiredParamsFieldsForPushFilledOut(t *testing.T) {
 	missingTestDomain := Params{
-		Command:      config.PUSH,
+		Command:      PUSH,
 		CliVersion:   "cf6",
 		ManifestPath: "path",
 		TestDomain:   "",
 	}
-	assert.Equal(t, ParamsMissingError("testDomain"), VerifyRequestParams(missingTestDomain))
+	assert.Equal(t, ParamsMissingError("testDomain"), missingTestDomain.Verify())
 
 	missingAppPath := Params{
-		Command:      config.PUSH,
+		Command:      PUSH,
 		CliVersion:   "cf7",
 		ManifestPath: "path",
 		TestDomain:   "test.com",
 		AppPath:      "",
 	}
-	assert.Equal(t, ParamsMissingError("appPath"), VerifyRequestParams(missingAppPath))
+	assert.Equal(t, ParamsMissingError("appPath"), missingAppPath.Verify())
 
 	missingGitRefPath := Params{
-		Command:      config.PUSH,
+		Command:      PUSH,
 		CliVersion:   "cf6",
 		ManifestPath: "path",
 		TestDomain:   "test.com",
 		AppPath:      "path",
 		GitRefPath:   "",
 	}
-	assert.Equal(t, ParamsMissingError("gitRefPath"), VerifyRequestParams(missingGitRefPath))
+	assert.Equal(t, ParamsMissingError("gitRefPath"), missingGitRefPath.Verify())
 
 	allesOk := Params{
-		Command:      config.PUSH,
+		Command:      PUSH,
 		CliVersion:   "cf6",
 		ManifestPath: "path",
 		TestDomain:   "test.com",
 		AppPath:      "path",
 		GitRefPath:   "path",
 	}
-	assert.Nil(t, VerifyRequestParams(allesOk))
+	assert.Nil(t, allesOk.Verify())
 }
 
 func TestVerifyErrorsIfNotAllRequiredParamsFieldsForPromoteFilledOut(t *testing.T) {
 	missingTestDomain := Params{
-		Command:      config.PROMOTE,
+		Command:      PROMOTE,
 		CliVersion:   "cf6",
 		ManifestPath: "path",
 		TestDomain:   "",
 	}
-	assert.Equal(t, ParamsMissingError("testDomain"), VerifyRequestParams(missingTestDomain))
+	assert.Equal(t, ParamsMissingError("testDomain"), missingTestDomain.Verify())
 
 	allesOk := Params{
-		Command:      config.PROMOTE,
+		Command:      PROMOTE,
 		CliVersion:   "cf6",
 		ManifestPath: "path",
 		TestDomain:   "test.com",
 	}
-	assert.Nil(t, VerifyRequestParams(allesOk))
+	assert.Nil(t, allesOk.Verify())
 }
 
 func TestVerifyErrorsIfNotAllRequiredParamsFieldsForCleanupFilledOut(t *testing.T) {
 	allesOk := Params{
-		Command:      config.CLEANUP,
+		Command:      CLEANUP,
 		CliVersion:   "cf6",
 		ManifestPath: "path",
 	}
-	assert.Nil(t, VerifyRequestParams(allesOk))
+	assert.Nil(t, allesOk.Verify())
 }
 
 func TestPreStartCommandForPush(t *testing.T) {
 	t.Run("Invalid preStartCommand", func(t *testing.T) {
 		invalidParams := Params{
-			Command:         config.PUSH,
+			Command:         PUSH,
 			CliVersion:      "cf6",
 			ManifestPath:    "path",
 			TestDomain:      "test.com",
@@ -157,12 +156,12 @@ func TestPreStartCommandForPush(t *testing.T) {
 
 		expectedError := PreStartCommandError("something bad")
 
-		assert.Equal(t, expectedError, VerifyRequestParams(invalidParams))
+		assert.Equal(t, expectedError, invalidParams.Verify())
 	})
 
 	t.Run("Valid preStartCommand", func(t *testing.T) {
 		allesOk := Params{
-			Command:         config.PUSH,
+			Command:         PUSH,
 			CliVersion:      "cf6",
 			ManifestPath:    "path",
 			TestDomain:      "test.com",
@@ -171,13 +170,13 @@ func TestPreStartCommandForPush(t *testing.T) {
 			PreStartCommand: "cf something good",
 		}
 
-		assert.NoError(t, VerifyRequestParams(allesOk))
+		assert.NoError(t, allesOk.Verify())
 	})
 }
 
 func TestVerifyItDoesntErrorIfAppPathIsEmptyButDockerSpecified(t *testing.T) {
 	allesOk := Params{
-		Command:        config.PUSH,
+		Command:        PUSH,
 		CliVersion:     "cf6",
 		ManifestPath:   "path",
 		TestDomain:     "test.com",
@@ -185,5 +184,5 @@ func TestVerifyItDoesntErrorIfAppPathIsEmptyButDockerSpecified(t *testing.T) {
 		DockerUsername: "asd",
 		DockerPassword: "asd",
 	}
-	assert.Nil(t, VerifyRequestParams(allesOk))
+	assert.Nil(t, allesOk.Verify())
 }

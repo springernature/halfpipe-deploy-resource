@@ -1,6 +1,7 @@
 package plan
 
 import (
+	"github.com/springernature/halfpipe-deploy-resource/config"
 	"github.com/springernature/halfpipe-deploy-resource/logger"
 	"os"
 	"os/exec"
@@ -17,7 +18,7 @@ type cfCLIExecutor struct {
 
 // This executor differs from the executor used in the plugin in that it
 // executes CF binary through the operating system rather than through the plugin system.
-func NewCFCliExecutor(logger *logger.CapturingWriter, request Request) Executor {
+func NewCFCliExecutor(logger *logger.CapturingWriter, request config.Request) Executor {
 	return cfCLIExecutor{
 		logger:    logger,
 		cfVersion: request.Params.CliVersion,

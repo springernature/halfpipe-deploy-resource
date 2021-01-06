@@ -2,18 +2,19 @@ package plan
 
 import (
 	"fmt"
+	"github.com/springernature/halfpipe-deploy-resource/config"
 	"github.com/springernature/halfpipe-deploy-resource/manifest"
 	"strconv"
 	"strings"
 )
 
 type PushPlan interface {
-	Plan(manifest manifest.Application, request Request, dockerTag string) (pl Plan)
+	Plan(manifest manifest.Application, request config.Request, dockerTag string) (pl Plan)
 }
 
 type pushPlan struct{}
 
-func (p pushPlan) Plan(manifest manifest.Application, request Request, dockerTag string) (pl Plan) {
+func (p pushPlan) Plan(manifest manifest.Application, request config.Request, dockerTag string) (pl Plan) {
 	pl = append(pl, p.pushCommand(manifest, request, dockerTag))
 
 	if !manifest.NoRoute {
@@ -45,7 +46,7 @@ func (p pushPlan) Plan(manifest manifest.Application, request Request, dockerTag
 	return
 }
 
-func (p pushPlan) pushCommand(manifest manifest.Application, request Request, dockerTag string) Command {
+func (p pushPlan) pushCommand(manifest manifest.Application, request config.Request, dockerTag string) Command {
 	pushCommand := NewCfCommand("push").
 		AddToArgs(createCandidateAppName(manifest.Name)).
 		AddToArgs("-f", request.Params.ManifestPath)

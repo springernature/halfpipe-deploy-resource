@@ -2,6 +2,7 @@ package plan
 
 import (
 	"fmt"
+	"github.com/springernature/halfpipe-deploy-resource/config"
 	"github.com/springernature/halfpipe-deploy-resource/manifest"
 	"strings"
 )
@@ -10,7 +11,7 @@ func createCandidateAppName(name string) string {
 	return fmt.Sprintf("%s-CANDIDATE", name)
 }
 
-func createCandidateHostname(manifest manifest.Application, request Request) string {
+func createCandidateHostname(manifest manifest.Application, request config.Request) string {
 	return strings.Join([]string{
 		strings.Replace(manifest.Name, "_", "-", -1),
 		strings.Replace(request.Source.Space, "_", "-", -1),

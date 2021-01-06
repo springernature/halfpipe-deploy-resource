@@ -3,20 +3,21 @@ package plan
 import (
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/springernature/halfpipe-deploy-resource/config"
 	"github.com/springernature/halfpipe-deploy-resource/manifest"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-var request = Request{
-	Source: Source{
+var request = config.Request{
+	Source: config.Source{
 		API:      "a",
 		Org:      "b",
 		Space:    "c",
 		Username: "d",
 		Password: "e",
 	},
-	Params: Params{
+	Params: config.Params{
 		ManifestPath: "path/to/manifest.yml",
 		AppPath:      "path/to/app",
 		TestDomain:   "kehe.com",
@@ -31,15 +32,15 @@ func TestNormalApp(t *testing.T) {
 	t.Run("Normal app", func(t *testing.T) {
 		t.Run("No pre start", func(t *testing.T) {
 
-			var requestWithUnderscore = Request{
-				Source: Source{
+			var requestWithUnderscore = config.Request{
+				Source: config.Source{
 					API:      "a",
 					Org:      "b",
 					Space:    "this_is-a_space",
 					Username: "d",
 					Password: "e",
 				},
-				Params: Params{
+				Params: config.Params{
 					ManifestPath: "path/to/manifest.yml",
 					AppPath:      "path/to/app",
 					TestDomain:   "kehe.com",

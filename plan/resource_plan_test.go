@@ -12,15 +12,15 @@ import (
 	"github.com/springernature/halfpipe-deploy-resource/manifest"
 )
 
-var validRequest = Request{
-	Source: Source{
+var validRequest = config.Request{
+	Source: config.Source{
 		API:      "a",
 		Org:      "b",
 		Space:    "c",
 		Username: "d",
 		Password: "e",
 	},
-	Params: Params{
+	Params: config.Params{
 		ManifestPath:     "manifest.yml",
 		AppPath:          "",
 		TestDomain:       "kehe.com",
@@ -215,7 +215,7 @@ func (f fakeCheckPlanner) Plan(manifest manifest.Application, summary []cfclient
 	return f.plan
 }
 
-func (f fakePromotePlanner) Plan(manifest manifest.Application, request Request, summary []cfclient.AppSummary) (pl Plan) {
+func (f fakePromotePlanner) Plan(manifest manifest.Application, request config.Request, summary []cfclient.AppSummary) (pl Plan) {
 	return f.plan
 }
 
@@ -227,12 +227,12 @@ func (f fakeDeleteCandidatePlanner) Plan(manifest manifest.Application, summary 
 	return f.plan
 }
 
-func (f *fakePushPlanner) Plan(manifest manifest.Application, request Request, dockerTag string) (pl Plan) {
+func (f *fakePushPlanner) Plan(manifest manifest.Application, request config.Request, dockerTag string) (pl Plan) {
 	f.dockerTag = dockerTag
 	return f.plan
 }
 
-func (f *fakeRollingDeployPlanner) Plan(manifest manifest.Application, request Request, dockerTag string) (pl Plan) {
+func (f *fakeRollingDeployPlanner) Plan(manifest manifest.Application, request config.Request, dockerTag string) (pl Plan) {
 	f.dockerTag = dockerTag
 	return f.plan
 }

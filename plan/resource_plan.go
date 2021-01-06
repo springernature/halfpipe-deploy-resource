@@ -11,7 +11,7 @@ import (
 )
 
 type ResourcePlan interface {
-	Plan(request Request, concourseRoot string, appsSummary []cfclient.AppSummary) (plan Plan, err error)
+	Plan(request config.Request, baseDir string, appsSummary []cfclient.AppSummary) (plan Plan, err error)
 }
 
 type planner struct {
@@ -38,36 +38,36 @@ func NewPlanner(manifestReaderWrite manifest.ReaderWriter, fs afero.Afero, pushP
 	}
 }
 
-func (p planner) setFullPathInRequest(request Request, concourseRoot string) Request {
+func (p planner) setFullPathInRequest(request config.Request, baseDir string) config.Request {
 	updatedRequest := request
 
-	updatedRequest.Params.ManifestPath = path.Join(concourseRoot, updatedRequest.Params.ManifestPath)
+	updatedRequest.Params.ManifestPath = path.Join(baseDir, updatedRequest.Params.ManifestPath)
 
 	if updatedRequest.Params.AppPath != "" {
-		updatedRequest.Params.AppPath = path.Join(concourseRoot, updatedRequest.Params.AppPath)
+		updatedRequest.Params.AppPath = path.Join(baseDir, updatedRequest.Params.AppPath)
 	}
 
 	if updatedRequest.Params.DockerTag != "" {
-		updatedRequest.Params.DockerTag = path.Join(concourseRoot, updatedRequest.Params.DockerTag)
+		updatedRequest.Params.DockerTag = path.Join(baseDir, updatedRequest.Params.DockerTag)
 	}
 
 	if request.Params.GitRefPath != "" {
-		updatedRequest.Params.GitRefPath = path.Join(concourseRoot, request.Params.GitRefPath)
+		updatedRequest.Params.GitRefPath = path.Join(baseDir, request.Params.GitRefPath)
 	}
 
 	if request.Params.BuildVersionPath != "" {
-		updatedRequest.Params.BuildVersionPath = path.Join(concourseRoot, request.Params.BuildVersionPath)
+		updatedRequest.Params.BuildVersionPath = path.Join(baseDir, request.Params.BuildVersionPath)
 	}
 
 	return updatedRequest
 }
 
-func (p planner) Plan(request Request, concourseRoot string, appsSummary []cfclient.AppSummary) (pl Plan, err error) {
+func (p planner) Plan(request config.Request, baseDir string, appsSummary []cfclient.AppSummary) (pl Plan, err error) {
 	// Here we assume that the request is complete.
 	// It has already been verified in out.go with the help of requests.VerifyRequest.
 
-	// Here we update the paths to take into account concourse root
-	request = p.setFullPathInRequest(request, concourseRoot)
+	// Here we update the paths to take into account baseDir root
+	request = p.setFullPathInRequest(request, baseDir)
 
 	readManifest, err := p.readManifest(request.Params.ManifestPath)
 	if err != nil {
@@ -128,7 +128,7 @@ func (p planner) readManifest(manifestPath string) (manifest.Manifest, error) {
 	return p.manifestReaderWrite.ReadManifest(manifestPath)
 }
 
-func (p planner) updateManifestWithVars(request Request) (err error) {
+func (p planner) updateManifestWithVars(request config.Request) (err error) {
 	if len(request.Params.Vars) > 0 || request.Params.GitRefPath != "" {
 		apps, e := p.readManifest(request.Params.ManifestPath)
 		if e != nil {

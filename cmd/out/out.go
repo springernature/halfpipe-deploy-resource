@@ -6,8 +6,8 @@ import (
 	"github.com/gookit/color"
 	"github.com/springernature/halfpipe-deploy-resource/fixes"
 	"github.com/springernature/halfpipe-deploy-resource/logger"
-	"io/ioutil"
 	"os"
+	"strings"
 	"syscall"
 	"time"
 
@@ -18,55 +18,47 @@ import (
 	"github.com/springernature/halfpipe-deploy-resource/plan"
 )
 
-func main() {
-	concourseRoot := os.Args[1]
+func environmentToMap() map[string]string {
+	env := make(map[string]string)
+	for _, element := range os.Environ() {
+		parts := strings.Split(element, "=")
+		env[parts[0]] = parts[1]
+	}
+	return env
+}
 
+func main() {
 	started := time.Now()
 
 	logger := logger.NewLogger(os.Stderr)
 
-	data, err := ioutil.ReadAll(os.Stdin)
+	requestConfig, err := config.NewRequestReader(os.Args, environmentToMap(), os.Stdin, afero.Afero{Fs: afero.NewOsFs()}).ReadRequest()
 	if err != nil {
 		logger.Println(err)
 		syscall.Exit(1)
 	}
 
-	if err := ioutil.WriteFile("/tmp/request", data, 0777); err != nil {
-		logger.Println(err)
-		syscall.Exit(1)
-	}
-
-	request := plan.Request{}
-	err = json.Unmarshal(data, &request)
+	cfClient, appsSummary, privateDomains, err := getApps(requestConfig)
 	if err != nil {
-		logger.Println(err)
-		syscall.Exit(1)
-	}
-
-	cfClient, appsSummary, privateDomains, err := getApps(request)
-	if err != nil {
-		errStr := fmt.Sprintf("Unable to login to org: %s, space: %s with user %s", request.Source.Org, request.Source.Space, request.Source.Username)
+		errStr := fmt.Sprintf("Unable to login to api: %s, org: %s, space: %s with user %s", requestConfig.Source.API, requestConfig.Source.Org, requestConfig.Source.Space, requestConfig.Source.Username)
 		logger.Println(errStr)
 		logger.Println(err)
 		syscall.Exit(1)
 	}
 
 	var p plan.Plan
-	switch request.Params.Command {
+	switch requestConfig.Params.Command {
 	case "":
 		panic("params.command must not be empty")
-	case config.PUSH, config.CHECK, config.PROMOTE, config.DELETE, config.CLEANUP, config.ROLLING_DEPLOY, config.DELETE_CANDIDATE:
+	case config.PUSH, config.CHECK, config.PROMOTE, config.DELETE, config.CLEANUP, config.ROLLING_DEPLOY, config.DELETE_CANDIDATE, config.ALL:
 		fs := afero.Afero{Fs: afero.NewOsFs()}
-		if request.Params.CliVersion == "" {
-			request.Params.CliVersion = "cf6"
-		}
-		if err = plan.VerifyRequest(request); err != nil {
-			break
+		if requestConfig.Params.CliVersion == "" {
+			requestConfig.Params.CliVersion = "cf6"
 		}
 
-		p, err = plan.NewPlanner(manifest.NewManifestReadWrite(fs), fs, plan.NewPushPlan(), plan.NewCheckPlan(), plan.NewPromotePlan(privateDomains), plan.NewCleanupPlan(), plan.NewRollingDeployPlan(), plan.NewDeleteCandidatePlan()).Plan(request, concourseRoot, appsSummary)
+		p, err = plan.NewPlanner(manifest.NewManifestReadWrite(fs), fs, plan.NewPushPlan(), plan.NewCheckPlan(), plan.NewPromotePlan(privateDomains), plan.NewCleanupPlan(), plan.NewRollingDeployPlan(), plan.NewDeleteCandidatePlan()).Plan(requestConfig, "", appsSummary)
 	default:
-		panic(fmt.Sprintf("Command '%s' not supported", request.Params.Command))
+		panic(fmt.Sprintf("Command '%s' not supported", requestConfig.Params.Command))
 	}
 
 	if err != nil {
@@ -76,16 +68,16 @@ func main() {
 
 	logger.Println(color.New(color.FgGreen).Sprintf("%s", p.String()))
 
-	timeout, err := getTimeout(request)
+	timeout, err := getTimeout(requestConfig)
 	if err != nil {
 		logger.Println(err)
 		os.Exit(1)
 	}
 
-	if err = p.Execute(plan.NewCFCliExecutor(&logger, request), cfClient, &logger, timeout); err != nil {
+	if err = p.Execute(plan.NewCFCliExecutor(&logger, requestConfig), cfClient, &logger, timeout); err != nil {
 		logger.Println(err)
 		logger.Println("")
-		for _, fix := range fixes.SuggestFix(logger.BytesWritten, request) {
+		for _, fix := range fixes.SuggestFix(logger.BytesWritten, requestConfig) {
 			logger.Println(fix)
 		}
 
@@ -99,9 +91,9 @@ func main() {
 			Timestamp: finished,
 		},
 		Metadata: []plan.MetadataPair{
-			{Name: "Api", Value: request.Source.API},
-			{Name: "Org", Value: request.Source.Org},
-			{Name: "Space", Value: request.Source.Space},
+			{Name: "Api", Value: requestConfig.Source.API},
+			{Name: "Org", Value: requestConfig.Source.Org},
+			{Name: "Space", Value: requestConfig.Source.Space},
 			{Name: "Duration", Value: finished.Sub(started).String()},
 		},
 	}
@@ -110,14 +102,14 @@ func main() {
 	}
 }
 
-func getTimeout(request plan.Request) (time.Duration, error) {
+func getTimeout(request config.Request) (time.Duration, error) {
 	if request.Params.Timeout == "" {
 		return 5 * time.Minute, nil
 	}
 	return time.ParseDuration(request.Params.Timeout)
 }
 
-func getApps(request plan.Request) (client *cfclient.Client, appSummary []cfclient.AppSummary, privateDomains []cfclient.Domain, err error) {
+func getApps(request config.Request) (client *cfclient.Client, appSummary []cfclient.AppSummary, privateDomains []cfclient.Domain, err error) {
 	c := &cfclient.Config{
 		ApiAddress: request.Source.API,
 		Username:   request.Source.Username,

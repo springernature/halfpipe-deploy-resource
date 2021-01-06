@@ -3,20 +3,21 @@ package plan
 import (
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/springernature/halfpipe-deploy-resource/config"
 	"github.com/springernature/halfpipe-deploy-resource/manifest"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-var rollingRequest = Request{
-	Source: Source{
+var rollingRequest = config.Request{
+	Source: config.Source{
 		API:      "a",
 		Org:      "b",
 		Space:    "c",
 		Username: "d",
 		Password: "e",
 	},
-	Params: Params{
+	Params: config.Params{
 		ManifestPath: "path/to/manifest.yml",
 		AppPath:      "path/to/app",
 		TestDomain:   "kehe.com",
