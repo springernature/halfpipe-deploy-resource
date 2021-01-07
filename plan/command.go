@@ -8,44 +8,56 @@ import (
 
 type Command interface {
 	fmt.Stringer
+	Cmd() string
 	Args() []string
 	Env() []string
 	AddToArgs(args ...string) Command
 	AddToEnv(env ...string) Command
 }
 
-type cfCommand struct {
+type command struct {
 	command string
 	args    []string
 	env     []string
 }
 
+func (c command) Cmd() string {
+	return c.command
+}
+
 func NewCfCommand(args ...string) Command {
-	return cfCommand{
+	return command{
 		command: "cf",
 		args:    args,
 	}
 }
 
-func (c cfCommand) Args() []string {
+func NewShellCommand(cmd string, args ...string) Command {
+	return command{
+		command: cmd,
+		args:    args,
+	}
+}
+
+func (c command) Args() []string {
 	return c.args
 }
 
-func (c cfCommand) Env() []string {
+func (c command) Env() []string {
 	return c.env
 }
 
-func (c cfCommand) AddToArgs(args ...string) Command {
+func (c command) AddToArgs(args ...string) Command {
 	c.args = append(c.args, args...)
 	return c
 }
 
-func (c cfCommand) AddToEnv(env ...string) Command {
+func (c command) AddToEnv(env ...string) Command {
 	c.env = append(c.env, env...)
 	return c
 }
 
-func (c cfCommand) String() string {
+func (c command) String() string {
 	var commandArgs = strings.Join(c.args, " ")
 
 	if strings.HasPrefix(commandArgs, "login") {

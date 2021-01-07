@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/spf13/afero"
 	"io"
 	"io/ioutil"
@@ -26,7 +27,7 @@ func NewRequestReader(osArgs []string, environ map[string]string, stdin io.Reade
 }
 
 func (r RequestReader) isActions() bool {
-	return r.environ["GITHUB_WORKSPACE"] == "/github/workspace"
+	return r.environ["GITHUB_WORKSPACE"] != ""
 }
 
 func (r RequestReader) actionRequest() (request Request) {
@@ -48,11 +49,6 @@ func (r RequestReader) actionRequest() (request Request) {
 	return
 }
 
-func (r RequestReader) readGitRef(request Request) (ref string, err error) {
-	//request.Params.GitRefPath
-	return
-}
-
 func (r RequestReader) concourseRequest() (request Request, err error) {
 	data, err := ioutil.ReadAll(r.stdin)
 	if err != nil {
@@ -70,6 +66,7 @@ func (r RequestReader) concourseRequest() (request Request, err error) {
 
 func (r RequestReader) parseRequest() (request Request, err error) {
 	if r.isActions() {
+		fmt.Println("Is action")
 		request = r.actionRequest()
 		return
 	}
@@ -156,16 +153,17 @@ func (r RequestReader) addGitRefAndVersion(request Request) (updated Request, er
 }
 
 func (r RequestReader) ReadRequest() (request Request, err error) {
+	fmt.Println(10)
 	request, err = r.parseRequest()
 	if err != nil {
 		return
 	}
-
+	fmt.Println(20)
 	if request.Params.CliVersion == "" {
 		request.Params.CliVersion = "cf6"
 	}
 
-	if e := request.Verify(); e != nil {
+	if e := request.Verify(r.isActions()); e != nil {
 		err = e
 		return
 	}

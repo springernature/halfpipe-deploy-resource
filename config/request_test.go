@@ -67,12 +67,12 @@ func TestVerifyErrorsIfNotAllRequiredParamsFieldsAreFilledOut(t *testing.T) {
 	missingCommand := Params{
 		Command: "",
 	}
-	assert.Equal(t, ParamsMissingError("command"), missingCommand.Verify())
+	assert.Equal(t, ParamsMissingError("command"), missingCommand.Verify(false))
 
 	missingManifestPath := Params{
 		Command: "Something",
 	}
-	assert.Equal(t, ParamsMissingError("manifestPath"), missingManifestPath.Verify())
+	assert.Equal(t, ParamsMissingError("manifestPath"), missingManifestPath.Verify(false))
 
 }
 
@@ -83,7 +83,7 @@ func TestVerifyErrorsIfNotAllRequiredParamsFieldsForPushFilledOut(t *testing.T) 
 		ManifestPath: "path",
 		TestDomain:   "",
 	}
-	assert.Equal(t, ParamsMissingError("testDomain"), missingTestDomain.Verify())
+	assert.Equal(t, ParamsMissingError("testDomain"), missingTestDomain.Verify(false))
 
 	missingAppPath := Params{
 		Command:      PUSH,
@@ -92,7 +92,7 @@ func TestVerifyErrorsIfNotAllRequiredParamsFieldsForPushFilledOut(t *testing.T) 
 		TestDomain:   "test.com",
 		AppPath:      "",
 	}
-	assert.Equal(t, ParamsMissingError("appPath"), missingAppPath.Verify())
+	assert.Equal(t, ParamsMissingError("appPath"), missingAppPath.Verify(false))
 
 	missingGitRefPath := Params{
 		Command:      PUSH,
@@ -102,7 +102,7 @@ func TestVerifyErrorsIfNotAllRequiredParamsFieldsForPushFilledOut(t *testing.T) 
 		AppPath:      "path",
 		GitRefPath:   "",
 	}
-	assert.Equal(t, ParamsMissingError("gitRefPath"), missingGitRefPath.Verify())
+	assert.Equal(t, ParamsMissingError("gitRefPath"), missingGitRefPath.Verify(false))
 
 	allesOk := Params{
 		Command:      PUSH,
@@ -112,7 +112,16 @@ func TestVerifyErrorsIfNotAllRequiredParamsFieldsForPushFilledOut(t *testing.T) 
 		AppPath:      "path",
 		GitRefPath:   "path",
 	}
-	assert.Nil(t, allesOk.Verify())
+	assert.Nil(t, allesOk.Verify(false))
+
+	allesOkWithAction := Params{
+		Command:      PUSH,
+		CliVersion:   "cf6",
+		ManifestPath: "path",
+		TestDomain:   "test.com",
+		AppPath:      "path",
+	}
+	assert.Nil(t, allesOkWithAction.Verify(true))
 }
 
 func TestVerifyErrorsIfNotAllRequiredParamsFieldsForPromoteFilledOut(t *testing.T) {
@@ -122,7 +131,7 @@ func TestVerifyErrorsIfNotAllRequiredParamsFieldsForPromoteFilledOut(t *testing.
 		ManifestPath: "path",
 		TestDomain:   "",
 	}
-	assert.Equal(t, ParamsMissingError("testDomain"), missingTestDomain.Verify())
+	assert.Equal(t, ParamsMissingError("testDomain"), missingTestDomain.Verify(false))
 
 	allesOk := Params{
 		Command:      PROMOTE,
@@ -130,7 +139,7 @@ func TestVerifyErrorsIfNotAllRequiredParamsFieldsForPromoteFilledOut(t *testing.
 		ManifestPath: "path",
 		TestDomain:   "test.com",
 	}
-	assert.Nil(t, allesOk.Verify())
+	assert.Nil(t, allesOk.Verify(false))
 }
 
 func TestVerifyErrorsIfNotAllRequiredParamsFieldsForCleanupFilledOut(t *testing.T) {
@@ -139,7 +148,7 @@ func TestVerifyErrorsIfNotAllRequiredParamsFieldsForCleanupFilledOut(t *testing.
 		CliVersion:   "cf6",
 		ManifestPath: "path",
 	}
-	assert.Nil(t, allesOk.Verify())
+	assert.Nil(t, allesOk.Verify(false))
 }
 
 func TestPreStartCommandForPush(t *testing.T) {
@@ -156,7 +165,7 @@ func TestPreStartCommandForPush(t *testing.T) {
 
 		expectedError := PreStartCommandError("something bad")
 
-		assert.Equal(t, expectedError, invalidParams.Verify())
+		assert.Equal(t, expectedError, invalidParams.Verify(false))
 	})
 
 	t.Run("Valid preStartCommand", func(t *testing.T) {
@@ -170,7 +179,7 @@ func TestPreStartCommandForPush(t *testing.T) {
 			PreStartCommand: "cf something good",
 		}
 
-		assert.NoError(t, allesOk.Verify())
+		assert.NoError(t, allesOk.Verify(false))
 	})
 }
 
@@ -184,5 +193,5 @@ func TestVerifyItDoesntErrorIfAppPathIsEmptyButDockerSpecified(t *testing.T) {
 		DockerUsername: "asd",
 		DockerPassword: "asd",
 	}
-	assert.Nil(t, allesOk.Verify())
+	assert.Nil(t, allesOk.Verify(false))
 }

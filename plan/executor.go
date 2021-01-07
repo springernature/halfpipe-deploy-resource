@@ -26,7 +26,14 @@ func NewCFCliExecutor(logger *logger.CapturingWriter, request config.Request) Ex
 }
 
 func (c cfCLIExecutor) CliCommand(command Command) (out []string, err error) {
-	execCmd := exec.Command(c.cfVersion, command.Args()...) // #nosec disables the gas warning for this line.
+	var execCmd *exec.Cmd
+
+	if command.Cmd() == "cf" {
+		execCmd = exec.Command(c.cfVersion, command.Args()...) // #nosec disables the gas warning for this line.
+	} else {
+		execCmd = exec.Command(command.Cmd(), command.Args()...) // #nosec disables the gas warning for this line.
+	}
+
 	execCmd.Stdout = c.logger
 	execCmd.Stderr = c.logger
 	execCmd.Env = append(os.Environ(), command.Env()...)

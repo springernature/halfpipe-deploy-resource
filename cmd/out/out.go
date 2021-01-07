@@ -29,15 +29,15 @@ func environmentToMap() map[string]string {
 
 func main() {
 	started := time.Now()
-
+	fmt.Println(1)
 	logger := logger.NewLogger(os.Stderr)
-
+	fmt.Println(2)
 	requestConfig, err := config.NewRequestReader(os.Args, environmentToMap(), os.Stdin, afero.Afero{Fs: afero.NewOsFs()}).ReadRequest()
 	if err != nil {
 		logger.Println(err)
 		syscall.Exit(1)
 	}
-
+	fmt.Println(3)
 	cfClient, appsSummary, privateDomains, err := getApps(requestConfig)
 	if err != nil {
 		errStr := fmt.Sprintf("Unable to login to api: %s, org: %s, space: %s with user %s", requestConfig.Source.API, requestConfig.Source.Org, requestConfig.Source.Space, requestConfig.Source.Username)

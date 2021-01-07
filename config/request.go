@@ -60,12 +60,12 @@ func PreStartCommandError(preStartCommand string) error {
 	return errors.New(fmt.Sprintf("invalid preStartCommand - only cf commands are allowed: '%s'", preStartCommand))
 }
 
-func (r Request) Verify() error {
+func (r Request) Verify(isActions bool) error {
 	if err := r.Source.Verify(); err != nil {
 		return err
 	}
 
-	if err := r.Params.Verify(); err != nil {
+	if err := r.Params.Verify(isActions); err != nil {
 		return err
 	}
 
@@ -96,7 +96,7 @@ func (source Source) Verify() error {
 	return nil
 }
 
-func (params Params) Verify() error {
+func (params Params) Verify(isActions bool) error {
 	if params.Command == "" {
 		return ParamsMissingError("command")
 	}
@@ -121,7 +121,7 @@ func (params Params) Verify() error {
 			}
 		}
 
-		if params.GitRefPath == "" {
+		if params.GitRefPath == "" && !isActions {
 			return ParamsMissingError("gitRefPath")
 		}
 
