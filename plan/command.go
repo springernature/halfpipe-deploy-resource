@@ -32,13 +32,6 @@ func NewCfCommand(args ...string) Command {
 	}
 }
 
-func NewShellCommand(cmd string, args ...string) Command {
-	return command{
-		command: cmd,
-		args:    args,
-	}
-}
-
 func (c command) Args() []string {
 	return c.args
 }

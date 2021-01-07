@@ -81,7 +81,6 @@ func (p planner) Plan(request config.Request, appsSummary []cfclient.AppSummary)
 		}
 
 		pl = append(pl, p.pushPlan.Plan(appUnderDeployment, request)...)
-		pl = append(pl, NewShellCommand("sleep", "10"))
 		pl = append(pl, p.checkPlan.Plan(appUnderDeployment, appsSummary)...)
 		pl = append(pl, p.promotePlan.Plan(appUnderDeployment, request, appsSummary)...)
 		pl = append(pl, p.cleanupPlan.Plan(appUnderDeployment, appsSummary)...)

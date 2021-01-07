@@ -2,7 +2,6 @@ package config
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/spf13/afero"
 	"io"
 	"io/ioutil"
@@ -66,7 +65,6 @@ func (r RequestReader) concourseRequest() (request Request, err error) {
 
 func (r RequestReader) parseRequest() (request Request, err error) {
 	if r.isActions() {
-		fmt.Println("Is action")
 		request = r.actionRequest()
 		return
 	}
@@ -153,12 +151,11 @@ func (r RequestReader) addGitRefAndVersion(request Request) (updated Request, er
 }
 
 func (r RequestReader) ReadRequest() (request Request, err error) {
-	fmt.Println(10)
 	request, err = r.parseRequest()
 	if err != nil {
 		return
 	}
-	fmt.Println(20)
+
 	if request.Params.CliVersion == "" {
 		request.Params.CliVersion = "cf6"
 	}
