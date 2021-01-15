@@ -2,11 +2,11 @@ package fixes
 
 import (
 	"fmt"
-	"github.com/springernature/halfpipe-deploy-resource/plan"
+	"github.com/springernature/halfpipe-deploy-resource/config"
 	"strings"
 )
 
-var suggestDeveloperSpaceRole = func(log []byte, request plan.Request) (err error) {
+var suggestDeveloperSpaceRole = func(log []byte, request config.Request) (err error) {
 	if strings.Contains(string(log), "You are not authorized to perform the requested action") {
 		errorMsg := `'%s' does not have 'SpaceDeveloper' permissions on org/space '%s/%s'
 To fix ask your org admin to run 'cf set-space-role %s %s %s SpaceDeveloper'`
@@ -22,7 +22,7 @@ To fix ask your org admin to run 'cf set-space-role %s %s %s SpaceDeveloper'`
 	return
 }
 
-func SuggestFix(log []byte, request plan.Request) (fixes []error) {
+func SuggestFix(log []byte, request config.Request) (fixes []error) {
 	if err := suggestDeveloperSpaceRole(log, request); err != nil {
 		fixes = append(fixes, err)
 	}

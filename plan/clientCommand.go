@@ -37,6 +37,10 @@ func (c clientCommand) AddToEnv(env ...string) Command {
 	panic("AddToEnv should never be called on a clientCommand")
 }
 
+func (c clientCommand) Cmd() string {
+	return ""
+}
+
 func NewClientCommand(fun func(client *cfclient.Client, logger *logger.CapturingWriter) error) Command {
 	return clientCommand{
 		fun: fun,

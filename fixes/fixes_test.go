@@ -1,14 +1,14 @@
 package fixes
 
 import (
-	"github.com/springernature/halfpipe-deploy-resource/plan"
+	"github.com/springernature/halfpipe-deploy-resource/config"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestFixForNotAuthorizedToPerformAction(t *testing.T) {
-	r := plan.Request{
-		Source: plan.Source{
+	r := config.Request{
+		Source: config.Source{
 			Org:      "myOrg",
 			Space:    "mySpace",
 			Username: "myUser",
@@ -36,8 +36,8 @@ exit status 1
 }
 
 func TestNoFixWhenLogDoesntContainATrigger(t *testing.T) {
-	r := plan.Request{
-		Source: plan.Source{
+	r := config.Request{
+		Source: config.Source{
 			Org:      "myOrg",
 			Space:    "mySpace",
 			Username: "myUser",

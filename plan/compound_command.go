@@ -38,3 +38,7 @@ func (c compoundCommand) AddToArgs(args ...string) Command {
 func (c compoundCommand) AddToEnv(env ...string) Command {
 	panic("AddToEnv in compoundCommand should never be used")
 }
+
+func (c compoundCommand) Cmd() string {
+	panic("Cmd in compoundCommand should never be used")
+}

@@ -1,16 +1,21 @@
-package plan
+package config
 
 import (
 	"errors"
 	"fmt"
 	"strings"
-
-	"github.com/springernature/halfpipe-deploy-resource/config"
 )
 
 type Request struct {
-	Source Source
-	Params Params
+	Source   Source
+	Params   Params
+	Metadata Metadata
+}
+
+type Metadata struct {
+	GitRef    string
+	Version   string
+	DockerTag string
 }
 
 type Source struct {
@@ -55,19 +60,19 @@ func PreStartCommandError(preStartCommand string) error {
 	return errors.New(fmt.Sprintf("invalid preStartCommand - only cf commands are allowed: '%s'", preStartCommand))
 }
 
-func VerifyRequest(request Request) error {
-	if err := VerifyRequestSource(request.Source); err != nil {
+func (r Request) Verify(isActions bool) error {
+	if err := r.Source.Verify(); err != nil {
 		return err
 	}
 
-	if err := VerifyRequestParams(request.Params); err != nil {
+	if err := r.Params.Verify(isActions); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func VerifyRequestSource(source Source) error {
+func (source Source) Verify() error {
 	if source.API == "" {
 		return SourceMissingError("api")
 	}
@@ -91,7 +96,7 @@ func VerifyRequestSource(source Source) error {
 	return nil
 }
 
-func VerifyRequestParams(params Params) error {
+func (params Params) Verify(isActions bool) error {
 	if params.Command == "" {
 		return ParamsMissingError("command")
 	}
@@ -105,7 +110,7 @@ func VerifyRequestParams(params Params) error {
 	}
 
 	switch params.Command {
-	case config.PUSH:
+	case PUSH, ALL:
 		if params.TestDomain == "" {
 			return ParamsMissingError("testDomain")
 		}
@@ -116,14 +121,14 @@ func VerifyRequestParams(params Params) error {
 			}
 		}
 
-		if params.GitRefPath == "" {
+		if params.GitRefPath == "" && !isActions {
 			return ParamsMissingError("gitRefPath")
 		}
 
 		if len(params.PreStartCommand) > 0 && !strings.HasPrefix(params.PreStartCommand, "cf ") {
 			return PreStartCommandError(params.PreStartCommand)
 		}
-	case config.PROMOTE:
+	case PROMOTE:
 		if params.TestDomain == "" {
 			return ParamsMissingError("testDomain")
 		}

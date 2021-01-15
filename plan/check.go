@@ -16,20 +16,29 @@ type checkPlan struct {
 }
 
 func (p checkPlan) Plan(manifest manifest.Application, summary []cfclient.AppSummary) (pl Plan) {
-	guid := ""
-	for _, app := range summary {
-		if app.Name == createCandidateAppName(manifest.Name) {
-			guid = app.Guid
-		}
-	}
-
-	pl = append(pl, NewClientCommand(p.createFunc(guid)))
+	pl = append(pl, NewClientCommand(p.createFunc(createCandidateAppName(manifest.Name))))
 
 	return
 }
 
-func (p checkPlan) createFunc(appGuid string) func(*cfclient.Client, *logger.CapturingWriter) error {
+func (p checkPlan) createFunc(appName string) func(*cfclient.Client, *logger.CapturingWriter) error {
 	return func(cfClient *cfclient.Client, logger *logger.CapturingWriter) error {
+		apps, err := cfClient.ListApps()
+		if err != nil {
+			return err
+		}
+
+		var appGuid string
+		for _, app := range apps {
+			if app.Name == appName {
+				appGuid = app.Guid
+			}
+		}
+
+		if appGuid == "" {
+			return fmt.Errorf("Could not find appGuid for '%s'", appName)
+		}
+
 		for true {
 			instances, err := cfClient.GetAppInstances(appGuid)
 			if err != nil {

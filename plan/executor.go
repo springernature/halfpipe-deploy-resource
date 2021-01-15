@@ -1,6 +1,7 @@
 package plan
 
 import (
+	"github.com/springernature/halfpipe-deploy-resource/config"
 	"github.com/springernature/halfpipe-deploy-resource/logger"
 	"os"
 	"os/exec"
@@ -17,7 +18,7 @@ type cfCLIExecutor struct {
 
 // This executor differs from the executor used in the plugin in that it
 // executes CF binary through the operating system rather than through the plugin system.
-func NewCFCliExecutor(logger *logger.CapturingWriter, request Request) Executor {
+func NewCFCliExecutor(logger *logger.CapturingWriter, request config.Request) Executor {
 	return cfCLIExecutor{
 		logger:    logger,
 		cfVersion: request.Params.CliVersion,
@@ -25,7 +26,14 @@ func NewCFCliExecutor(logger *logger.CapturingWriter, request Request) Executor 
 }
 
 func (c cfCLIExecutor) CliCommand(command Command) (out []string, err error) {
-	execCmd := exec.Command(c.cfVersion, command.Args()...) // #nosec disables the gas warning for this line.
+	var execCmd *exec.Cmd
+
+	if command.Cmd() == "cf" {
+		execCmd = exec.Command(c.cfVersion, command.Args()...) // #nosec disables the gas warning for this line.
+	} else {
+		execCmd = exec.Command(command.Cmd(), command.Args()...) // #nosec disables the gas warning for this line.
+	}
+
 	execCmd.Stdout = c.logger
 	execCmd.Stderr = c.logger
 	execCmd.Env = append(os.Environ(), command.Env()...)

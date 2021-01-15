@@ -25,3 +25,4 @@ COPY --from=builder /bin/cf6 /bin/cf6
 COPY --from=builder /bin/cf7 /bin/cf7
 
 FROM resource
+ENTRYPOINT ["/opt/resource/out"]

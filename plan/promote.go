@@ -2,19 +2,20 @@ package plan
 
 import (
 	"github.com/cloudfoundry-community/go-cfclient"
+	"github.com/springernature/halfpipe-deploy-resource/config"
 	"github.com/springernature/halfpipe-deploy-resource/manifest"
 	"strings"
 )
 
 type PromotePlan interface {
-	Plan(manifest manifest.Application, request Request, summary []cfclient.AppSummary) (pl Plan)
+	Plan(manifest manifest.Application, request config.Request, summary []cfclient.AppSummary) (pl Plan)
 }
 
 type promotePlan struct {
 	privateDomainsInOrg []cfclient.Domain
 }
 
-func (p promotePlan) Plan(manifest manifest.Application, request Request, summary []cfclient.AppSummary) (pl Plan) {
+func (p promotePlan) Plan(manifest manifest.Application, request config.Request, summary []cfclient.AppSummary) (pl Plan) {
 	currentLive, currentOld, currentDeletes := p.getPreviousAppState(manifest.Name, summary)
 
 	pl = append(pl, p.addManifestRoutes(manifest)...)
@@ -114,7 +115,7 @@ func (p promotePlan) addManifestRoutes(man manifest.Application) (cmds []Command
 	return
 }
 
-func (p promotePlan) unmapTestRoute(man manifest.Application, request Request) (cmds []Command) {
+func (p promotePlan) unmapTestRoute(man manifest.Application, request config.Request) (cmds []Command) {
 	if !man.NoRoute {
 		unmapRoute := NewCfCommand("unmap-route", createCandidateAppName(man.Name), request.Params.TestDomain, "--hostname", createCandidateHostname(man, request))
 		cmds = append(cmds, unmapRoute)
