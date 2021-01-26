@@ -39,6 +39,9 @@ func TestReadRequest(t *testing.T) {
 			"GITHUB_SHA":         "ref",
 			"GITHUB_RUN_NUMBER":  "run number",
 			"GITHUB_WORKSPACE":   "/github/workspace",
+			"CF_ENV_VAR_VAR":     "a",
+			"CF_ENV_VAR_VAR2":    "b",
+			"CF_ENV_VAR_var_3":   "c",
 		}
 
 		expected := Request{
@@ -55,6 +58,11 @@ func TestReadRequest(t *testing.T) {
 				AppPath:      "/github/workspace/app",
 				TestDomain:   "test domain",
 				CliVersion:   "cf6",
+				Vars: map[string]string{
+					"VAR": "a",
+					"VAR2": "b",
+					"var_3": "c",
+				},
 			},
 			Metadata: Metadata{
 				GitRef:  "ref",

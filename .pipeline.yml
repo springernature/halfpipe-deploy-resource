@@ -33,9 +33,9 @@ resources:
   source:
     api: ((cloudfoundry.api-snpaas))
     org: engineering-enablement
-    password: ((cloudfoundry.password))
+    password: ((cloudfoundry.password-snpaas))
     space: integration_test
-    username: ((cloudfoundry.username))
+    username: ((cloudfoundry.username-snpaas))
   check_every: 24h
 resource_types:
 - name: cf-resource

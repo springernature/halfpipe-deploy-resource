@@ -150,6 +150,23 @@ func (r RequestReader) addGitRefAndVersion(request Request) (updated Request, er
 	return
 }
 
+func (r RequestReader) addVars(request Request) (updated Request) {
+	updated = request
+	prefix := "CF_ENV_VAR_"
+	if r.isActions() {
+		updated.Params.Vars = make(map[string]string)
+		for k, v := range r.environ {
+			if strings.HasPrefix(k, prefix) {
+				newKey := strings.Replace(k, prefix, "", -1)
+				updated.Params.Vars[newKey] = v
+			}
+		}
+		return
+	}
+
+	return
+}
+
 func (r RequestReader) ReadRequest() (request Request, err error) {
 	request, err = r.parseRequest()
 	if err != nil {
@@ -166,6 +183,7 @@ func (r RequestReader) ReadRequest() (request Request, err error) {
 	}
 
 	request = r.setFullPathInRequest(request)
+	request = r.addVars(request)
 	request, err = r.addGitRefAndVersion(request)
 
 	return
