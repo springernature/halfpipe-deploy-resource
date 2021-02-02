@@ -110,7 +110,7 @@ func (params Params) Verify(isActions bool) error {
 	}
 
 	switch params.Command {
-	case PUSH, ALL:
+	case PUSH:
 		if params.TestDomain == "" {
 			return ParamsMissingError("testDomain")
 		}

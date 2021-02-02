@@ -75,14 +75,6 @@ func (p planner) Plan(request config.Request, appsSummary []cfclient.AppSummary)
 		pl = append(pl, p.cleanupPlan.Plan(appUnderDeployment, appsSummary)...)
 	case config.DELETE_CANDIDATE:
 		pl = append(pl, p.deleteCandidatePlan.Plan(appUnderDeployment, appsSummary)...)
-	case config.ALL:
-		if err = p.updateManifestWithVars(request); err != nil {
-			return
-		}
-
-		pl = append(pl, p.pushPlan.Plan(appUnderDeployment, request)...)
-		pl = append(pl, p.checkPlan.Plan(appUnderDeployment, appsSummary)...)
-		pl = append(pl, p.promotePlan.Plan(appUnderDeployment, request, appsSummary)...)
 	}
 
 	return

@@ -49,7 +49,7 @@ func main() {
 	switch requestConfig.Params.Command {
 	case "":
 		panic("params.command must not be empty")
-	case config.PUSH, config.CHECK, config.PROMOTE, config.DELETE, config.CLEANUP, config.ROLLING_DEPLOY, config.DELETE_CANDIDATE, config.ALL:
+	case config.PUSH, config.CHECK, config.PROMOTE, config.DELETE, config.CLEANUP, config.ROLLING_DEPLOY, config.DELETE_CANDIDATE:
 		fs := afero.Afero{Fs: afero.NewOsFs()}
 		if requestConfig.Params.CliVersion == "" {
 			requestConfig.Params.CliVersion = "cf6"
