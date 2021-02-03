@@ -2,9 +2,11 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/spf13/afero"
 	"io"
 	"io/ioutil"
+	"os"
 	"path"
 	"strings"
 )
@@ -45,6 +47,13 @@ func (r RequestReader) actionRequest() (request Request) {
 		TestDomain:     r.environ["INPUT_TESTDOMAIN"],
 		DockerUsername: r.environ["INPUT_DOCKERUSERNAME"],
 		DockerPassword: r.environ["INPUT_DOCKERPASSWORD"],
+	}
+
+	fmt.Fprintln(os.Stderr, "This is the struct\n")
+	fmt.Fprintln(os.Stderr, fmt.Sprintf("%+v\n", request.Params))
+	fmt.Fprintln(os.Stderr, "This is the environ\n")
+	for k, v := range r.environ {
+		fmt.Fprintln(os.Stderr, fmt.Sprintf("%s = %s", k, v))
 	}
 
 	return
