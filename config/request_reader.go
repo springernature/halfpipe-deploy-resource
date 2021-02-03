@@ -39,10 +39,12 @@ func (r RequestReader) actionRequest() (request Request) {
 	}
 
 	request.Params = Params{
-		Command:      r.environ["INPUT_COMMAND"],
-		AppPath:      r.environ["INPUT_APPPATH"],
-		ManifestPath: r.environ["INPUT_MANIFESTPATH"],
-		TestDomain:   r.environ["INPUT_TESTDOMAIN"],
+		Command:        r.environ["INPUT_COMMAND"],
+		AppPath:        r.environ["INPUT_APPPATH"],
+		ManifestPath:   r.environ["INPUT_MANIFESTPATH"],
+		TestDomain:     r.environ["INPUT_TESTDOMAIN"],
+		DockerUsername: r.environ["INPUT_DOCKERUSERNAME"],
+		DockerPassword: r.environ["INPUT_DOCKERPASSWORD"],
 	}
 
 	return
