@@ -21,7 +21,7 @@ import (
 func environmentToMap() map[string]string {
 	env := make(map[string]string)
 	for _, element := range os.Environ() {
-		parts := strings.Split(element, "=")
+		parts := strings.SplitN(element, "=", 2)
 		env[parts[0]] = parts[1]
 	}
 	return env

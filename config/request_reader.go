@@ -1,7 +1,6 @@
 package config
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"github.com/spf13/afero"
 	"io"
@@ -30,7 +29,7 @@ func (r RequestReader) isActions() bool {
 	return r.environ["GITHUB_WORKSPACE"] != ""
 }
 
-func (r RequestReader) actionRequest() (request Request, err error) {
+func (r RequestReader) actionRequest() (request Request) {
 	request.Source = Source{
 		API:      r.environ["INPUT_API"],
 		Org:      r.environ["INPUT_ORG"],
@@ -39,18 +38,13 @@ func (r RequestReader) actionRequest() (request Request, err error) {
 		Password: r.environ["INPUT_PASSWORD"],
 	}
 
-	dockerPassword, err := base64.StdEncoding.DecodeString(r.environ["INPUT_DOCKERPASSWORD"])
-	if err != nil {
-		return
-	}
-
 	request.Params = Params{
 		Command:        r.environ["INPUT_COMMAND"],
 		AppPath:        r.environ["INPUT_APPPATH"],
 		ManifestPath:   r.environ["INPUT_MANIFESTPATH"],
 		TestDomain:     r.environ["INPUT_TESTDOMAIN"],
 		DockerUsername: r.environ["INPUT_DOCKERUSERNAME"],
-		DockerPassword: string(dockerPassword),
+		DockerPassword: r.environ["INPUT_DOCKERPASSWORD"],
 	}
 
 	return
@@ -73,7 +67,7 @@ func (r RequestReader) concourseRequest() (request Request, err error) {
 
 func (r RequestReader) parseRequest() (request Request, err error) {
 	if r.isActions() {
-		return r.actionRequest()
+		return r.actionRequest(), nil
 	}
 	return r.concourseRequest()
 }
