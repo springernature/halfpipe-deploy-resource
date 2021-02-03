@@ -49,9 +49,9 @@ func (r RequestReader) actionRequest() (request Request) {
 		DockerPassword: r.environ["INPUT_DOCKERPASSWORD"],
 	}
 
-	fmt.Fprintln(os.Stderr, "This is the struct\n")
+	fmt.Fprintln(os.Stderr, "This is the struct")
 	fmt.Fprintln(os.Stderr, fmt.Sprintf("%+v\n", request.Params))
-	fmt.Fprintln(os.Stderr, "This is the environ\n")
+	fmt.Fprintln(os.Stderr, "This is the environ")
 	for k, v := range r.environ {
 		fmt.Fprintln(os.Stderr, fmt.Sprintf("%s = %s", k, v))
 	}
