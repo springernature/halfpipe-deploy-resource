@@ -16,6 +16,7 @@ type Metadata struct {
 	GitRef    string
 	Version   string
 	DockerTag string
+	IsActions bool
 }
 
 type Source struct {

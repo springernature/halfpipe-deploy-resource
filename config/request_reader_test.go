@@ -59,14 +59,15 @@ func TestReadRequest(t *testing.T) {
 				TestDomain:   "test domain",
 				CliVersion:   "cf6",
 				Vars: map[string]string{
-					"VAR": "a",
-					"VAR2": "b",
+					"VAR":   "a",
+					"VAR2":  "b",
 					"var_3": "c",
 				},
 			},
 			Metadata: Metadata{
-				GitRef:  "ref",
-				Version: "run number",
+				GitRef:    "ref",
+				Version:   "run number",
+				IsActions: true,
 			},
 		}
 
@@ -151,7 +152,8 @@ func TestReadRequest(t *testing.T) {
 					CliVersion:   "cf6",
 				},
 				Metadata: Metadata{
-					GitRef: "ref",
+					GitRef:    "ref",
+					IsActions: false,
 				},
 			}
 

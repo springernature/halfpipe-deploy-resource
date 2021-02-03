@@ -96,8 +96,10 @@ func main() {
 			{Name: "Duration", Value: finished.Sub(started).String()},
 		},
 	}
-	if err = json.NewEncoder(os.Stdout).Encode(response); err != nil {
-		panic(err)
+	if !requestConfig.Metadata.IsActions {
+		if err = json.NewEncoder(os.Stdout).Encode(response); err != nil {
+			panic(err)
+		}
 	}
 }
 
