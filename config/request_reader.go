@@ -3,11 +3,9 @@ package config
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"github.com/spf13/afero"
 	"io"
 	"io/ioutil"
-	"os"
 	"path"
 	"strings"
 )
@@ -32,7 +30,7 @@ func (r RequestReader) isActions() bool {
 	return r.environ["GITHUB_WORKSPACE"] != ""
 }
 
-func (r RequestReader) actionRequest() (request Request) {
+func (r RequestReader) actionRequest() (request Request, err error) {
 	request.Source = Source{
 		API:      r.environ["INPUT_API"],
 		Org:      r.environ["INPUT_ORG"],
@@ -41,24 +39,19 @@ func (r RequestReader) actionRequest() (request Request) {
 		Password: r.environ["INPUT_PASSWORD"],
 	}
 
+	dockerPassword, err := base64.StdEncoding.DecodeString(r.environ["INPUT_DOCKERPASSWORD"])
+	if err != nil {
+		return
+	}
+
 	request.Params = Params{
 		Command:        r.environ["INPUT_COMMAND"],
 		AppPath:        r.environ["INPUT_APPPATH"],
 		ManifestPath:   r.environ["INPUT_MANIFESTPATH"],
 		TestDomain:     r.environ["INPUT_TESTDOMAIN"],
 		DockerUsername: r.environ["INPUT_DOCKERUSERNAME"],
-		DockerPassword: r.environ["INPUT_DOCKERPASSWORD"],
+		DockerPassword: string(dockerPassword),
 	}
-
-	fmt.Fprintln(os.Stderr, "This is the struct")
-	fmt.Fprintln(os.Stderr, fmt.Sprintf("%+v\n", request.Params))
-	fmt.Fprintln(os.Stderr, "This is the environ")
-	for k, v := range r.environ {
-		fmt.Fprintln(os.Stderr, fmt.Sprintf("%s = %s", k, v))
-	}
-
-	fmt.Fprintln(os.Stderr, "base64 encoded")
-	fmt.Fprintln(os.Stderr, base64.StdEncoding.EncodeToString([]byte(request.Params.DockerPassword)))
 
 	return
 }
@@ -80,7 +73,7 @@ func (r RequestReader) concourseRequest() (request Request, err error) {
 
 func (r RequestReader) parseRequest() (request Request, err error) {
 	if r.isActions() {
-		return r.actionRequest(), nil
+		return r.actionRequest()
 	}
 	return r.concourseRequest()
 }
