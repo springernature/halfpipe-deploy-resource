@@ -1,10 +1,11 @@
 package config
 
 import (
-	"github.com/spf13/afero"
-	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
+
+	"github.com/spf13/afero"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIsAction(t *testing.T) {
@@ -36,6 +37,7 @@ func TestReadRequest(t *testing.T) {
 			"INPUT_MANIFESTPATH": "app/cf/manifest.yml",
 			"INPUT_APPPATH":      "app",
 			"INPUT_TESTDOMAIN":   "test domain",
+			"INPUT_DOCKERTAG":    "docker-tag",
 			"GITHUB_SHA":         "ref",
 			"GITHUB_RUN_NUMBER":  "run number",
 			"GITHUB_WORKSPACE":   "/github/workspace",
@@ -57,6 +59,7 @@ func TestReadRequest(t *testing.T) {
 				ManifestPath: "/github/workspace/app/cf/manifest.yml",
 				AppPath:      "/github/workspace/app",
 				TestDomain:   "test domain",
+				DockerTag:    "docker-tag",
 				CliVersion:   "cf6",
 				Vars: map[string]string{
 					"VAR":   "a",

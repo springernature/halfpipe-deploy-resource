@@ -3,11 +3,12 @@ package config
 import (
 	"encoding/base64"
 	"encoding/json"
-	"github.com/spf13/afero"
 	"io"
 	"io/ioutil"
 	"path"
 	"strings"
+
+	"github.com/spf13/afero"
 )
 
 type RequestReader struct {
@@ -51,6 +52,7 @@ func (r RequestReader) actionRequest() (request Request, err error) {
 		TestDomain:     r.environ["INPUT_TESTDOMAIN"],
 		DockerUsername: r.environ["INPUT_DOCKERUSERNAME"],
 		DockerPassword: string(dockerPassword),
+		DockerTag:      r.environ["INPUT_DOCKERTAG"],
 	}
 
 	request.Metadata.IsActions = true
@@ -96,7 +98,7 @@ func (r RequestReader) setFullPathInRequest(request Request) Request {
 		updatedRequest.Params.AppPath = path.Join(r.baseDir(), updatedRequest.Params.AppPath)
 	}
 
-	if updatedRequest.Params.DockerTag != "" {
+	if !updatedRequest.Metadata.IsActions && updatedRequest.Params.DockerTag != "" {
 		updatedRequest.Params.DockerTag = path.Join(r.baseDir(), updatedRequest.Params.DockerTag)
 	}
 
@@ -146,12 +148,16 @@ func (r RequestReader) addGitRefAndVersion(request Request) (updated Request, er
 	}
 
 	if request.Params.DockerTag != "" {
-		content, e := readFile(request.Params.DockerTag)
-		if e != nil {
-			err = e
-			return
+		if r.isActions() {
+			updated.Metadata.DockerTag = request.Params.DockerTag
+		} else {
+			content, e := readFile(request.Params.DockerTag)
+			if e != nil {
+				err = e
+				return
+			}
+			updated.Metadata.DockerTag = content
 		}
-		updated.Metadata.DockerTag = content
 	}
 
 	return
