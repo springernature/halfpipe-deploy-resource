@@ -118,6 +118,7 @@ func (r RequestReader) addGitRefAndVersion(request Request) (updated Request, er
 	if r.isActions() {
 		updated.Metadata.GitRef = r.environ["GITHUB_SHA"]
 		updated.Metadata.Version = r.environ["GITHUB_RUN_NUMBER"]
+		updated.Metadata.DockerTag = request.Params.DockerTag
 		return
 	}
 
@@ -148,16 +149,12 @@ func (r RequestReader) addGitRefAndVersion(request Request) (updated Request, er
 	}
 
 	if request.Params.DockerTag != "" {
-		if r.isActions() {
-			updated.Metadata.DockerTag = request.Params.DockerTag
-		} else {
-			content, e := readFile(request.Params.DockerTag)
-			if e != nil {
-				err = e
-				return
-			}
-			updated.Metadata.DockerTag = content
+		content, e := readFile(request.Params.DockerTag)
+		if e != nil {
+			err = e
+			return
 		}
+		updated.Metadata.DockerTag = content
 	}
 
 	return

@@ -70,6 +70,7 @@ func TestReadRequest(t *testing.T) {
 			Metadata: Metadata{
 				GitRef:    "ref",
 				Version:   "run number",
+				DockerTag: "docker-tag",
 				IsActions: true,
 			},
 		}
