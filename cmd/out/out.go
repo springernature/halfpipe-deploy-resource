@@ -3,13 +3,14 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gookit/color"
-	"github.com/springernature/halfpipe-deploy-resource/fixes"
-	"github.com/springernature/halfpipe-deploy-resource/logger"
 	"os"
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/gookit/color"
+	"github.com/springernature/halfpipe-deploy-resource/fixes"
+	"github.com/springernature/halfpipe-deploy-resource/logger"
 
 	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/spf13/afero"
@@ -105,7 +106,7 @@ func main() {
 
 func getTimeout(request config.Request) (time.Duration, error) {
 	if request.Params.Timeout == "" {
-		return 5 * time.Minute, nil
+		return 15 * time.Minute, nil
 	}
 	return time.ParseDuration(request.Params.Timeout)
 }
