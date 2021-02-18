@@ -116,8 +116,8 @@ func (r RequestReader) setFullPathInRequest(request Request) Request {
 func (r RequestReader) addGitRefAndVersion(request Request) (updated Request, err error) {
 	updated = request
 	if r.isActions() {
-		updated.Metadata.GitRef = r.environ["GITHUB_SHA"]
-		updated.Metadata.Version = r.environ["GITHUB_RUN_NUMBER"]
+		updated.Metadata.GitRef = r.environ["GIT_REVISION"]
+		updated.Metadata.Version = r.environ["BUILD_VERSION"]
 		updated.Metadata.DockerTag = request.Params.DockerTag
 		return
 	}
