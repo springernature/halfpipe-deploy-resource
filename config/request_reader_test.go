@@ -82,6 +82,28 @@ func TestReadRequest(t *testing.T) {
 		assert.Equal(t, expected, req)
 	})
 
+	t.Run("empty app path", func(t *testing.T) {
+		env := map[string]string{
+			"INPUT_API":          "api",
+			"INPUT_ORG":          "org",
+			"INPUT_SPACE":        "space",
+			"INPUT_USERNAME":     "username",
+			"INPUT_PASSWORD":     "password",
+			"INPUT_COMMAND":      "command",
+			"INPUT_MANIFESTPATH": "app/cf/manifest.yml",
+			"INPUT_APPPATH":      "",
+			"GIT_REVISION":       "ref",
+			"BUILD_VERSION":      "run number",
+			"GITHUB_WORKSPACE":   "/github/workspace",
+		}
+
+		rr := NewRequestReader([]string{}, env, nil, afero.Afero{})
+		req, err := rr.ReadRequest()
+
+		assert.NoError(t, err)
+		assert.Equal(t, env["GITHUB_WORKSPACE"], req.Params.AppPath)
+	})
+
 	t.Run("Concourse", func(t *testing.T) {
 		validRequestWithoutVersionPath := `{
    "source": {

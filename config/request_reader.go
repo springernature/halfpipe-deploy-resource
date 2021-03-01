@@ -94,9 +94,7 @@ func (r RequestReader) setFullPathInRequest(request Request) Request {
 
 	updatedRequest.Params.ManifestPath = path.Join(r.baseDir(), updatedRequest.Params.ManifestPath)
 
-	if updatedRequest.Params.AppPath != "" {
-		updatedRequest.Params.AppPath = path.Join(r.baseDir(), updatedRequest.Params.AppPath)
-	}
+	updatedRequest.Params.AppPath = path.Join(r.baseDir(), updatedRequest.Params.AppPath)
 
 	if !updatedRequest.Metadata.IsActions && updatedRequest.Params.DockerTag != "" {
 		updatedRequest.Params.DockerTag = path.Join(r.baseDir(), updatedRequest.Params.DockerTag)
