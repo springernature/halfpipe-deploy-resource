@@ -53,6 +53,7 @@ func (r RequestReader) actionRequest() (request Request, err error) {
 		DockerUsername: r.environ["INPUT_DOCKERUSERNAME"],
 		DockerPassword: string(dockerPassword),
 		DockerTag:      r.environ["INPUT_DOCKERTAG"],
+		CliVersion:     r.environ["INPUT_CLI_VERSION"],
 	}
 
 	request.Metadata.IsActions = true

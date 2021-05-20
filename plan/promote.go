@@ -1,6 +1,7 @@
 package plan
 
 import (
+	"fmt"
 	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/springernature/halfpipe-deploy-resource/config"
 	"github.com/springernature/halfpipe-deploy-resource/manifest"
@@ -29,8 +30,20 @@ func (p promotePlan) Plan(manifest manifest.Application, request config.Request,
 
 func (p promotePlan) renameOldApp(manifest manifest.Application, oldApp cfclient.AppSummary, currentDeletes []cfclient.AppSummary) (cmds []Command) {
 	if oldApp.Name != "" {
-		i := len(currentDeletes)
-		cmds = append(cmds, NewCfCommand("rename", createOldAppName(manifest.Name), createDeleteName(manifest.Name, i)))
+		nextI := 0
+		for i := 1 ; i <= len(currentDeletes); i++ {
+			found := false
+			for _, currentDelete := range currentDeletes {
+				if strings.HasSuffix(currentDelete.Name, fmt.Sprintf("-%d", i)) {
+					found = true
+				}
+			}
+			if !found {
+				nextI = i
+				break
+			}
+		}
+		cmds = append(cmds, NewCfCommand("rename", createOldAppName(manifest.Name), createDeleteName(manifest.Name, nextI)))
 	}
 
 	return

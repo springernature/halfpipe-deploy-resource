@@ -117,7 +117,7 @@ type fakeDeleteCandidatePlanner struct {
 	plan Plan
 }
 
-func (f fakeCheckPlanner) Plan(manifest manifest.Application, summary []cfclient.AppSummary) (pl Plan) {
+func (f fakeCheckPlanner) Plan(manifest manifest.Application, org, space string) (pl Plan) {
 	return f.plan
 }
 

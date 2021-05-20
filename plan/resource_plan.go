@@ -66,9 +66,18 @@ func (p planner) Plan(request config.Request, appsSummary []cfclient.AppSummary)
 		case config.ROLLING_DEPLOY:
 			pl = append(pl, p.rollingDeployPlan.Plan(appUnderDeployment, request)...)
 		}
+	case config.ALL:
+		if err = p.updateManifestWithVars(request); err != nil {
+			return
+		}
+		pl = append(pl, p.pushPlan.Plan(appUnderDeployment, request)...)
+		pl = append(pl, p.checkPlan.Plan(appUnderDeployment, request.Source.Org, request.Source.Space)...)
+		pl = append(pl, p.promotePlan.Plan(appUnderDeployment, request, appsSummary)...)
+		pl = append(pl, NewDynamicCleanupPlan().Plan(appUnderDeployment, request.Source.Org, request.Source.Space)...)
+		//pl = append(pl, p.cleanupPlan.Plan(appUnderDeployment, appsSummary)...)
 	case config.CHECK:
 		// We dont actually need to login for this as we are using a cf client for this specific task..
-		pl = p.checkPlan.Plan(appUnderDeployment, appsSummary)
+		pl = p.checkPlan.Plan(appUnderDeployment, request.Source.Org, request.Source.Space)
 	case config.PROMOTE:
 		pl = append(pl, p.promotePlan.Plan(appUnderDeployment, request, appsSummary)...)
 	case config.CLEANUP, config.DELETE:

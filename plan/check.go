@@ -9,27 +9,52 @@ import (
 )
 
 type CheckPlan interface {
-	Plan(manifest manifest.Application, summary []cfclient.AppSummary) (pl Plan)
+	Plan(manifest manifest.Application, org, space string) (pl Plan)
 }
 
 type checkPlan struct {
 }
 
-func (p checkPlan) Plan(manifest manifest.Application, summary []cfclient.AppSummary) (pl Plan) {
-	guid := ""
-	for _, app := range summary {
-		if app.Name == createCandidateAppName(manifest.Name) {
-			guid = app.Guid
-		}
-	}
-
-	pl = append(pl, NewClientCommand(p.createFunc(guid)))
-
+func (p checkPlan) Plan(manifest manifest.Application, org, space string) (pl Plan) {
+	pl = append(pl, NewClientCommand(p.createFunc(createCandidateAppName(manifest.Name), org, space)))
 	return
 }
 
-func (p checkPlan) createFunc(appGuid string) func(*cfclient.Client, *logger.CapturingWriter) error {
+func (p checkPlan) getAppsInOrgSpace(client *cfclient.Client, orgName, spaceName string) (summary []cfclient.AppSummary, err error) {
+	org, err := client.GetOrgByName(orgName)
+	if err != nil {
+		return
+	}
+	space, err := client.GetSpaceByName(spaceName, org.Guid)
+	if err != nil {
+		return
+	}
+	spaceSummary, err := space.Summary()
+	if err != nil {
+		return
+	}
+	summary = spaceSummary.Apps
+	return
+}
+
+func (p checkPlan) createFunc(candidateAppName, org, space string) func(*cfclient.Client, *logger.CapturingWriter) error {
 	return func(cfClient *cfclient.Client, logger *logger.CapturingWriter) error {
+		apps, err := p.getAppsInOrgSpace(cfClient, org, space)
+		if err != nil {
+			return err
+		}
+
+		appGuid := ""
+		for _, app := range apps {
+			if app.Name == candidateAppName {
+				appGuid = app.Guid
+				break
+			}
+		}
+		if appGuid == "" {
+			return fmt.Errorf("failed to find appGuid for app '%s'", candidateAppName)
+		}
+
 		for true {
 			instances, err := cfClient.GetAppInstances(appGuid)
 			if err != nil {

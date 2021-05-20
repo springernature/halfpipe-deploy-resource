@@ -359,4 +359,54 @@ func TestPromoteNormalApp(t *testing.T) {
 		plan := NewPromotePlan(privateRoutesInOrg).Plan(man, validRequest, summary)
 		assert.Equal(t, expectedPlan, plan)
 	})
+
+	t.Run("If there is already a DELETE-1", func(t *testing.T) {
+		summary := []cfclient.AppSummary{
+			{
+				Name:  "myApp-CANDIDATE",
+				State: "STARTED",
+			},
+			{
+				Name: "myApp",
+			},
+			{
+				Name: "myApp-OLD",
+			},
+			{
+				Name: "myApp-DELETE-1",
+			},
+			{
+				Name: "myApp-DELETE-2",
+			},
+		}
+
+		man := manifest.Application{
+			Name: "myApp",
+			Routes: []manifest.Route{
+				{
+					Route: "myroute.domain1.com",
+				},
+				{
+					Route: "subroute.thisIsASpaceOwnedDomain.com",
+				},
+			},
+		}
+		privateRoutesInOrg := []cfclient.Domain{
+			{
+				Name: "thisIsASpaceOwnedDomain.com",
+			},
+		}
+
+		expectedPlan := Plan{
+			NewCfCommand("map-route", "myApp-CANDIDATE", "domain1.com", "--hostname", "myroute"),
+			NewCfCommand("map-route", "myApp-CANDIDATE", "thisIsASpaceOwnedDomain.com", "--hostname", "subroute"),
+			NewCfCommand("unmap-route", "myApp-CANDIDATE", validRequest.Params.TestDomain, "--hostname", createCandidateHostname(man, validRequest)),
+			NewCfCommand("rename", "myApp-OLD", "myApp-DELETE"),
+			NewCfCommand("rename", "myApp", "myApp-OLD"),
+			NewCfCommand("rename", "myApp-CANDIDATE", "myApp"),
+		}
+
+		plan := NewPromotePlan(privateRoutesInOrg).Plan(man, validRequest, summary)
+		assert.Equal(t, expectedPlan, plan)
+	})
 }
