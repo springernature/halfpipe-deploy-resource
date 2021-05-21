@@ -19,7 +19,6 @@ func (c clientCommand) CallWithCfClient(client *cfclient.Client, logger *logger.
 }
 
 func (c clientCommand) String() string {
-	// Todo this should be configurable
 	return c.description
 }
 

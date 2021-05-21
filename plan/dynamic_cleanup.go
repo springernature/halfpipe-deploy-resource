@@ -48,7 +48,6 @@ func (p dynamicCleanupPlan) createFunc(appName, org, space string) func(*cfclien
 		for _, app := range apps {
 			if strings.HasPrefix(app.Name, fmt.Sprintf("%s-DELETE", appName)) {
 				fmt.Println("Deleting ", app.Name)
-				// Todo check that this works with on prem.
 				err := cfClient.DeleteV3App(app.Guid)
 				if err != nil {
 					return err
