@@ -54,6 +54,7 @@ func (p dynamicCleanupPlan) createFunc(appName, org, space string) func(*cfclien
 				}
 			}
 		}
+		logger.Println("OK")
 		return nil
 	}
 }
