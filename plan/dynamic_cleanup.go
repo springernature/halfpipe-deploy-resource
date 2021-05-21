@@ -16,7 +16,8 @@ type dynamicCleanupPlan struct {
 }
 
 func (p dynamicCleanupPlan) Plan(manifest manifest.Application, org, space string) (pl Plan) {
-	pl = append(pl, NewClientCommand(p.createFunc(manifest.Name, org, space)))
+	desc := "Finding old apps to delete"
+	pl = append(pl, NewClientCommand(p.createFunc(manifest.Name, org, space), desc))
 	return
 }
 

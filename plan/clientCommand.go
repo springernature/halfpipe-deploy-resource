@@ -11,6 +11,7 @@ type ClientCommand interface {
 
 type clientCommand struct {
 	fun func(client *cfclient.Client, logger *logger.CapturingWriter) error
+	description string
 }
 
 func (c clientCommand) CallWithCfClient(client *cfclient.Client, logger *logger.CapturingWriter) error {
@@ -19,7 +20,7 @@ func (c clientCommand) CallWithCfClient(client *cfclient.Client, logger *logger.
 
 func (c clientCommand) String() string {
 	// Todo this should be configurable
-	return "Checking that all app instances are in running state"
+	return c.description
 }
 
 func (c clientCommand) Args() []string {
@@ -42,8 +43,9 @@ func (c clientCommand) Cmd() string {
 	return ""
 }
 
-func NewClientCommand(fun func(client *cfclient.Client, logger *logger.CapturingWriter) error) Command {
+func NewClientCommand(fun func(client *cfclient.Client, logger *logger.CapturingWriter) error, description string) Command {
 	return clientCommand{
 		fun: fun,
+		description: description,
 	}
 }

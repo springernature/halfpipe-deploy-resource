@@ -124,7 +124,7 @@ func TestPlan_ExecuteErrorsWhenACommandWithClientTimesOut(t *testing.T) {
 		NewClientCommand(func(client *cfclient.Client, logger *logger.CapturingWriter) error {
 			time.Sleep(6 * time.Millisecond)
 			return nil
-		}),
+		}, "description"),
 	}
 
 	err := p.Execute(nil, &cfclient.Client{}, &discardLogger, 5*time.Millisecond)

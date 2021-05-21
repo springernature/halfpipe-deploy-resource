@@ -16,7 +16,8 @@ type checkPlan struct {
 }
 
 func (p checkPlan) Plan(manifest manifest.Application, org, space string) (pl Plan) {
-	pl = append(pl, NewClientCommand(p.createFunc(createCandidateAppName(manifest.Name), org, space)))
+	desc := "Checking that all app instances are running"
+	pl = append(pl, NewClientCommand(p.createFunc(createCandidateAppName(manifest.Name), org, space), desc))
 	return
 }
 
