@@ -1,12 +1,27 @@
 package config
 
 import (
+	"errors"
+	"github.com/springernature/halfpipe-deploy-resource/manifest"
 	"strings"
 	"testing"
 
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 )
+
+type ManifestReadWriteStub struct {
+	manifest  manifest.Manifest
+	readError error
+}
+
+func (m *ManifestReadWriteStub) ReadManifest(path string) (manifest.Manifest, error) {
+	return m.manifest, m.readError
+}
+
+func (m *ManifestReadWriteStub) WriteManifest(path string, application manifest.Application) error {
+	panic("Should not be used in the test")
+}
 
 func TestIsAction(t *testing.T) {
 	t.Run("when github workspace is set", func(t *testing.T) {
@@ -26,6 +41,16 @@ func TestIsAction(t *testing.T) {
 }
 
 func TestReadRequest(t *testing.T) {
+	appName := "AppUnderDeployment"
+	okManifestReadWriter := ManifestReadWriteStub{
+		manifest: manifest.Manifest{
+			Applications: []manifest.Application{
+				{
+					Name: appName,
+				},
+			},
+		},
+	}
 	t.Run("Action", func(t *testing.T) {
 		env := map[string]string{
 			"INPUT_API":          "api",
@@ -71,11 +96,12 @@ func TestReadRequest(t *testing.T) {
 				GitRef:    "ref",
 				Version:   "run number",
 				DockerTag: "docker-tag",
+				AppName:   appName,
 				IsActions: true,
 			},
 		}
 
-		rr := NewRequestReader([]string{}, env, nil, afero.Afero{})
+		rr := NewRequestReader([]string{}, env, nil, afero.Afero{}, &okManifestReadWriter)
 		req, err := rr.ReadRequest()
 
 		assert.NoError(t, err)
@@ -97,7 +123,7 @@ func TestReadRequest(t *testing.T) {
 			"GITHUB_WORKSPACE":   "/github/workspace",
 		}
 
-		rr := NewRequestReader([]string{}, env, nil, afero.Afero{})
+		rr := NewRequestReader([]string{}, env, nil, afero.Afero{}, &okManifestReadWriter)
 		req, err := rr.ReadRequest()
 
 		assert.NoError(t, err)
@@ -142,7 +168,7 @@ func TestReadRequest(t *testing.T) {
 			fs := afero.Afero{Fs: afero.NewMemMapFs()}
 
 			stdin := strings.NewReader(validRequestWithoutVersionPath)
-			rr := NewRequestReader([]string{"/opt/resource/out", "/tmp/buildDir"}, map[string]string{}, stdin, fs)
+			rr := NewRequestReader([]string{"/opt/resource/out", "/tmp/buildDir"}, map[string]string{}, stdin, fs, &okManifestReadWriter)
 
 			_, err := rr.ReadRequest()
 			assert.Error(t, err)
@@ -153,11 +179,26 @@ func TestReadRequest(t *testing.T) {
 			fs := afero.Afero{Fs: afero.NewMemMapFs()}
 			fs.WriteFile("/tmp/buildDir/git/.git/ref", []byte("ref"), 0777)
 			stdin := strings.NewReader(validRequestWithVersionPath)
-			rr := NewRequestReader([]string{"/opt/resource/out", "/tmp/buildDir"}, map[string]string{}, stdin, fs)
+			rr := NewRequestReader([]string{"/opt/resource/out", "/tmp/buildDir"}, map[string]string{}, stdin, fs, &okManifestReadWriter)
 
 			_, err := rr.ReadRequest()
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "open /tmp/buildDir/version/version: file does not exist")
+		})
+
+		t.Run("fails to read manifest", func(t *testing.T) {
+			returnError := errors.New("failed to read manifest ayh")
+			errorManifestReadWriter := ManifestReadWriteStub{
+				readError: returnError,
+			}
+
+			fs := afero.Afero{Fs: afero.NewMemMapFs()}
+			fs.WriteFile("/tmp/buildDir/git/.git/ref", []byte("ref"), 0777)
+			stdin := strings.NewReader(validRequestWithoutVersionPath)
+			rr := NewRequestReader([]string{"/opt/resource/out", "/tmp/buildDir"}, map[string]string{}, stdin, fs, &errorManifestReadWriter)
+
+			_, err := rr.ReadRequest()
+			assert.Equal(t, returnError, err)
 		})
 
 		t.Run("no version", func(t *testing.T) {
@@ -179,6 +220,7 @@ func TestReadRequest(t *testing.T) {
 				},
 				Metadata: Metadata{
 					GitRef:    "ref",
+					AppName:   appName,
 					IsActions: false,
 				},
 			}
@@ -186,7 +228,7 @@ func TestReadRequest(t *testing.T) {
 			fs := afero.Afero{Fs: afero.NewMemMapFs()}
 			fs.WriteFile("/tmp/buildDir/git/.git/ref", []byte("ref"), 0777)
 			stdin := strings.NewReader(validRequestWithoutVersionPath)
-			rr := NewRequestReader([]string{"/opt/resource/out", "/tmp/buildDir"}, map[string]string{}, stdin, fs)
+			rr := NewRequestReader([]string{"/opt/resource/out", "/tmp/buildDir"}, map[string]string{}, stdin, fs, &okManifestReadWriter)
 
 			request, err := rr.ReadRequest()
 			assert.NoError(t, err)
@@ -215,6 +257,7 @@ func TestReadRequest(t *testing.T) {
 				Metadata: Metadata{
 					GitRef:  "ref",
 					Version: "version",
+					AppName: appName,
 				},
 			}
 
@@ -222,7 +265,7 @@ func TestReadRequest(t *testing.T) {
 			fs.WriteFile("/tmp/buildDir/git/.git/ref", []byte("ref"), 0777)
 			fs.WriteFile("/tmp/buildDir/version/version", []byte("version"), 0777)
 			stdin := strings.NewReader(validRequestWithVersionPath)
-			rr := NewRequestReader([]string{"/opt/resource/out", "/tmp/buildDir"}, map[string]string{}, stdin, fs)
+			rr := NewRequestReader([]string{"/opt/resource/out", "/tmp/buildDir"}, map[string]string{}, stdin, fs, &okManifestReadWriter)
 
 			request, err := rr.ReadRequest()
 			assert.NoError(t, err)

@@ -31,12 +31,20 @@ func environmentToMap() map[string]string {
 func main() {
 	started := time.Now()
 	logger := logger.NewLogger(os.Stderr)
+	fs := afero.Afero{Fs: afero.NewOsFs()}
 
-	requestConfig, err := config.NewRequestReader(os.Args, environmentToMap(), os.Stdin, afero.Afero{Fs: afero.NewOsFs()}).ReadRequest()
+	requestConfig, err := config.NewRequestReader(
+		os.Args,
+		environmentToMap(),
+		os.Stdin,
+		fs,
+		manifest.NewManifestReadWrite(fs)).ReadRequest()
 	if err != nil {
 		logger.Println(err)
 		syscall.Exit(1)
 	}
+
+	metrics := plan.NewMetrics(requestConfig, "https://pushgateway.k8s.springernature.io/")
 
 	cfClient, appsSummary, privateDomains, err := getApps(requestConfig)
 	if err != nil {
@@ -51,7 +59,7 @@ func main() {
 	case "":
 		panic("params.command must not be empty")
 	case config.PUSH, config.CHECK, config.PROMOTE, config.DELETE, config.CLEANUP, config.ROLLING_DEPLOY, config.DELETE_CANDIDATE, config.ALL:
-		fs := afero.Afero{Fs: afero.NewOsFs()}
+
 		if requestConfig.Params.CliVersion == "" {
 			requestConfig.Params.CliVersion = "cf6"
 		}
@@ -80,10 +88,11 @@ func main() {
 		for _, fix := range fixes.SuggestFix(logger.BytesWritten, requestConfig) {
 			logger.Println(fix)
 		}
-
+		metrics.Failure()
 		os.Exit(1)
 	}
 
+	metrics.Success()
 	finished := time.Now()
 
 	response := plan.Response{

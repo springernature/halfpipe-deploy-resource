@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/base64"
 	"encoding/json"
+	"github.com/springernature/halfpipe-deploy-resource/manifest"
 	"io"
 	"io/ioutil"
 	"path"
@@ -12,18 +13,20 @@ import (
 )
 
 type RequestReader struct {
-	osArgs  []string
-	environ map[string]string
-	stdin   io.Reader
-	fs      afero.Afero
+	osArgs              []string
+	environ             map[string]string
+	stdin               io.Reader
+	fs                  afero.Afero
+	manifestReaderWrite manifest.ReaderWriter
 }
 
-func NewRequestReader(osArgs []string, environ map[string]string, stdin io.Reader, fs afero.Afero) RequestReader {
+func NewRequestReader(osArgs []string, environ map[string]string, stdin io.Reader, fs afero.Afero, manifestReaderWrite manifest.ReaderWriter) RequestReader {
 	return RequestReader{
-		osArgs:  osArgs,
-		environ: environ,
-		stdin:   stdin,
-		fs:      fs,
+		osArgs:              osArgs,
+		environ:             environ,
+		stdin:               stdin,
+		fs:                  fs,
+		manifestReaderWrite: manifestReaderWrite,
 	}
 }
 
@@ -176,6 +179,17 @@ func (r RequestReader) addVars(request Request) (updated Request) {
 	return
 }
 
+func (r RequestReader) addAppName(request Request) (updated Request, err error) {
+	updated = request
+	manifest, err := r.manifestReaderWrite.ReadManifest(request.Params.ManifestPath)
+	if err != nil {
+		return
+	}
+	updated.Metadata.AppName = manifest.Applications[0].Name
+
+	return
+}
+
 func (r RequestReader) ReadRequest() (request Request, err error) {
 	request, err = r.parseRequest()
 	if err != nil {
@@ -194,6 +208,10 @@ func (r RequestReader) ReadRequest() (request Request, err error) {
 	request = r.setFullPathInRequest(request)
 	request = r.addVars(request)
 	request, err = r.addGitRefAndVersion(request)
+	if err != nil {
+		return
+	}
+	request, err = r.addAppName(request)
 
 	return
 }

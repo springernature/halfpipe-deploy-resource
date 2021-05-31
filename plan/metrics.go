@@ -1,11 +1,10 @@
 package plan
 
 import (
+	"github.com/springernature/halfpipe-deploy-resource/config"
 	"time"
 
 	"regexp"
-
-	"fmt"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
@@ -16,28 +15,30 @@ type Metrics interface {
 	Failure() error
 }
 
-func NewMetrics(request Request) Metrics {
+func NewMetrics(request config.Request, url string) Metrics {
 	return &prometheusMetrics{
+		url:       url,
 		request:   request,
 		startTime: time.Now(),
 		successCounter: prometheus.NewCounter(prometheus.CounterOpts{
-			Name: "halfpipe_cf_plugin_success",
-			Help: "Successful invocation of halfpipe cf plugin",
+			Name: "halfpipe_cf_success",
+			Help: "Successful invocation of halfpipe cf deployment",
 		}),
 		failureCounter: prometheus.NewCounter(prometheus.CounterOpts{
-			Name: "halfpipe_cf_plugin_failure",
-			Help: "Unsuccessful invocation of halfpipe cf plugin",
+			Name: "halfpipe_cf_failure",
+			Help: "Unsuccessful invocation of halfpipe cf deployment",
 		}),
 		timerHistogram: prometheus.NewHistogram(prometheus.HistogramOpts{
-			Name:    "halfpipe_cf_plugin_duration_seconds",
-			Help:    "Time taken in seconds for successful invocation of halfpipe cf plugin",
+			Name:    "halfpipe_cf_duration_seconds",
+			Help:    "Time taken in seconds for successful invocation of halfpipe cf deployment",
 			Buckets: []float64{5, 10, 20, 30, 40, 50, 60, 90, 120, 180},
 		}),
 	}
 }
 
 type prometheusMetrics struct {
-	request        Request
+	url            string
+	request        config.Request
 	startTime      time.Time
 	successCounter prometheus.Counter
 	failureCounter prometheus.Counter
@@ -56,19 +57,15 @@ func (p *prometheusMetrics) Failure() error {
 }
 
 func (p *prometheusMetrics) push(metrics ...prometheus.Collector) error {
-	if p.request.Source.PrometheusGatewayURL != "" {
-		pusher := push.New(p.request.Source.PrometheusGatewayURL, p.request.Params.Command)
-		pusher.Grouping("cf_api", sanitize(p.request.Source.API))
-		pusher.Grouping("cf_org", sanitize(p.request.Source.Org))
-		for _, m := range metrics {
-			pusher.Collector(m)
-		}
-		err := pusher.Add()
-		if err != nil {
-			return fmt.Errorf("error sending metric to prometheus: %v", err)
-		}
+	pusher := push.New(p.url, p.request.Params.Command)
+	pusher.Grouping("cf_api", sanitize(p.request.Source.API))
+	pusher.Grouping("cf_org", sanitize(p.request.Source.Org))
+	pusher.Grouping("cf_space", sanitize(p.request.Source.Space))
+	pusher.Grouping("app_name", sanitize(p.request.Metadata.AppName))
+	for _, m := range metrics {
+		pusher.Collector(m)
 	}
-	return nil
+	return pusher.Add()
 }
 
 func sanitize(s string) string {
