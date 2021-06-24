@@ -1,10 +1,11 @@
 package plan
 
 import (
-	"github.com/springernature/halfpipe-deploy-resource/config"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/springernature/halfpipe-deploy-resource/config"
 
 	"strings"
 
@@ -40,10 +41,6 @@ func TestNewPrometheusMetrics(t *testing.T) {
 	assert.Equal(t, 1, counter)
 	assert.True(t, strings.HasPrefix(path, "/metrics/job/promote/"), path)
 	assert.Contains(t, path, "cf_api/some_cf_api")
-	assert.Contains(t, path, "cf_org/some_cf_org")
-	assert.Contains(t, path, "cf_space/some_cf_space")
-	assert.Contains(t, path, "app_name/some_App_name")
-
 
 	err = m.Failure()
 	assert.Nil(t, err)

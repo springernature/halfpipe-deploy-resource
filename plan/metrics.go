@@ -1,8 +1,9 @@
 package plan
 
 import (
-	"github.com/springernature/halfpipe-deploy-resource/config"
 	"time"
+
+	"github.com/springernature/halfpipe-deploy-resource/config"
 
 	"regexp"
 
@@ -31,7 +32,7 @@ func NewMetrics(request config.Request, url string) Metrics {
 		timerHistogram: prometheus.NewHistogram(prometheus.HistogramOpts{
 			Name:    "halfpipe_cf_duration_seconds",
 			Help:    "Time taken in seconds for successful invocation of halfpipe cf deployment",
-			Buckets: []float64{5, 10, 20, 30, 40, 50, 60, 90, 120, 180},
+			Buckets: []float64{30, 60, 90, 120, 150, 180, 210, 240, 270, 300},
 		}),
 	}
 }
@@ -59,9 +60,6 @@ func (p *prometheusMetrics) Failure() error {
 func (p *prometheusMetrics) push(metrics ...prometheus.Collector) error {
 	pusher := push.New(p.url, p.request.Params.Command)
 	pusher.Grouping("cf_api", sanitize(p.request.Source.API))
-	pusher.Grouping("cf_org", sanitize(p.request.Source.Org))
-	pusher.Grouping("cf_space", sanitize(p.request.Source.Space))
-	pusher.Grouping("app_name", sanitize(p.request.Metadata.AppName))
 	for _, m := range metrics {
 		pusher.Collector(m)
 	}
