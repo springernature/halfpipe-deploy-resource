@@ -134,7 +134,9 @@ jobs:
     params:
       build: git
       tag_file: git/.docker-stable-tag
+      tag_as_latest: true
   - put: docker-registry-image-stable-dockerhub
     params:
       build: git
       tag_file: git/.docker-stable-tag
+      tag_as_latest: true
