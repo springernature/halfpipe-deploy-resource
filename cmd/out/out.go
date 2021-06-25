@@ -44,7 +44,7 @@ func main() {
 		syscall.Exit(1)
 	}
 
-	metrics := plan.NewMetrics(requestConfig, "https://pushgateway.k8s.springernature.io/")
+	metrics := plan.NewMetrics(requestConfig, "https://aggregationgateway.k8s.springernature.io/")
 
 	cfClient, appsSummary, privateDomains, err := getApps(requestConfig)
 	if err != nil {
