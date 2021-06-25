@@ -1,6 +1,7 @@
 package plan
 
 import (
+	"github.com/prometheus/common/expfmt"
 	"time"
 
 	"github.com/springernature/halfpipe-deploy-resource/config"
@@ -59,6 +60,7 @@ func (p *prometheusMetrics) Failure() error {
 
 func (p *prometheusMetrics) push(metrics ...prometheus.Collector) error {
 	pusher := push.New(p.url, p.request.Params.Command)
+	pusher.Format(expfmt.FmtText)
 	pusher.Grouping("cf_api", sanitize(p.request.Source.API))
 	for _, m := range metrics {
 		pusher.Collector(m)

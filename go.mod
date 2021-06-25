@@ -7,6 +7,7 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/gookit/color v1.2.5
 	github.com/prometheus/client_golang v1.10.0
+	github.com/prometheus/common v0.18.0 // indirect
 	github.com/spf13/afero v1.1.1
 	github.com/stretchr/testify v1.4.0
 	golang.org/x/net v0.0.0-20210510120150-4163338589ed // indirect
