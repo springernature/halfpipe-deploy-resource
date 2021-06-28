@@ -39,8 +39,7 @@ func TestNewPrometheusMetrics(t *testing.T) {
 	err := m.Success()
 	assert.Nil(t, err)
 	assert.Equal(t, 1, counter)
-	assert.True(t, strings.HasPrefix(path, "/metrics/job/promote/"), path)
-	assert.Contains(t, path, "cf_api/some_cf_api")
+	assert.True(t, strings.HasPrefix(path, "/metrics/job/promote"), path)
 
 	err = m.Failure()
 	assert.Nil(t, err)

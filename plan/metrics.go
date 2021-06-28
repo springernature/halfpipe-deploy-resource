@@ -6,8 +6,6 @@ import (
 
 	"github.com/springernature/halfpipe-deploy-resource/config"
 
-	"regexp"
-
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
 )
@@ -18,6 +16,9 @@ type Metrics interface {
 }
 
 func NewMetrics(request config.Request, url string) Metrics {
+	labels := prometheus.Labels{
+		"command": request.Params.Command,
+	}
 	return &prometheusMetrics{
 		url:       url,
 		request:   request,
@@ -25,15 +26,18 @@ func NewMetrics(request config.Request, url string) Metrics {
 		successCounter: prometheus.NewCounter(prometheus.CounterOpts{
 			Name: "halfpipe_cf_success",
 			Help: "Successful invocation of halfpipe cf deployment",
+			ConstLabels: labels,
 		}),
 		failureCounter: prometheus.NewCounter(prometheus.CounterOpts{
 			Name: "halfpipe_cf_failure",
 			Help: "Unsuccessful invocation of halfpipe cf deployment",
+			ConstLabels: labels,
 		}),
 		timerHistogram: prometheus.NewHistogram(prometheus.HistogramOpts{
 			Name:    "halfpipe_cf_duration_seconds",
 			Help:    "Time taken in seconds for successful invocation of halfpipe cf deployment",
 			Buckets: []float64{30, 60, 90, 120, 150, 180, 210, 240, 270, 300},
+			ConstLabels: labels,
 		}),
 	}
 }
@@ -61,13 +65,8 @@ func (p *prometheusMetrics) Failure() error {
 func (p *prometheusMetrics) push(metrics ...prometheus.Collector) error {
 	pusher := push.New(p.url, p.request.Params.Command)
 	pusher.Format(expfmt.FmtText)
-	pusher.Grouping("cf_api", sanitize(p.request.Source.API))
 	for _, m := range metrics {
 		pusher.Collector(m)
 	}
 	return pusher.Add()
-}
-
-func sanitize(s string) string {
-	return regexp.MustCompile(`[^a-zA-Z0-9]`).ReplaceAllString(s, "_")
 }
