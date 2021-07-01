@@ -7,7 +7,7 @@ ENV CF_TAR_URL_V6 "https://packages.cloudfoundry.org/stable?release=linux64-bina
 RUN wget -qO- ${CF_TAR_URL_V6} | tar xvz -C /bin > /dev/null
 RUN mv /bin/cf /bin/cf6
 
-ENV CF_TAR_URL_V7 "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=7.0.0-beta.30&source=github-rel"
+ENV CF_TAR_URL_V7 "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=7.2.0&source=github-rel"
 RUN wget -qO- ${CF_TAR_URL_V7} | tar xvz -C /bin > /dev/null
 
 RUN go test ./...
