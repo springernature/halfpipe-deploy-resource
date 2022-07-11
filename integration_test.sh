@@ -12,4 +12,3 @@ set -e
 # export CF_SPACE=integration_test
 
 go run .integration_test/integration.go `pwd`
-

@@ -122,6 +122,42 @@ jobs:
       cliVersion: cf7
       manifestPath: git/.integration_test/manifest-cf7.yml
 
+- name: Test resource cf8
+  serial: true
+  plan:
+    - get: git
+      passed:
+        - Push test resource
+    - get: docker-registry-image-dev
+      passed:
+        - Push test resource
+      trigger: true
+    - put: cf
+      params:
+        appPath: git/.integration_test
+        command: halfpipe-push
+        gitRefPath: git/.git/ref
+        manifestPath: git/.integration_test/manifest-cf8.yml
+        testDomain: springernature.app
+        cliVersion: cf8
+    - put: cf
+      params:
+        command: halfpipe-check
+        manifestPath: git/.integration_test/manifest-cf8.yml
+        cliVersion: cf8
+    - put: cf
+      params:
+        command: halfpipe-promote
+        manifestPath: git/.integration_test/manifest-cf8.yml
+        testDomain: springernature.app
+        cliVersion: cf8
+  ensure:
+    put: cf
+    params:
+      command: halfpipe-cleanup
+      cliVersion: cf8
+      manifestPath: git/.integration_test/manifest-cf8.yml
+
 - name: Push resource
   serial: true
   plan:
@@ -129,6 +165,7 @@ jobs:
     passed:
     - Test resource cf6
     - Test resource cf7
+    - Test resource cf8
     trigger: true
   - put: docker-registry-image-stable
     params:

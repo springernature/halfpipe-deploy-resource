@@ -107,8 +107,8 @@ func (params Params) Verify(isActions bool) error {
 		return ParamsMissingError("manifestPath")
 	}
 
-	if params.CliVersion != "cf6" && params.CliVersion != "cf7" {
-		return ParamsInvalidError("cliVersion", "must be either 'cf6' or 'cf7'")
+	if params.CliVersion != "cf6" && params.CliVersion != "cf7" && params.CliVersion != "cf8" {
+		return ParamsInvalidError("cliVersion", "must be either 'cf6', 'cf7' or 'cf8'")
 	}
 
 	switch params.Command {
