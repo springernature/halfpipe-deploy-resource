@@ -1,6 +1,7 @@
 package plan
 
 import (
+	"code.cloudfoundry.org/cli/util/manifestparser"
 	"errors"
 	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/spf13/afero"
@@ -48,6 +49,10 @@ func (m *ManifestReadWriteStub) ReadManifest(path string) (manifest.Manifest, er
 	return m.manifest, m.readError
 }
 
+func (m *ManifestReadWriteStub) ReadManifestNew(path string) (manifestparser.Manifest, error) {
+	panic("Should not be used in the test")
+}
+
 func (m *ManifestReadWriteStub) WriteManifest(path string, application manifest.Application) error {
 	m.writePath = path
 	m.savedManifest = manifest.Manifest{
@@ -55,6 +60,10 @@ func (m *ManifestReadWriteStub) WriteManifest(path string, application manifest.
 	}
 
 	return m.writeError
+}
+
+func (m ManifestReadWriteStub) WriteManifestNew(path string, manifest manifestparser.Manifest) error {
+	panic("Should not be used in the test")
 }
 
 func TestErrorsReadingAppManifest(t *testing.T) {
