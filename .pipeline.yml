@@ -14,19 +14,19 @@ resources:
     repository: eu.gcr.io/halfpipe-io/cf-resource-v2-dev
     password: ((halfpipe-gcr.private_key))
     username: _json_key
-#- name: docker-registry-image-stable
-#  type: docker-image
-#  source:
-#    repository: eu.gcr.io/halfpipe-io/cf-resource-v2
-#    tag: stable
-#    password: ((halfpipe-gcr.private_key))
-#    username: _json_key
-#- name: docker-registry-image-stable-dockerhub
-#  type: docker-image
-#  source:
-#    repository: platformengineering/cf-resource-v2
-#    username: ((platformengineering-dockerhub.username))
-#    password: ((platformengineering-dockerhub.password))
+- name: docker-registry-image-stable
+  type: docker-image
+  source:
+    repository: eu.gcr.io/halfpipe-io/cf-resource-v2
+    tag: stable
+    password: ((halfpipe-gcr.private_key))
+    username: _json_key
+- name: docker-registry-image-stable-dockerhub
+  type: docker-image
+  source:
+    repository: platformengineering/cf-resource-v2
+    username: ((platformengineering-dockerhub.username))
+    password: ((platformengineering-dockerhub.password))
 - name: cf
   type: cf-resource
   source:
@@ -480,25 +480,27 @@ jobs:
               cat /tmp/apps | grep integration-test-app-cf8-OLD
               cf7 env integration-test-app-cf8-OLD | grep test_resource_cf8_2
           path: /bin/sh
-      task: cleanup
+      task: check_cf_state
       timeout: 1h
   serial: true
 
 
-#- name: push resource
-#  serial: true
-#  plan:
-#  - get: git
-#    passed:
-#    - test_resource_cf6_
-#    - test_resource_cf7_#    - test_resource_cf8_#    trigger: true
-#  - put: docker-registry-image-stable
-#    params:
-#      build: git
-#      tag_file: git/.docker-stable-tag
-#      tag_as_latest: true
-#  - put: docker-registry-image-stable-dockerhub
-#    params:
-#      build: git
-#      tag_file: git/.docker-stable-tag
-#      tag_as_latest: true
+- name: push_resource
+  serial: true
+  plan:
+  - get: git
+    passed:
+    - test_resource_cf6_3
+    - test_resource_cf7_3
+    - test_resource_cf8_3
+    trigger: true
+  - put: docker-registry-image-stable
+    params:
+      build: git
+      tag_file: git/.docker-stable-tag
+      tag_as_latest: true
+  - put: docker-registry-image-stable-dockerhub
+    params:
+      build: git
+      tag_file: git/.docker-stable-tag
+      tag_as_latest: true
