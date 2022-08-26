@@ -1,8 +1,8 @@
 package plan
 
 import (
+	"code.cloudfoundry.org/cli/util/manifestparser"
 	"github.com/cloudfoundry-community/go-cfclient"
-	"github.com/springernature/halfpipe-deploy-resource/manifest"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -16,7 +16,7 @@ func TestPromoteWorkerApp(t *testing.T) {
 			},
 		}
 
-		man := manifest.Application{
+		man := manifestparser.Application{
 			Name:    "myApp",
 			NoRoute: true,
 		}
@@ -25,7 +25,6 @@ func TestPromoteWorkerApp(t *testing.T) {
 		}
 
 		plan := NewPromotePlan([]cfclient.Domain{}).Plan(man, validRequest, summary)
-		//assert.Nil(t, err)
 		assert.Equal(t, expectedPlan, plan)
 	})
 
@@ -41,7 +40,7 @@ func TestPromoteWorkerApp(t *testing.T) {
 			},
 		}
 
-		man := manifest.Application{
+		man := manifestparser.Application{
 			Name:    "myApp",
 			NoRoute: true,
 		}
@@ -67,7 +66,7 @@ func TestPromoteWorkerApp(t *testing.T) {
 			},
 		}
 
-		man := manifest.Application{
+		man := manifestparser.Application{
 			Name:    "myApp",
 			NoRoute: true,
 		}
@@ -97,7 +96,7 @@ func TestPromoteWorkerApp(t *testing.T) {
 			},
 		}
 
-		man := manifest.Application{
+		man := manifestparser.Application{
 			Name:    "myApp",
 			NoRoute: true,
 		}
@@ -132,7 +131,7 @@ func TestPromoteWorkerApp(t *testing.T) {
 			},
 		}
 
-		man := manifest.Application{
+		man := manifestparser.Application{
 			Name:    "myApp",
 			NoRoute: true,
 		}
@@ -175,7 +174,7 @@ func TestPromoteWorkerApp(t *testing.T) {
 			},
 		}
 
-		man := manifest.Application{
+		man := manifestparser.Application{
 			Name:    "myApp",
 			NoRoute: true,
 		}
@@ -200,14 +199,12 @@ func TestPromoteNormalApp(t *testing.T) {
 			},
 		}
 
-		man := manifest.Application{
+		man := manifestparser.Application{
 			Name: "myApp",
-			Routes: []manifest.Route{
-				{
-					Route: "myroute.domain1.com",
-				},
-				{
-					Route: "myroute.subroute.domain2.com",
+			RemainingManifestFields: map[string]any{
+				"routes": []any{
+					map[any]any{"route": "myroute.domain1.com"},
+					map[any]any{"route": "myroute.subroute.domain2.com"},
 				},
 			},
 		}
@@ -230,17 +227,16 @@ func TestPromoteNormalApp(t *testing.T) {
 			},
 		}
 
-		man := manifest.Application{
+		man := manifestparser.Application{
 			Name: "myApp",
-			Routes: []manifest.Route{
-				{
-					Route: "myroute.domain1.com",
-				},
-				{
-					Route: "myroute.subroute.domain2.com/pathy/path",
+			RemainingManifestFields: map[string]any{
+				"routes": []any{
+					map[any]any{"route": "myroute.domain1.com"},
+					map[any]any{"route": "myroute.subroute.domain2.com/pathy/path"},
 				},
 			},
 		}
+
 		expectedPlan := Plan{
 			NewCfCommand("map-route", createCandidateAppName(man.Name), "domain1.com", "--hostname", "myroute"),
 			NewCfCommand("map-route", createCandidateAppName(man.Name), "subroute.domain2.com", "--hostname", "myroute", "--path", "pathy/path"),
@@ -260,17 +256,16 @@ func TestPromoteNormalApp(t *testing.T) {
 			},
 		}
 
-		man := manifest.Application{
+		man := manifestparser.Application{
 			Name: "myApp",
-			Routes: []manifest.Route{
-				{
-					Route: "myroute.domain1.com",
-				},
-				{
-					Route: "thisIsASpaceOwnedDomain.com",
+			RemainingManifestFields: map[string]any{
+				"routes": []any{
+					map[any]any{"route": "myroute.domain1.com"},
+					map[any]any{"route": "thisIsASpaceOwnedDomain.com"},
 				},
 			},
 		}
+
 		privateRoutesInOrg := []cfclient.Domain{
 			{
 				Name: "thisIsASpaceOwnedDomain.com",
@@ -296,17 +291,16 @@ func TestPromoteNormalApp(t *testing.T) {
 			},
 		}
 
-		man := manifest.Application{
+		man := manifestparser.Application{
 			Name: "myApp",
-			Routes: []manifest.Route{
-				{
-					Route: "myroute.domain1.com",
-				},
-				{
-					Route: "thisIsASpaceOwnedDomain.com/mypath",
+			RemainingManifestFields: map[string]any{
+				"routes": []any{
+					map[any]any{"route": "myroute.domain1.com"},
+					map[any]any{"route": "thisIsASpaceOwnedDomain.com/mypath"},
 				},
 			},
 		}
+
 		privateRoutesInOrg := []cfclient.Domain{
 			{
 				Name: "thisIsASpaceOwnedDomain.com",
@@ -332,17 +326,16 @@ func TestPromoteNormalApp(t *testing.T) {
 			},
 		}
 
-		man := manifest.Application{
+		man := manifestparser.Application{
 			Name: "myApp",
-			Routes: []manifest.Route{
-				{
-					Route: "myroute.domain1.com",
-				},
-				{
-					Route: "subroute.thisIsASpaceOwnedDomain.com",
+			RemainingManifestFields: map[string]any{
+				"routes": []any{
+					map[any]any{"route": "myroute.domain1.com"},
+					map[any]any{"route": "subroute.thisIsASpaceOwnedDomain.com"},
 				},
 			},
 		}
+
 		privateRoutesInOrg := []cfclient.Domain{
 			{
 				Name: "thisIsASpaceOwnedDomain.com",
@@ -380,17 +373,16 @@ func TestPromoteNormalApp(t *testing.T) {
 			},
 		}
 
-		man := manifest.Application{
+		man := manifestparser.Application{
 			Name: "myApp",
-			Routes: []manifest.Route{
-				{
-					Route: "myroute.domain1.com",
-				},
-				{
-					Route: "subroute.thisIsASpaceOwnedDomain.com",
+			RemainingManifestFields: map[string]any{
+				"routes": []any{
+					map[any]any{"route": "myroute.domain1.com"},
+					map[any]any{"route": "subroute.thisIsASpaceOwnedDomain.com"},
 				},
 			},
 		}
+
 		privateRoutesInOrg := []cfclient.Domain{
 			{
 				Name: "thisIsASpaceOwnedDomain.com",

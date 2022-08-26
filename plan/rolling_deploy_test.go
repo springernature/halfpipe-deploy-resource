@@ -1,10 +1,10 @@
 package plan
 
 import (
+	"code.cloudfoundry.org/cli/util/manifestparser"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/springernature/halfpipe-deploy-resource/config"
-	"github.com/springernature/halfpipe-deploy-resource/manifest"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -31,8 +31,9 @@ var rollingRequest = config.Request{
 func TestRollingDeployNormalApp(t *testing.T) {
 	t.Run("Normal app", func(t *testing.T) {
 		t.Run("No pre start", func(t *testing.T) {
-			applicationManifest := manifest.Application{
-				Name: "MyApp",
+			applicationManifest := manifestparser.Application{
+				Name:   "MyApp",
+				Docker: &manifestparser.Docker{},
 			}
 
 			p := NewRollingDeployPlan().Plan(applicationManifest, rollingRequest)
@@ -44,9 +45,9 @@ func TestRollingDeployNormalApp(t *testing.T) {
 
 func TestRollingDeployDocker(t *testing.T) {
 	t.Run("Normal app", func(t *testing.T) {
-		applicationManifest := manifest.Application{
+		applicationManifest := manifestparser.Application{
 			Name: "MyApp",
-			Docker: manifest.DockerInfo{
+			Docker: &manifestparser.Docker{
 				Image: "wheep/whuup",
 			},
 		}
@@ -61,9 +62,9 @@ func TestRollingDeployDocker(t *testing.T) {
 
 	t.Run("Docker tag", func(t *testing.T) {
 		t.Run("When it isn't set in the manifest, and we dont pass in an override", func(t *testing.T) {
-			applicationManifest := manifest.Application{
+			applicationManifest := manifestparser.Application{
 				Name: "MyApp",
-				Docker: manifest.DockerInfo{
+				Docker: &manifestparser.Docker{
 					Image: "wheep/whuup",
 				},
 			}
@@ -79,9 +80,9 @@ func TestRollingDeployDocker(t *testing.T) {
 		t.Run("When it's set in the manifest, and we dont pass in an override", func(t *testing.T) {
 			dockerTag := uuid.New().String()
 
-			applicationManifest := manifest.Application{
+			applicationManifest := manifestparser.Application{
 				Name: "MyApp",
-				Docker: manifest.DockerInfo{
+				Docker: &manifestparser.Docker{
 					Image: fmt.Sprintf("wheep/whuup:%s", dockerTag),
 				},
 			}
@@ -97,9 +98,9 @@ func TestRollingDeployDocker(t *testing.T) {
 		t.Run("When it's not set in the manifest, and we pass in an override", func(t *testing.T) {
 			dockerTag := uuid.New().String()
 
-			applicationManifest := manifest.Application{
+			applicationManifest := manifestparser.Application{
 				Name: "MyApp",
-				Docker: manifest.DockerInfo{
+				Docker: &manifestparser.Docker{
 					Image: "wheep/whuup",
 				},
 			}
@@ -117,9 +118,9 @@ func TestRollingDeployDocker(t *testing.T) {
 		t.Run("When it's set in the manifest, and we pass in an override", func(t *testing.T) {
 			dockerTag := uuid.New().String()
 
-			applicationManifest := manifest.Application{
+			applicationManifest := manifestparser.Application{
 				Name: "MyApp",
-				Docker: manifest.DockerInfo{
+				Docker: &manifestparser.Docker{
 					Image: "wheep/whuup:somethingStatic",
 				},
 			}

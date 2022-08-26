@@ -1,22 +1,22 @@
 package plan
 
 import (
+	"code.cloudfoundry.org/cli/util/manifestparser"
 	"fmt"
 	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/springernature/halfpipe-deploy-resource/config"
-	"github.com/springernature/halfpipe-deploy-resource/manifest"
 	"strings"
 )
 
 type PromotePlan interface {
-	Plan(manifest manifest.Application, request config.Request, summary []cfclient.AppSummary) (pl Plan)
+	Plan(manifest manifestparser.Application, request config.Request, summary []cfclient.AppSummary) (pl Plan)
 }
 
 type promotePlan struct {
 	privateDomainsInOrg []cfclient.Domain
 }
 
-func (p promotePlan) Plan(manifest manifest.Application, request config.Request, summary []cfclient.AppSummary) (pl Plan) {
+func (p promotePlan) Plan(manifest manifestparser.Application, request config.Request, summary []cfclient.AppSummary) (pl Plan) {
 	currentLive, currentOld, currentDeletes := p.getPreviousAppState(manifest.Name, summary)
 
 	pl = append(pl, p.addManifestRoutes(manifest)...)
@@ -28,10 +28,10 @@ func (p promotePlan) Plan(manifest manifest.Application, request config.Request,
 	return
 }
 
-func (p promotePlan) renameOldApp(manifest manifest.Application, oldApp cfclient.AppSummary, currentDeletes []cfclient.AppSummary) (cmds []Command) {
+func (p promotePlan) renameOldApp(manifest manifestparser.Application, oldApp cfclient.AppSummary, currentDeletes []cfclient.AppSummary) (cmds []Command) {
 	if oldApp.Name != "" {
 		nextI := 0
-		for i := 1 ; i <= len(currentDeletes); i++ {
+		for i := 1; i <= len(currentDeletes); i++ {
 			found := false
 			for _, currentDelete := range currentDeletes {
 				if strings.HasSuffix(currentDelete.Name, fmt.Sprintf("-%d", i)) {
@@ -49,7 +49,7 @@ func (p promotePlan) renameOldApp(manifest manifest.Application, oldApp cfclient
 	return
 }
 
-func (p promotePlan) renameAndStopCurrentApp(manifest manifest.Application, currentLive cfclient.AppSummary) (cmds []Command) {
+func (p promotePlan) renameAndStopCurrentApp(manifest manifestparser.Application, currentLive cfclient.AppSummary) (cmds []Command) {
 	if currentLive.Name != "" {
 		cmds = append(cmds, NewCfCommand("rename", manifest.Name, createOldAppName(manifest.Name)))
 		if currentLive.State == "STARTED" {
@@ -59,7 +59,7 @@ func (p promotePlan) renameAndStopCurrentApp(manifest manifest.Application, curr
 	return
 }
 
-func (p promotePlan) renameCandidateToLive(manifest manifest.Application) Command {
+func (p promotePlan) renameCandidateToLive(manifest manifestparser.Application) Command {
 	return NewCfCommand("rename", createCandidateAppName(manifest.Name), manifest.Name)
 }
 
@@ -88,7 +88,21 @@ func (p promotePlan) getPreviousAppState(manifestAppName string, summary []cfcli
 	return
 }
 
-func (p promotePlan) addManifestRoutes(man manifest.Application) (cmds []Command) {
+func (p promotePlan) routes(man manifestparser.Application) (rs []string) {
+	rawRoutes := []any{}
+
+	if man.RemainingManifestFields["routes"] != nil {
+		rawRoutes = man.RemainingManifestFields["routes"].([]any)
+	}
+
+	for _, r := range rawRoutes {
+		route := r.(map[any]any)["route"].(string)
+		rs = append(rs, route)
+	}
+	return rs
+}
+
+func (p promotePlan) addManifestRoutes(man manifestparser.Application) (cmds []Command) {
 	isPrivateDomain := func(r string) bool {
 		for _, domain := range p.privateDomainsInOrg {
 			if r == domain.Name {
@@ -98,19 +112,19 @@ func (p promotePlan) addManifestRoutes(man manifest.Application) (cmds []Command
 		return false
 	}
 
-	for _, route := range man.Routes {
-		splitOnPath := strings.Split(route.Route, "/")
+	for _, route := range p.routes(man) {
+		splitOnPath := strings.Split(route, "/")
 		if isPrivateDomain(splitOnPath[0]) {
 			var mapRoute Command
-			if strings.Contains(route.Route, "/") {
+			if strings.Contains(route, "/") {
 				mapRoute = NewCfCommand("map-route", createCandidateAppName(man.Name), splitOnPath[0], "--path", splitOnPath[1])
 			} else {
-				mapRoute = NewCfCommand("map-route", createCandidateAppName(man.Name), route.Route)
+				mapRoute = NewCfCommand("map-route", createCandidateAppName(man.Name), route)
 			}
 
 			cmds = append(cmds, mapRoute)
 		} else {
-			parts := strings.Split(route.Route, ".")
+			parts := strings.Split(route, ".")
 			hostname := parts[0]
 			domain := strings.Join(parts[1:], ".")
 			if strings.Contains(domain, "/") {
@@ -128,7 +142,7 @@ func (p promotePlan) addManifestRoutes(man manifest.Application) (cmds []Command
 	return
 }
 
-func (p promotePlan) unmapTestRoute(man manifest.Application, request config.Request) (cmds []Command) {
+func (p promotePlan) unmapTestRoute(man manifestparser.Application, request config.Request) (cmds []Command) {
 	if !man.NoRoute {
 		unmapRoute := NewCfCommand("unmap-route", createCandidateAppName(man.Name), request.Params.TestDomain, "--hostname", createCandidateHostname(man, request))
 		cmds = append(cmds, unmapRoute)

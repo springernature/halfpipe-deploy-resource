@@ -1,19 +1,19 @@
 package plan
 
 import (
+	"code.cloudfoundry.org/cli/util/manifestparser"
 	"fmt"
 	"github.com/springernature/halfpipe-deploy-resource/config"
-	"github.com/springernature/halfpipe-deploy-resource/manifest"
 	"strings"
 )
 
 type RollingDeployPlan interface {
-	Plan(manifest manifest.Application, request config.Request) (pl Plan)
+	Plan(manifest manifestparser.Application, request config.Request) (pl Plan)
 }
 
 type rollingDeployPlan struct{}
 
-func (p rollingDeployPlan) Plan(manifest manifest.Application, request config.Request) (pl Plan) {
+func (p rollingDeployPlan) Plan(manifest manifestparser.Application, request config.Request) (pl Plan) {
 	pushCommand := NewCfCommand("push").
 		AddToArgs("--manifest", request.Params.ManifestPath).
 		AddToArgs("--strategy", "rolling")

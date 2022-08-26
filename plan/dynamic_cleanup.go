@@ -1,21 +1,21 @@
 package plan
 
 import (
+	"code.cloudfoundry.org/cli/util/manifestparser"
 	"fmt"
 	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/springernature/halfpipe-deploy-resource/logger"
-	"github.com/springernature/halfpipe-deploy-resource/manifest"
 	"strings"
 )
 
 type DynamicCleanupPlan interface {
-	Plan(manifest manifest.Application, org, space string) (pl Plan)
+	Plan(manifest manifestparser.Application, org, space string) (pl Plan)
 }
 
 type dynamicCleanupPlan struct {
 }
 
-func (p dynamicCleanupPlan) Plan(manifest manifest.Application, org, space string) (pl Plan) {
+func (p dynamicCleanupPlan) Plan(manifest manifestparser.Application, org, space string) (pl Plan) {
 	desc := "Finding old apps to delete"
 	pl = append(pl, NewClientCommand(p.createFunc(manifest.Name, org, space), desc))
 	return
@@ -60,6 +60,5 @@ func (p dynamicCleanupPlan) createFunc(appName, org, space string) func(*cfclien
 }
 
 func NewDynamicCleanupPlan() DynamicCleanupPlan {
-	return dynamicCleanupPlan{
-	}
+	return dynamicCleanupPlan{}
 }

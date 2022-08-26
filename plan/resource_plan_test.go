@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/springernature/halfpipe-deploy-resource/config"
-	"github.com/springernature/halfpipe-deploy-resource/manifest"
 )
 
 var validRequest = config.Request{
@@ -35,40 +34,31 @@ var validRequest = config.Request{
 }
 
 type ManifestReadWriteStub struct {
-	manifest      manifest.Manifest
-	readError     error
-	writeError    error
-	savedManifest manifest.Manifest
+	manifest          manifestparser.Manifest
+	manifestReadError error
+
+	savedManifest     manifestparser.Manifest
+	saveManifestError error
 
 	readPath  string
 	writePath string
 }
 
-func (m *ManifestReadWriteStub) ReadManifest(path string) (manifest.Manifest, error) {
+func (m *ManifestReadWriteStub) ReadManifest(path string) (manifestparser.Manifest, error) {
 	m.readPath = path
-	return m.manifest, m.readError
+	return m.manifest, m.manifestReadError
 }
 
-func (m *ManifestReadWriteStub) ReadManifestNew(path string) (manifestparser.Manifest, error) {
-	panic("Should not be used in the test")
-}
-
-func (m *ManifestReadWriteStub) WriteManifest(path string, application manifest.Application) error {
+func (m *ManifestReadWriteStub) WriteManifest(path string, manifest manifestparser.Manifest) error {
 	m.writePath = path
-	m.savedManifest = manifest.Manifest{
-		Applications: []manifest.Application{application},
-	}
+	m.savedManifest = manifest
 
-	return m.writeError
-}
-
-func (m ManifestReadWriteStub) WriteManifestNew(path string, manifest manifestparser.Manifest) error {
-	panic("Should not be used in the test")
+	return m.saveManifestError
 }
 
 func TestErrorsReadingAppManifest(t *testing.T) {
 	expectedErr := errors.New("blurgh")
-	manifestReader := ManifestReadWriteStub{readError: expectedErr}
+	manifestReader := ManifestReadWriteStub{manifestReadError: expectedErr}
 
 	planner := NewPlanner(&manifestReader, nil, nil, nil, nil, nil, nil)
 
@@ -80,12 +70,14 @@ func TestErrorsReadingAppManifest(t *testing.T) {
 func TestErrorsWhenSavingManifestWithUpdatedVars(t *testing.T) {
 	expectedErr := errors.New("blurgh")
 	manifestReader := ManifestReadWriteStub{
-		manifest: manifest.Manifest{
-			Applications: []manifest.Application{
-				{},
+		manifest: manifestparser.Manifest{
+			Applications: []manifestparser.Application{
+				{
+					Name: "MyApp",
+				},
 			},
 		},
-		writeError: expectedErr,
+		saveManifestError: expectedErr,
 	}
 
 	fs := afero.Afero{Fs: afero.NewMemMapFs()}
@@ -126,43 +118,45 @@ type fakeDeleteCandidatePlanner struct {
 	plan Plan
 }
 
-func (f fakeCheckPlanner) Plan(manifest manifest.Application, org, space string) (pl Plan) {
+func (f fakeCheckPlanner) Plan(manifest manifestparser.Application, org, space string) (pl Plan) {
 	return f.plan
 }
 
-func (f fakePromotePlanner) Plan(manifest manifest.Application, request config.Request, summary []cfclient.AppSummary) (pl Plan) {
+func (f fakePromotePlanner) Plan(manifest manifestparser.Application, request config.Request, summary []cfclient.AppSummary) (pl Plan) {
 	return f.plan
 }
 
-func (f fakeCleanupPlanner) Plan(manifest manifest.Application, summary []cfclient.AppSummary) (pl Plan) {
+func (f fakeCleanupPlanner) Plan(manifest manifestparser.Application, summary []cfclient.AppSummary) (pl Plan) {
 	return f.plan
 }
 
-func (f fakeDeleteCandidatePlanner) Plan(manifest manifest.Application, summary []cfclient.AppSummary) (pl Plan) {
+func (f fakeDeleteCandidatePlanner) Plan(manifest manifestparser.Application, summary []cfclient.AppSummary) (pl Plan) {
 	return f.plan
 }
 
-func (f *fakePushPlanner) Plan(manifest manifest.Application, request config.Request) (pl Plan) {
+func (f *fakePushPlanner) Plan(manifest manifestparser.Application, request config.Request) (pl Plan) {
 	return f.plan
 }
 
-func (f *fakeRollingDeployPlanner) Plan(manifest manifest.Application, request config.Request) (pl Plan) {
+func (f *fakeRollingDeployPlanner) Plan(manifest manifestparser.Application, request config.Request) (pl Plan) {
 	return f.plan
 }
 
 func TestCallsOutToCorrectPlanner(t *testing.T) {
 	t.Run("Push planner", func(t *testing.T) {
-		expectedManifest := manifest.Manifest{
-			Applications: []manifest.Application{
+		expectedManifest := manifestparser.Manifest{
+			Applications: []manifestparser.Application{
 				{
-					EnvironmentVariables: validRequest.Params.Vars,
+					RemainingManifestFields: map[string]any{
+						"env": validRequest.Params.Vars,
+					},
 				},
 			},
 		}
 
 		manifestReader := ManifestReadWriteStub{
-			manifest: manifest.Manifest{
-				Applications: []manifest.Application{
+			manifest: manifestparser.Manifest{
+				Applications: []manifestparser.Application{
 					{},
 				},
 			},
@@ -194,17 +188,19 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 
 		expectedPath := validRequest.Params.ManifestPath
 
-		expectedManifest := manifest.Manifest{
-			Applications: []manifest.Application{
+		expectedManifest := manifestparser.Manifest{
+			Applications: []manifestparser.Application{
 				{
-					EnvironmentVariables: validRequest.Params.Vars,
+					RemainingManifestFields: map[string]any{
+						"env": validRequest.Params.Vars,
+					},
 				},
 			},
 		}
 
 		manifestReader := ManifestReadWriteStub{
-			manifest: manifest.Manifest{
-				Applications: []manifest.Application{
+			manifest: manifestparser.Manifest{
+				Applications: []manifestparser.Application{
 					{},
 				},
 			},
@@ -235,8 +231,8 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 
 	t.Run("Check planner", func(t *testing.T) {
 		manifestReader := ManifestReadWriteStub{
-			manifest: manifest.Manifest{
-				Applications: []manifest.Application{
+			manifest: manifestparser.Manifest{
+				Applications: []manifestparser.Application{
 					{},
 				},
 			},
@@ -261,8 +257,8 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 
 	t.Run("Promote planner", func(t *testing.T) {
 		manifestReader := ManifestReadWriteStub{
-			manifest: manifest.Manifest{
-				Applications: []manifest.Application{
+			manifest: manifestparser.Manifest{
+				Applications: []manifestparser.Application{
 					{},
 				},
 			},
@@ -289,8 +285,8 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 
 	t.Run("Cleanup planner", func(t *testing.T) {
 		manifestReader := ManifestReadWriteStub{
-			manifest: manifest.Manifest{
-				Applications: []manifest.Application{
+			manifest: manifestparser.Manifest{
+				Applications: []manifestparser.Application{
 					{},
 				},
 			},
@@ -334,8 +330,8 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 
 	t.Run("Delete Candidate planner", func(t *testing.T) {
 		manifestReader := ManifestReadWriteStub{
-			manifest: manifest.Manifest{
-				Applications: []manifest.Application{
+			manifest: manifestparser.Manifest{
+				Applications: []manifestparser.Application{
 					{},
 				},
 			},

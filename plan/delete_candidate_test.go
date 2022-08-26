@@ -1,14 +1,14 @@
 package plan
 
 import (
+	"code.cloudfoundry.org/cli/util/manifestparser"
 	"github.com/cloudfoundry-community/go-cfclient"
-	"github.com/springernature/halfpipe-deploy-resource/manifest"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestDoesTheNeedful(t *testing.T) {
-	man := manifest.Application{
+	man := manifestparser.Application{
 		Name: "myApp",
 	}
 
@@ -27,15 +27,14 @@ func TestDoesTheNeedful(t *testing.T) {
 		},
 	}
 
-		p := NewDeleteCandidatePlan().Plan(man, summary)
+	p := NewDeleteCandidatePlan().Plan(man, summary)
 
 	assert.Equal(t, expectedPlan, p)
 
 }
 
-
 func TestDoesNothingWhenThereIsNoCandidate(t *testing.T) {
-	man := manifest.Application{
+	man := manifestparser.Application{
 		Name: "myApp",
 	}
 

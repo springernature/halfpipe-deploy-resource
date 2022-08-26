@@ -1,10 +1,10 @@
 package plan
 
 import (
+	"code.cloudfoundry.org/cli/util/manifestparser"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/springernature/halfpipe-deploy-resource/config"
-	"github.com/springernature/halfpipe-deploy-resource/manifest"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -51,8 +51,9 @@ func TestNormalApp(t *testing.T) {
 				},
 			}
 
-			applicationManifest := manifest.Application{
-				Name: "My_App",
+			applicationManifest := manifestparser.Application{
+				Name:   "My_App",
+				Docker: &manifestparser.Docker{},
 			}
 
 			p := NewPushPlan().Plan(applicationManifest, requestWithUnderscore)
@@ -63,8 +64,9 @@ func TestNormalApp(t *testing.T) {
 		})
 
 		t.Run("Instances set", func(t *testing.T) {
-			applicationManifest := manifest.Application{
-				Name: "MyApp",
+			applicationManifest := manifestparser.Application{
+				Name:   "MyApp",
+				Docker: &manifestparser.Docker{},
 			}
 			r := request
 			r.Params.Instances = 1
@@ -75,8 +77,9 @@ func TestNormalApp(t *testing.T) {
 			assert.Equal(t, "cf start MyApp-CANDIDATE || cf logs MyApp-CANDIDATE --recent", p[2].String())
 		})
 		t.Run("With pre start", func(t *testing.T) {
-			applicationManifest := manifest.Application{
-				Name: "MyApp",
+			applicationManifest := manifestparser.Application{
+				Name:   "MyApp",
+				Docker: &manifestparser.Docker{},
 			}
 
 			r := request
@@ -93,9 +96,10 @@ func TestNormalApp(t *testing.T) {
 	})
 
 	t.Run("Worker app", func(t *testing.T) {
-		applicationManifest := manifest.Application{
+		applicationManifest := manifestparser.Application{
 			Name:    "MyApp",
 			NoRoute: true,
+			Docker:  &manifestparser.Docker{},
 		}
 
 		p := NewPushPlan().Plan(applicationManifest, request)
@@ -107,9 +111,9 @@ func TestNormalApp(t *testing.T) {
 
 func TestDocker(t *testing.T) {
 	t.Run("Normal app", func(t *testing.T) {
-		applicationManifest := manifest.Application{
+		applicationManifest := manifestparser.Application{
 			Name: "MyApp",
-			Docker: manifest.DockerInfo{
+			Docker: &manifestparser.Docker{
 				Image: "wheep/whuup",
 			},
 		}
@@ -125,10 +129,10 @@ func TestDocker(t *testing.T) {
 	})
 
 	t.Run("Worker app", func(t *testing.T) {
-		applicationManifest := manifest.Application{
+		applicationManifest := manifestparser.Application{
 			Name:    "MyApp",
 			NoRoute: true,
-			Docker: manifest.DockerInfo{
+			Docker: &manifestparser.Docker{
 				Image: "wheep/whuup",
 			},
 		}
@@ -144,9 +148,9 @@ func TestDocker(t *testing.T) {
 
 	t.Run("Docker tag", func(t *testing.T) {
 		t.Run("When it isn't set in the manifest, and we dont pass in an override", func(t *testing.T) {
-			applicationManifest := manifest.Application{
+			applicationManifest := manifestparser.Application{
 				Name: "MyApp",
-				Docker: manifest.DockerInfo{
+				Docker: &manifestparser.Docker{
 					Image: "wheep/whuup",
 				},
 			}
@@ -164,9 +168,9 @@ func TestDocker(t *testing.T) {
 		t.Run("When it's set in the manifest, and we dont pass in an override", func(t *testing.T) {
 			dockerTag := uuid.New().String()
 
-			applicationManifest := manifest.Application{
+			applicationManifest := manifestparser.Application{
 				Name: "MyApp",
-				Docker: manifest.DockerInfo{
+				Docker: &manifestparser.Docker{
 					Image: fmt.Sprintf("wheep/whuup:%s", dockerTag),
 				},
 			}
@@ -184,9 +188,9 @@ func TestDocker(t *testing.T) {
 		t.Run("When it's not set in the manifest, and we pass in an override", func(t *testing.T) {
 			dockerTag := uuid.New().String()
 
-			applicationManifest := manifest.Application{
+			applicationManifest := manifestparser.Application{
 				Name: "MyApp",
-				Docker: manifest.DockerInfo{
+				Docker: &manifestparser.Docker{
 					Image: "wheep/whuup",
 				},
 			}
@@ -205,9 +209,9 @@ func TestDocker(t *testing.T) {
 		t.Run("When it's set in the manifest, and we pass in an override", func(t *testing.T) {
 			dockerTag := uuid.New().String()
 
-			applicationManifest := manifest.Application{
+			applicationManifest := manifestparser.Application{
 				Name: "MyApp",
-				Docker: manifest.DockerInfo{
+				Docker: &manifestparser.Docker{
 					Image: "wheep/whuup:somethingStatic",
 				},
 			}

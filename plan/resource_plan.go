@@ -1,6 +1,7 @@
 package plan
 
 import (
+	"code.cloudfoundry.org/cli/util/manifestparser"
 	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/springernature/halfpipe-deploy-resource/config"
 	"github.com/springernature/halfpipe-deploy-resource/manifest"
@@ -35,15 +36,13 @@ func NewPlanner(manifestReaderWrite manifest.ReaderWriter, pushPlan PushPlan, ch
 func (p planner) Plan(request config.Request, appsSummary []cfclient.AppSummary) (pl Plan, err error) {
 	// Here we assume that the request is complete.
 	// It has already been verified.
-
-	readManifest, err := p.readManifest(request.Params.ManifestPath)
+	newManifest, err := p.readManifest(request.Params.ManifestPath)
 	if err != nil {
-		// todo: test this
 		return
 	}
 
 	// We lint that there is only one app.
-	appUnderDeployment := readManifest.Applications[0]
+	appUnderDeployment := newManifest.Applications[0]
 
 	pl = append(pl, NewCfCommand("--version"))
 
@@ -74,7 +73,6 @@ func (p planner) Plan(request config.Request, appsSummary []cfclient.AppSummary)
 		pl = append(pl, p.checkPlan.Plan(appUnderDeployment, request.Source.Org, request.Source.Space)...)
 		pl = append(pl, p.promotePlan.Plan(appUnderDeployment, request, appsSummary)...)
 		pl = append(pl, NewDynamicCleanupPlan().Plan(appUnderDeployment, request.Source.Org, request.Source.Space)...)
-		//pl = append(pl, p.cleanupPlan.Plan(appUnderDeployment, appsSummary)...)
 	case config.CHECK:
 		// We dont actually need to login for this as we are using a cf client for this specific task..
 		pl = p.checkPlan.Plan(appUnderDeployment, request.Source.Org, request.Source.Space)
@@ -88,8 +86,7 @@ func (p planner) Plan(request config.Request, appsSummary []cfclient.AppSummary)
 
 	return
 }
-
-func (p planner) readManifest(manifestPath string) (manifest.Manifest, error) {
+func (p planner) readManifest(manifestPath string) (manifestparser.Manifest, error) {
 	return p.manifestReaderWrite.ReadManifest(manifestPath)
 }
 
@@ -101,26 +98,33 @@ func (p planner) updateManifestWithVars(request config.Request) (err error) {
 			return
 		}
 
+		env := make(map[string]string)
+
 		// We just assume the first app in the manifest is the app under deployment.
 		// We lint that this is the case in the halfpipe linter.
 		app := apps.Applications[0]
-		if len(app.EnvironmentVariables) == 0 {
-			app.EnvironmentVariables = map[string]string{}
+		if app.RemainingManifestFields == nil {
+			app.RemainingManifestFields = make(map[string]any)
 		}
-
-		for key, value := range request.Params.Vars {
-			app.EnvironmentVariables[key] = value
+		if app.RemainingManifestFields["env"] != nil {
+			env = app.RemainingManifestFields["env"].(map[string]string)
 		}
 
 		if request.Metadata.GitRef != "" {
-			app.EnvironmentVariables["GIT_REVISION"] = request.Metadata.GitRef
+			env["GIT_REVISION"] = request.Metadata.GitRef
 		}
 
 		if request.Metadata.Version != "" {
-			app.EnvironmentVariables["BUILD_VERSION"] = request.Metadata.Version
+			env["BUILD_VERSION"] = request.Metadata.Version
 		}
 
-		if err = p.manifestReaderWrite.WriteManifest(request.Params.ManifestPath, app); err != nil {
+		for k, v := range request.Params.Vars {
+			env[k] = v
+		}
+		app.RemainingManifestFields["env"] = env
+		apps.Applications[0] = app
+
+		if err = p.manifestReaderWrite.WriteManifest(request.Params.ManifestPath, apps); err != nil {
 			return
 		}
 	}

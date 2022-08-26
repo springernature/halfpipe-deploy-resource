@@ -1,8 +1,8 @@
 package plan
 
 import (
+	"code.cloudfoundry.org/cli/util/manifestparser"
 	"github.com/cloudfoundry-community/go-cfclient"
-	"github.com/springernature/halfpipe-deploy-resource/manifest"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -15,7 +15,7 @@ func TestDoesNothingWhenNoAppsToCleanup(t *testing.T) {
 		},
 	}
 
-	man := manifest.Application{
+	man := manifestparser.Application{
 		Name: "myApp",
 	}
 
@@ -35,7 +35,7 @@ func TestDeletesAppThatNeedsACleanup(t *testing.T) {
 		},
 	}
 
-	man := manifest.Application{
+	man := manifestparser.Application{
 		Name: "myApp",
 	}
 
@@ -69,7 +69,7 @@ func TestDeletesAppsThatNeedsACleanup(t *testing.T) {
 		},
 	}
 
-	man := manifest.Application{
+	man := manifestparser.Application{
 		Name: "myApp",
 	}
 

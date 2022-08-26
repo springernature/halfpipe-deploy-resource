@@ -1,21 +1,21 @@
 package plan
 
 import (
+	"code.cloudfoundry.org/cli/util/manifestparser"
 	"fmt"
 	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/springernature/halfpipe-deploy-resource/logger"
-	"github.com/springernature/halfpipe-deploy-resource/manifest"
 	"time"
 )
 
 type CheckPlan interface {
-	Plan(manifest manifest.Application, org, space string) (pl Plan)
+	Plan(manifest manifestparser.Application, org, space string) (pl Plan)
 }
 
 type checkPlan struct {
 }
 
-func (p checkPlan) Plan(manifest manifest.Application, org, space string) (pl Plan) {
+func (p checkPlan) Plan(manifest manifestparser.Application, org, space string) (pl Plan) {
 	desc := "Checking that all app instances are running"
 	pl = append(pl, NewClientCommand(p.createFunc(createCandidateAppName(manifest.Name), org, space), desc))
 	return
@@ -82,6 +82,5 @@ func (p checkPlan) createFunc(candidateAppName, org, space string) func(*cfclien
 }
 
 func NewCheckPlan() CheckPlan {
-	return checkPlan{
-	}
+	return checkPlan{}
 }

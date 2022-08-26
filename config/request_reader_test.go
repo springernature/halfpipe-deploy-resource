@@ -3,7 +3,6 @@ package config
 import (
 	"code.cloudfoundry.org/cli/util/manifestparser"
 	"errors"
-	"github.com/springernature/halfpipe-deploy-resource/manifest"
 	"strings"
 	"testing"
 
@@ -12,23 +11,15 @@ import (
 )
 
 type ManifestReadWriteStub struct {
-	manifest  manifest.Manifest
+	manifest  manifestparser.Manifest
 	readError error
 }
 
-func (m *ManifestReadWriteStub) ReadManifest(path string) (manifest.Manifest, error) {
+func (m *ManifestReadWriteStub) ReadManifest(path string) (manifestparser.Manifest, error) {
 	return m.manifest, m.readError
 }
 
-func (m *ManifestReadWriteStub) ReadManifestNew(path string) (manifestparser.Manifest, error) {
-	panic("Should not be used in the test")
-}
-
-func (m *ManifestReadWriteStub) WriteManifest(path string, application manifest.Application) error {
-	panic("Should not be used in the test")
-}
-
-func (m ManifestReadWriteStub) WriteManifestNew(path string, manifest manifestparser.Manifest) error {
+func (m ManifestReadWriteStub) WriteManifest(path string, manifest manifestparser.Manifest) error {
 	panic("Should not be used in the test")
 }
 
@@ -52,8 +43,8 @@ func TestIsAction(t *testing.T) {
 func TestReadRequest(t *testing.T) {
 	appName := "AppUnderDeployment"
 	okManifestReadWriter := ManifestReadWriteStub{
-		manifest: manifest.Manifest{
-			Applications: []manifest.Application{
+		manifest: manifestparser.Manifest{
+			Applications: []manifestparser.Application{
 				{
 					Name: appName,
 				},

@@ -1,18 +1,18 @@
 package plan
 
 import (
+	"code.cloudfoundry.org/cli/util/manifestparser"
 	"github.com/cloudfoundry-community/go-cfclient"
-	"github.com/springernature/halfpipe-deploy-resource/manifest"
 )
 
 type DeleteCandidatePlan interface {
-	Plan(manifest manifest.Application, summary []cfclient.AppSummary) (pl Plan)
+	Plan(manifest manifestparser.Application, summary []cfclient.AppSummary) (pl Plan)
 }
 
 type deleteCandidatePlan struct {
 }
 
-func (p deleteCandidatePlan) Plan(manifest manifest.Application, summary []cfclient.AppSummary) (pl Plan) {
+func (p deleteCandidatePlan) Plan(manifest manifestparser.Application, summary []cfclient.AppSummary) (pl Plan) {
 	pl = Plan{}
 
 	for _, appSummary := range summary {

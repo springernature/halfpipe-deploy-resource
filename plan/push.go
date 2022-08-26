@@ -1,20 +1,20 @@
 package plan
 
 import (
+	"code.cloudfoundry.org/cli/util/manifestparser"
 	"fmt"
 	"github.com/springernature/halfpipe-deploy-resource/config"
-	"github.com/springernature/halfpipe-deploy-resource/manifest"
 	"strconv"
 	"strings"
 )
 
 type PushPlan interface {
-	Plan(manifest manifest.Application, request config.Request) (pl Plan)
+	Plan(manifest manifestparser.Application, request config.Request) (pl Plan)
 }
 
 type pushPlan struct{}
 
-func (p pushPlan) Plan(manifest manifest.Application, request config.Request) (pl Plan) {
+func (p pushPlan) Plan(manifest manifestparser.Application, request config.Request) (pl Plan) {
 	pl = append(pl, p.pushCommand(manifest, request))
 
 	if !manifest.NoRoute {
@@ -46,7 +46,7 @@ func (p pushPlan) Plan(manifest manifest.Application, request config.Request) (p
 	return
 }
 
-func (p pushPlan) pushCommand(manifest manifest.Application, request config.Request) Command {
+func (p pushPlan) pushCommand(manifest manifestparser.Application, request config.Request) Command {
 	pushCommand := NewCfCommand("push").
 		AddToArgs(createCandidateAppName(manifest.Name)).
 		AddToArgs("-f", request.Params.ManifestPath)
@@ -70,7 +70,7 @@ func (p pushPlan) pushCommand(manifest manifest.Application, request config.Requ
 	return pushCommand
 }
 
-func (p pushPlan) formatDockerImage(man manifest.Application, dockerTag string) string {
+func (p pushPlan) formatDockerImage(man manifestparser.Application, dockerTag string) string {
 	image := man.Docker.Image
 	if dockerTag != "" {
 		if strings.Contains(image, ":") {
