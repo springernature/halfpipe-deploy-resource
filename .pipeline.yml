@@ -463,16 +463,22 @@ jobs:
               cf7 apps > /tmp/apps
 
               echo Checking for integration-test-app-cf6 and integration-test-app-cf6-OLD
-              cat /tmp/apps | egrep '^integration-test-app-cf6\s+' > /dev/null
-              cat /tmp/apps | grep integration-test-app-cf6-OLD > /dev/null
+              cat /tmp/apps | egrep '^integration-test-app-cf6\s+'
+              cf7 env integration-test-app-cf6 | grep test_resource_cf6_3
+              cat /tmp/apps | grep integration-test-app-cf6-OLD
+              cf7 env integration-test-app-cf6-OLD | grep test_resource_cf6_2
 
               echo Checking for integration-test-app-cf7 and integration-test-app-cf7-OLD
-              echo /tmp/apps | egrep '^integration-test-app-cf7\s+'
-              echo /tmp/apps | grep integration-test-app-cf7-OLD
+              cat /tmp/apps | egrep '^integration-test-app-cf7\s+'
+              cf7 env integration-test-app-cf7 | grep test_resource_cf7_3
+              cat /tmp/apps | grep integration-test-app-cf7-OLD
+              cf7 env integration-test-app-cf7-OLD | grep test_resource_cf7_2
 
               echo Checking for integration-test-app-cf8 and integration-test-app-cf8-OLD
-              echo /tmp/apps | egrep '^integration-test-app-cf8\s+'
-              echo /tmp/apps | grep integration-test-app-cf8-OLD
+              cat /tmp/apps | egrep '^integration-test-app-cf8\s+'
+              cf7 env integration-test-app-cf8 | grep test_resource_cf8_3
+              cat /tmp/apps | grep integration-test-app-cf8-OLD
+              cf7 env integration-test-app-cf8-OLD | grep test_resource_cf8_2
           path: /bin/sh
       task: cleanup
       timeout: 1h
