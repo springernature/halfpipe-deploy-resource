@@ -98,7 +98,7 @@ func (p planner) updateManifestWithVars(request config.Request) (err error) {
 			return
 		}
 
-		env := make(map[string]any)
+		env := make(map[any]any)
 
 		// We just assume the first app in the manifest is the app under deployment.
 		// We lint that this is the case in the halfpipe linter.
@@ -107,7 +107,7 @@ func (p planner) updateManifestWithVars(request config.Request) (err error) {
 			app.RemainingManifestFields = map[string]any{}
 		}
 		if app.RemainingManifestFields["env"] != nil {
-			env = app.RemainingManifestFields["env"].(map[string]any)
+			env = app.RemainingManifestFields["env"].(map[any]any)
 		}
 
 		if request.Metadata.GitRef != "" {

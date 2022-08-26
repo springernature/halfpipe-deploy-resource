@@ -144,7 +144,7 @@ func (f *fakeRollingDeployPlanner) Plan(manifest manifestparser.Application, req
 
 func TestCallsOutToCorrectPlanner(t *testing.T) {
 	t.Run("Push planner", func(t *testing.T) {
-		vars := make(map[string]any)
+		vars := make(map[any]any)
 		for k, v := range validRequest.Params.Vars {
 			vars[k] = v
 		}
@@ -193,7 +193,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 
 		expectedPath := validRequest.Params.ManifestPath
 
-		vars := make(map[string]any)
+		vars := make(map[any]any)
 		for k, v := range validRequest.Params.Vars {
 			vars[k] = v
 		}
