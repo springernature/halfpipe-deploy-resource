@@ -490,9 +490,7 @@ jobs:
   plan:
   - get: git
     passed:
-    - test_resource_cf6_3
-    - test_resource_cf7_3
-    - test_resource_cf8_3
+    - check_cf
     trigger: true
   - put: docker-registry-image-stable
     params:
