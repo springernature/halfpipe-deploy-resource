@@ -144,11 +144,16 @@ func (f *fakeRollingDeployPlanner) Plan(manifest manifestparser.Application, req
 
 func TestCallsOutToCorrectPlanner(t *testing.T) {
 	t.Run("Push planner", func(t *testing.T) {
+		vars := make(map[string]any)
+		for k, v := range validRequest.Params.Vars {
+			vars[k] = v
+		}
+
 		expectedManifest := manifestparser.Manifest{
 			Applications: []manifestparser.Application{
 				{
 					RemainingManifestFields: map[string]any{
-						"env": validRequest.Params.Vars,
+						"env": vars,
 					},
 				},
 			},
@@ -188,11 +193,16 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 
 		expectedPath := validRequest.Params.ManifestPath
 
+		vars := make(map[string]any)
+		for k, v := range validRequest.Params.Vars {
+			vars[k] = v
+		}
+
 		expectedManifest := manifestparser.Manifest{
 			Applications: []manifestparser.Application{
 				{
 					RemainingManifestFields: map[string]any{
-						"env": validRequest.Params.Vars,
+						"env": vars,
 					},
 				},
 			},
