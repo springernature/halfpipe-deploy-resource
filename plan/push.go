@@ -55,7 +55,7 @@ func (p pushPlan) pushCommand(manifest manifestparser.Application, request confi
 		pushCommand = pushCommand.AddToArgs("-i", strconv.Itoa(request.Params.Instances))
 	}
 
-	if manifest.Docker != nil && manifest.Docker.Image == "" {
+	if manifest.Docker == nil || manifest.Docker.Image == "" {
 		pushCommand = pushCommand.AddToArgs("-p", request.Params.AppPath)
 	} else {
 		pushCommand = pushCommand.

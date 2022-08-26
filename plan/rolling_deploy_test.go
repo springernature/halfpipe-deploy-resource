@@ -32,8 +32,7 @@ func TestRollingDeployNormalApp(t *testing.T) {
 	t.Run("Normal app", func(t *testing.T) {
 		t.Run("No pre start", func(t *testing.T) {
 			applicationManifest := manifestparser.Application{
-				Name:   "MyApp",
-				Docker: &manifestparser.Docker{},
+				Name: "MyApp",
 			}
 
 			p := NewRollingDeployPlan().Plan(applicationManifest, rollingRequest)

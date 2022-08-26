@@ -52,8 +52,7 @@ func TestNormalApp(t *testing.T) {
 			}
 
 			applicationManifest := manifestparser.Application{
-				Name:   "My_App",
-				Docker: &manifestparser.Docker{},
+				Name: "My_App",
 			}
 
 			p := NewPushPlan().Plan(applicationManifest, requestWithUnderscore)
@@ -65,8 +64,7 @@ func TestNormalApp(t *testing.T) {
 
 		t.Run("Instances set", func(t *testing.T) {
 			applicationManifest := manifestparser.Application{
-				Name:   "MyApp",
-				Docker: &manifestparser.Docker{},
+				Name: "MyApp",
 			}
 			r := request
 			r.Params.Instances = 1
@@ -78,8 +76,7 @@ func TestNormalApp(t *testing.T) {
 		})
 		t.Run("With pre start", func(t *testing.T) {
 			applicationManifest := manifestparser.Application{
-				Name:   "MyApp",
-				Docker: &manifestparser.Docker{},
+				Name: "MyApp",
 			}
 
 			r := request
@@ -99,7 +96,6 @@ func TestNormalApp(t *testing.T) {
 		applicationManifest := manifestparser.Application{
 			Name:    "MyApp",
 			NoRoute: true,
-			Docker:  &manifestparser.Docker{},
 		}
 
 		p := NewPushPlan().Plan(applicationManifest, request)

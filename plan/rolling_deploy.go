@@ -18,7 +18,7 @@ func (p rollingDeployPlan) Plan(manifest manifestparser.Application, request con
 		AddToArgs("--manifest", request.Params.ManifestPath).
 		AddToArgs("--strategy", "rolling")
 
-	if manifest.Docker.Image != "" {
+	if manifest.Docker != nil && manifest.Docker.Image != "" {
 		image := manifest.Docker.Image
 		if request.Metadata.DockerTag != "" {
 			if strings.Contains(image, ":") {
