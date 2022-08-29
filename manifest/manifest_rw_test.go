@@ -83,4 +83,40 @@ func TestWriteManifest(t *testing.T) {
 		fileBytes, _ := fs.ReadFile(path)
 		assert.Equal(t, expectedManifest, string(fileBytes))
 	})
+
+	t.Run("It writes out manifest in the correct even though there is no disk_quota", func(t *testing.T) {
+		manifest := manifestparser.Manifest{
+			Applications: []manifestparser.Application{
+				{
+					Name: "myApp",
+					RemainingManifestFields: map[string]interface{}{
+						"routes": []map[string]string{
+							{"route": "myRoute.com"},
+						},
+						"env": map[string]string{
+							"VAR1":       "ONE",
+							"VAR2":       "TWO",
+							"disk-quota": "shouldNotChange",
+						},
+					},
+				},
+			},
+		}
+
+		expectedManifest := `applications:
+- name: myApp
+  env:
+    VAR1: ONE
+    VAR2: TWO
+    disk-quota: shouldNotChange
+  routes:
+  - route: myRoute.com
+`
+		path := "/path/to/manifest.yml"
+		err := manifestReadWriter.WriteManifest(path, manifest)
+		assert.NoError(t, err)
+
+		fileBytes, _ := fs.ReadFile(path)
+		assert.Equal(t, expectedManifest, string(fileBytes))
+	})
 }
