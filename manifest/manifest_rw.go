@@ -3,6 +3,7 @@ package manifest
 import (
 	"code.cloudfoundry.org/cli/util/manifestparser"
 	"github.com/spf13/afero"
+	"strings"
 )
 
 type ReaderWriter interface {
@@ -30,5 +31,7 @@ func (m manifestReadWrite) WriteManifest(path string, manifest manifestparser.Ma
 		return err
 	}
 
-	return m.fs.WriteFile(path, serialized, 0666)
+	withCorrectDiskQuota := strings.Replace(string(serialized), "disk-quota:", "disk_quota:", 1)
+
+	return m.fs.WriteFile(path, []byte(withCorrectDiskQuota), 0666)
 }
