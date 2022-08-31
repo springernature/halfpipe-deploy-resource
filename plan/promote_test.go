@@ -1,8 +1,8 @@
 package plan
 
 import (
-	"code.cloudfoundry.org/cli/util/manifestparser"
 	"github.com/cloudfoundry-community/go-cfclient"
+	"github.com/springernature/halfpipe-deploy-resource"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -16,10 +16,12 @@ func TestPromoteWorkerApp(t *testing.T) {
 			},
 		}
 
-		man := manifestparser.Application{
-			Name:    "myApp",
-			NoRoute: true,
-		}
+		manifest := `applications:
+- name: myApp
+  no-route: true
+`
+		man := halfpipe_deploy_resource.ParseManifest(manifest).Applications[0]
+
 		expectedPlan := Plan{
 			NewCfCommand("rename", createCandidateAppName(man.Name), man.Name),
 		}
@@ -40,10 +42,12 @@ func TestPromoteWorkerApp(t *testing.T) {
 			},
 		}
 
-		man := manifestparser.Application{
-			Name:    "myApp",
-			NoRoute: true,
-		}
+		manifest := `applications:
+- name: myApp
+  no-route: true
+`
+		man := halfpipe_deploy_resource.ParseManifest(manifest).Applications[0]
+
 		expectedPlan := Plan{
 			NewCfCommand("rename", man.Name, createOldAppName(man.Name)),
 			NewCfCommand("rename", createCandidateAppName(man.Name), man.Name),
@@ -66,10 +70,12 @@ func TestPromoteWorkerApp(t *testing.T) {
 			},
 		}
 
-		man := manifestparser.Application{
-			Name:    "myApp",
-			NoRoute: true,
-		}
+		manifest := `applications:
+- name: myApp
+  no-route: true
+`
+		man := halfpipe_deploy_resource.ParseManifest(manifest).Applications[0]
+
 		expectedPlan := Plan{
 			NewCfCommand("rename", man.Name, createOldAppName(man.Name)),
 			NewCfCommand("stop", createOldAppName(man.Name)),
@@ -96,10 +102,12 @@ func TestPromoteWorkerApp(t *testing.T) {
 			},
 		}
 
-		man := manifestparser.Application{
-			Name:    "myApp",
-			NoRoute: true,
-		}
+		manifest := `applications:
+- name: myApp
+  no-route: true
+`
+		man := halfpipe_deploy_resource.ParseManifest(manifest).Applications[0]
+
 		expectedPlan := Plan{
 			NewCfCommand("rename", createOldAppName(man.Name), createDeleteName(man.Name, 0)),
 			NewCfCommand("rename", man.Name, createOldAppName(man.Name)),
@@ -131,10 +139,12 @@ func TestPromoteWorkerApp(t *testing.T) {
 			},
 		}
 
-		man := manifestparser.Application{
-			Name:    "myApp",
-			NoRoute: true,
-		}
+		manifest := `applications:
+- name: myApp
+  no-route: true
+`
+		man := halfpipe_deploy_resource.ParseManifest(manifest).Applications[0]
+
 		expectedPlan := Plan{
 			NewCfCommand("rename", createOldAppName(man.Name), createDeleteName(man.Name, 1)),
 			NewCfCommand("rename", man.Name, createOldAppName(man.Name)),
@@ -174,10 +184,12 @@ func TestPromoteWorkerApp(t *testing.T) {
 			},
 		}
 
-		man := manifestparser.Application{
-			Name:    "myApp",
-			NoRoute: true,
-		}
+		manifest := `applications:
+- name: myApp
+  no-route: true
+`
+		man := halfpipe_deploy_resource.ParseManifest(manifest).Applications[0]
+
 		expectedPlan := Plan{
 			NewCfCommand("rename", createOldAppName(man.Name), createDeleteName(man.Name, 3)),
 			NewCfCommand("rename", man.Name, createOldAppName(man.Name)),
@@ -199,15 +211,14 @@ func TestPromoteNormalApp(t *testing.T) {
 			},
 		}
 
-		man := manifestparser.Application{
-			Name: "myApp",
-			RemainingManifestFields: map[string]any{
-				"routes": []any{
-					map[any]any{"route": "myroute.domain1.com"},
-					map[any]any{"route": "myroute.subroute.domain2.com"},
-				},
-			},
-		}
+		manifest := `applications:
+- name: myApp
+  routes:
+  - route: myroute.domain1.com
+  - route: myroute.subroute.domain2.com
+`
+		man := halfpipe_deploy_resource.ParseManifest(manifest).Applications[0]
+
 		expectedPlan := Plan{
 			NewCfCommand("map-route", createCandidateAppName(man.Name), "domain1.com", "--hostname", "myroute"),
 			NewCfCommand("map-route", createCandidateAppName(man.Name), "subroute.domain2.com", "--hostname", "myroute"),
@@ -227,15 +238,13 @@ func TestPromoteNormalApp(t *testing.T) {
 			},
 		}
 
-		man := manifestparser.Application{
-			Name: "myApp",
-			RemainingManifestFields: map[string]any{
-				"routes": []any{
-					map[any]any{"route": "myroute.domain1.com"},
-					map[any]any{"route": "myroute.subroute.domain2.com/pathy/path"},
-				},
-			},
-		}
+		manifest := `applications:
+- name: myApp
+  routes:
+  - route: myroute.domain1.com
+  - route: myroute.subroute.domain2.com/pathy/path
+`
+		man := halfpipe_deploy_resource.ParseManifest(manifest).Applications[0]
 
 		expectedPlan := Plan{
 			NewCfCommand("map-route", createCandidateAppName(man.Name), "domain1.com", "--hostname", "myroute"),
@@ -256,15 +265,13 @@ func TestPromoteNormalApp(t *testing.T) {
 			},
 		}
 
-		man := manifestparser.Application{
-			Name: "myApp",
-			RemainingManifestFields: map[string]any{
-				"routes": []any{
-					map[any]any{"route": "myroute.domain1.com"},
-					map[any]any{"route": "thisIsASpaceOwnedDomain.com"},
-				},
-			},
-		}
+		manifest := `applications:
+- name: myApp
+  routes:
+  - route: myroute.domain1.com
+  - route: thisIsASpaceOwnedDomain.com
+`
+		man := halfpipe_deploy_resource.ParseManifest(manifest).Applications[0]
 
 		privateRoutesInOrg := []cfclient.Domain{
 			{
@@ -291,15 +298,13 @@ func TestPromoteNormalApp(t *testing.T) {
 			},
 		}
 
-		man := manifestparser.Application{
-			Name: "myApp",
-			RemainingManifestFields: map[string]any{
-				"routes": []any{
-					map[any]any{"route": "myroute.domain1.com"},
-					map[any]any{"route": "thisIsASpaceOwnedDomain.com/mypath"},
-				},
-			},
-		}
+		manifest := `applications:
+- name: myApp
+  routes:
+  - route: myroute.domain1.com
+  - route: thisIsASpaceOwnedDomain.com/mypath
+`
+		man := halfpipe_deploy_resource.ParseManifest(manifest).Applications[0]
 
 		privateRoutesInOrg := []cfclient.Domain{
 			{
@@ -326,15 +331,13 @@ func TestPromoteNormalApp(t *testing.T) {
 			},
 		}
 
-		man := manifestparser.Application{
-			Name: "myApp",
-			RemainingManifestFields: map[string]any{
-				"routes": []any{
-					map[any]any{"route": "myroute.domain1.com"},
-					map[any]any{"route": "subroute.thisIsASpaceOwnedDomain.com"},
-				},
-			},
-		}
+		manifest := `applications:
+- name: myApp
+  routes:
+  - route: myroute.domain1.com
+  - route: subroute.thisIsASpaceOwnedDomain.com
+`
+		man := halfpipe_deploy_resource.ParseManifest(manifest).Applications[0]
 
 		privateRoutesInOrg := []cfclient.Domain{
 			{
@@ -373,15 +376,13 @@ func TestPromoteNormalApp(t *testing.T) {
 			},
 		}
 
-		man := manifestparser.Application{
-			Name: "myApp",
-			RemainingManifestFields: map[string]any{
-				"routes": []any{
-					map[any]any{"route": "myroute.domain1.com"},
-					map[any]any{"route": "subroute.thisIsASpaceOwnedDomain.com"},
-				},
-			},
-		}
+		manifest := `applications:
+- name: myApp
+  routes:
+  - route: myroute.domain1.com
+  - route: subroute.thisIsASpaceOwnedDomain.com
+`
+		man := halfpipe_deploy_resource.ParseManifest(manifest).Applications[0]
 
 		privateRoutesInOrg := []cfclient.Domain{
 			{

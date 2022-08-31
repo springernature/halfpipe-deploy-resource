@@ -3,6 +3,7 @@ package config
 import (
 	"code.cloudfoundry.org/cli/util/manifestparser"
 	"errors"
+	halfpipe_deploy_resource "github.com/springernature/halfpipe-deploy-resource"
 	"strings"
 	"testing"
 
@@ -42,15 +43,12 @@ func TestIsAction(t *testing.T) {
 
 func TestReadRequest(t *testing.T) {
 	appName := "AppUnderDeployment"
+
 	okManifestReadWriter := ManifestReadWriteStub{
-		manifest: manifestparser.Manifest{
-			Applications: []manifestparser.Application{
-				{
-					Name: appName,
-				},
-			},
-		},
+		manifest: halfpipe_deploy_resource.ParseManifest(`applications:
+- name: AppUnderDeployment`),
 	}
+
 	t.Run("Action", func(t *testing.T) {
 		env := map[string]string{
 			"INPUT_API":          "api",

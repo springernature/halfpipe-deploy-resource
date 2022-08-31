@@ -1,16 +1,17 @@
 package plan
 
 import (
-	"code.cloudfoundry.org/cli/util/manifestparser"
 	"github.com/cloudfoundry-community/go-cfclient"
+	"github.com/springernature/halfpipe-deploy-resource"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestDoesTheNeedful(t *testing.T) {
-	man := manifestparser.Application{
-		Name: "myApp",
-	}
+	manifest := `applications:
+- name: myApp
+`
+	man := halfpipe_deploy_resource.ParseManifest(manifest)
 
 	expectedPlan := Plan{
 		NewCfCommand("delete", "myApp-CANDIDATE", "-f"),
@@ -27,16 +28,17 @@ func TestDoesTheNeedful(t *testing.T) {
 		},
 	}
 
-	p := NewDeleteCandidatePlan().Plan(man, summary)
+	p := NewDeleteCandidatePlan().Plan(man.Applications[0], summary)
 
 	assert.Equal(t, expectedPlan, p)
 
 }
 
 func TestDoesNothingWhenThereIsNoCandidate(t *testing.T) {
-	man := manifestparser.Application{
-		Name: "myApp",
-	}
+	manifest := `applications:
+- name: myApp
+`
+	man := halfpipe_deploy_resource.ParseManifest(manifest)
 
 	summary := []cfclient.AppSummary{
 		{
@@ -45,7 +47,7 @@ func TestDoesNothingWhenThereIsNoCandidate(t *testing.T) {
 		},
 	}
 
-	p := NewDeleteCandidatePlan().Plan(man, summary)
+	p := NewDeleteCandidatePlan().Plan(man.Applications[0], summary)
 
 	assert.Equal(t, Plan{}, p)
 

@@ -1,9 +1,9 @@
 package plan
 
 import (
-	"code.cloudfoundry.org/cli/util/manifestparser"
 	"fmt"
 	"github.com/google/uuid"
+	halfpipe_deploy_resource "github.com/springernature/halfpipe-deploy-resource"
 	"github.com/springernature/halfpipe-deploy-resource/config"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -51,9 +51,8 @@ func TestNormalApp(t *testing.T) {
 				},
 			}
 
-			applicationManifest := manifestparser.Application{
-				Name: "My_App",
-			}
+			applicationManifest := halfpipe_deploy_resource.ParseManifest(`applications:
+- name: My_App`).Applications[0]
 
 			p := NewPushPlan().Plan(applicationManifest, requestWithUnderscore)
 			assert.Len(t, p, 3)
@@ -63,9 +62,9 @@ func TestNormalApp(t *testing.T) {
 		})
 
 		t.Run("Instances set", func(t *testing.T) {
-			applicationManifest := manifestparser.Application{
-				Name: "MyApp",
-			}
+			applicationManifest := halfpipe_deploy_resource.ParseManifest(`applications:
+- name: MyApp`).Applications[0]
+
 			r := request
 			r.Params.Instances = 1
 			p := NewPushPlan().Plan(applicationManifest, r)
@@ -75,9 +74,8 @@ func TestNormalApp(t *testing.T) {
 			assert.Equal(t, "cf start MyApp-CANDIDATE || cf logs MyApp-CANDIDATE --recent", p[2].String())
 		})
 		t.Run("With pre start", func(t *testing.T) {
-			applicationManifest := manifestparser.Application{
-				Name: "MyApp",
-			}
+			applicationManifest := halfpipe_deploy_resource.ParseManifest(`applications:
+- name: MyApp`).Applications[0]
 
 			r := request
 			r.Params.PreStartCommand = "cf something; cf somethingElse"
@@ -93,10 +91,9 @@ func TestNormalApp(t *testing.T) {
 	})
 
 	t.Run("Worker app", func(t *testing.T) {
-		applicationManifest := manifestparser.Application{
-			Name:    "MyApp",
-			NoRoute: true,
-		}
+		applicationManifest := halfpipe_deploy_resource.ParseManifest(`applications:
+- name: MyApp
+  no-route: True`).Applications[0]
 
 		p := NewPushPlan().Plan(applicationManifest, request)
 		assert.Len(t, p, 2)
@@ -107,12 +104,10 @@ func TestNormalApp(t *testing.T) {
 
 func TestDocker(t *testing.T) {
 	t.Run("Normal app", func(t *testing.T) {
-		applicationManifest := manifestparser.Application{
-			Name: "MyApp",
-			Docker: &manifestparser.Docker{
-				Image: "wheep/whuup",
-			},
-		}
+		applicationManifest := halfpipe_deploy_resource.ParseManifest(`applications:
+- name: MyApp
+  docker:
+    image: wheep/whuup`).Applications[0]
 
 		r := request
 		r.Params.DockerUsername = "asd"
@@ -125,13 +120,11 @@ func TestDocker(t *testing.T) {
 	})
 
 	t.Run("Worker app", func(t *testing.T) {
-		applicationManifest := manifestparser.Application{
-			Name:    "MyApp",
-			NoRoute: true,
-			Docker: &manifestparser.Docker{
-				Image: "wheep/whuup",
-			},
-		}
+		applicationManifest := halfpipe_deploy_resource.ParseManifest(`applications:
+- name: MyApp
+  no-route: true
+  docker:
+    image: wheep/whuup`).Applications[0]
 
 		r := request
 		r.Params.DockerUsername = "kehe"
@@ -144,12 +137,10 @@ func TestDocker(t *testing.T) {
 
 	t.Run("Docker tag", func(t *testing.T) {
 		t.Run("When it isn't set in the manifest, and we dont pass in an override", func(t *testing.T) {
-			applicationManifest := manifestparser.Application{
-				Name: "MyApp",
-				Docker: &manifestparser.Docker{
-					Image: "wheep/whuup",
-				},
-			}
+			applicationManifest := halfpipe_deploy_resource.ParseManifest(`applications:
+- name: MyApp
+  docker:
+    image: wheep/whuup`).Applications[0]
 
 			r := request
 			r.Params.DockerUsername = "asd"
@@ -164,12 +155,10 @@ func TestDocker(t *testing.T) {
 		t.Run("When it's set in the manifest, and we dont pass in an override", func(t *testing.T) {
 			dockerTag := uuid.New().String()
 
-			applicationManifest := manifestparser.Application{
-				Name: "MyApp",
-				Docker: &manifestparser.Docker{
-					Image: fmt.Sprintf("wheep/whuup:%s", dockerTag),
-				},
-			}
+			applicationManifest := halfpipe_deploy_resource.ParseManifest(fmt.Sprintf(`applications:
+- name: MyApp
+  docker:
+    image: wheep/whuup:%s`, dockerTag)).Applications[0]
 
 			r := request
 			r.Params.DockerUsername = "asd"
@@ -184,12 +173,10 @@ func TestDocker(t *testing.T) {
 		t.Run("When it's not set in the manifest, and we pass in an override", func(t *testing.T) {
 			dockerTag := uuid.New().String()
 
-			applicationManifest := manifestparser.Application{
-				Name: "MyApp",
-				Docker: &manifestparser.Docker{
-					Image: "wheep/whuup",
-				},
-			}
+			applicationManifest := halfpipe_deploy_resource.ParseManifest(`applications:
+- name: MyApp
+  docker:
+    image: wheep/whuup`).Applications[0]
 
 			r := request
 			r.Params.DockerUsername = "asd"
@@ -205,12 +192,10 @@ func TestDocker(t *testing.T) {
 		t.Run("When it's set in the manifest, and we pass in an override", func(t *testing.T) {
 			dockerTag := uuid.New().String()
 
-			applicationManifest := manifestparser.Application{
-				Name: "MyApp",
-				Docker: &manifestparser.Docker{
-					Image: "wheep/whuup:somethingStatic",
-				},
-			}
+			applicationManifest := halfpipe_deploy_resource.ParseManifest(`applications:
+- name: MyApp
+  docker:
+    image: wheep/whuup:somethingStatic`).Applications[0]
 
 			r := request
 			r.Params.DockerUsername = "asd"

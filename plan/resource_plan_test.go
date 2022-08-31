@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/spf13/afero"
+	"github.com/springernature/halfpipe-deploy-resource"
 	"github.com/stretchr/testify/assert"
 	"testing"
 
@@ -70,13 +71,8 @@ func TestErrorsReadingAppManifest(t *testing.T) {
 func TestErrorsWhenSavingManifestWithUpdatedVars(t *testing.T) {
 	expectedErr := errors.New("blurgh")
 	manifestReader := ManifestReadWriteStub{
-		manifest: manifestparser.Manifest{
-			Applications: []manifestparser.Application{
-				{
-					Name: "MyApp",
-				},
-			},
-		},
+		manifest: halfpipe_deploy_resource.ParseManifest(`applications:
+- name: MyApp`),
 		saveManifestError: expectedErr,
 	}
 
@@ -144,27 +140,15 @@ func (f *fakeRollingDeployPlanner) Plan(manifest manifestparser.Application, req
 
 func TestCallsOutToCorrectPlanner(t *testing.T) {
 	t.Run("Push planner", func(t *testing.T) {
-		vars := make(map[any]any)
-		for k, v := range validRequest.Params.Vars {
-			vars[k] = v
-		}
-
-		expectedManifest := manifestparser.Manifest{
-			Applications: []manifestparser.Application{
-				{
-					RemainingManifestFields: map[string]any{
-						"env": vars,
-					},
-				},
-			},
-		}
+		expectedManifest := halfpipe_deploy_resource.ParseManifest(`applications:
+- name: myApp
+  env:
+    VAR2: bb
+    VAR4: cc`)
 
 		manifestReader := ManifestReadWriteStub{
-			manifest: manifestparser.Manifest{
-				Applications: []manifestparser.Application{
-					{},
-				},
-			},
+			manifest: halfpipe_deploy_resource.ParseManifest(`applications:
+- name: myApp`),
 		}
 
 		planner := NewPlanner(&manifestReader, &fakePushPlanner{
@@ -190,30 +174,17 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 	})
 
 	t.Run("Rolling deploy planner", func(t *testing.T) {
-
 		expectedPath := validRequest.Params.ManifestPath
 
-		vars := make(map[any]any)
-		for k, v := range validRequest.Params.Vars {
-			vars[k] = v
-		}
-
-		expectedManifest := manifestparser.Manifest{
-			Applications: []manifestparser.Application{
-				{
-					RemainingManifestFields: map[string]any{
-						"env": vars,
-					},
-				},
-			},
-		}
+		expectedManifest := halfpipe_deploy_resource.ParseManifest(`applications:
+- name: myApp
+  env:
+    VAR2: bb
+    VAR4: cc`)
 
 		manifestReader := ManifestReadWriteStub{
-			manifest: manifestparser.Manifest{
-				Applications: []manifestparser.Application{
-					{},
-				},
-			},
+			manifest: halfpipe_deploy_resource.ParseManifest(`applications:
+- name: myApp`),
 		}
 
 		planner := NewPlanner(&manifestReader, nil, nil, nil, nil, &fakeRollingDeployPlanner{
@@ -241,11 +212,8 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 
 	t.Run("Check planner", func(t *testing.T) {
 		manifestReader := ManifestReadWriteStub{
-			manifest: manifestparser.Manifest{
-				Applications: []manifestparser.Application{
-					{},
-				},
-			},
+			manifest: halfpipe_deploy_resource.ParseManifest(`applications:
+- name: myApp`),
 		}
 
 		planner := NewPlanner(&manifestReader, nil, fakeCheckPlanner{
@@ -267,11 +235,8 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 
 	t.Run("Promote planner", func(t *testing.T) {
 		manifestReader := ManifestReadWriteStub{
-			manifest: manifestparser.Manifest{
-				Applications: []manifestparser.Application{
-					{},
-				},
-			},
+			manifest: halfpipe_deploy_resource.ParseManifest(`applications:
+- name: myApp`),
 		}
 
 		planner := NewPlanner(&manifestReader, nil, nil, fakePromotePlanner{
@@ -295,11 +260,8 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 
 	t.Run("Cleanup planner", func(t *testing.T) {
 		manifestReader := ManifestReadWriteStub{
-			manifest: manifestparser.Manifest{
-				Applications: []manifestparser.Application{
-					{},
-				},
-			},
+			manifest: halfpipe_deploy_resource.ParseManifest(`applications:
+- name: myApp`),
 		}
 
 		planner := NewPlanner(&manifestReader, nil, nil, nil, fakeCleanupPlanner{
@@ -340,11 +302,8 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 
 	t.Run("Delete Candidate planner", func(t *testing.T) {
 		manifestReader := ManifestReadWriteStub{
-			manifest: manifestparser.Manifest{
-				Applications: []manifestparser.Application{
-					{},
-				},
-			},
+			manifest: halfpipe_deploy_resource.ParseManifest(`applications:
+- name: myApp`),
 		}
 
 		planner := NewPlanner(&manifestReader, nil, nil, nil, nil, nil, &fakeDeleteCandidatePlanner{
