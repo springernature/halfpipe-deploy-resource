@@ -196,6 +196,10 @@ func (r RequestReader) ReadRequest() (request Request, err error) {
 		return
 	}
 
+	if request.Params.Command == "check" {
+		return request, nil
+	}
+
 	if request.Params.CliVersion == "" {
 		request.Params.CliVersion = "cf6"
 	}

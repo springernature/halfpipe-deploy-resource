@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/springernature/halfpipe-deploy-resource/cmd/out/check_resource"
 	"os"
 	"strings"
 	"syscall"
@@ -42,6 +43,14 @@ func main() {
 	if err != nil {
 		logger.Println(err)
 		syscall.Exit(1)
+	}
+
+	if requestConfig.Params.Command == "check" {
+		// Here be dragons.
+		// This is just to make sure the pipeline where we build and test the resource is correct..
+		check_resource.CheckResource(logger)
+		json.NewEncoder(os.Stdout).Encode(plan.Response{})
+		syscall.Exit(0)
 	}
 
 	metrics := plan.NewMetrics(requestConfig, "https://aggregationgateway.k8s.springernature.io/")
