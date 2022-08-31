@@ -5,6 +5,7 @@ import (
 	"github.com/springernature/halfpipe-deploy-resource/logger"
 	"io"
 	"os"
+	"path"
 	"strings"
 )
 
@@ -21,10 +22,11 @@ func readFile(l logger.CapturingWriter, path string) string {
 
 }
 
-func CheckResource(l logger.CapturingWriter) {
+func CheckResource(args []string, l logger.CapturingWriter) {
+	baseDir := args[1]
 	l.Println("Making sure we are running with the latest built resource")
 	builtWithRef := readFile(l, "/opt/resource/builtWithRef")
-	currentRef := readFile(l, "git/.git/ref")
+	currentRef := readFile(l, path.Join(baseDir, "git/.git/ref"))
 	l.Println(fmt.Sprintf("Build with ref '%s', current ref '%s'", builtWithRef, currentRef))
 
 	if builtWithRef != currentRef {

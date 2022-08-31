@@ -48,7 +48,7 @@ func main() {
 	if requestConfig.Params.Command == "check" {
 		// Here be dragons.
 		// This is just to make sure the pipeline where we build and test the resource is correct..
-		check_resource.CheckResource(logger)
+		check_resource.CheckResource(os.Args, logger)
 		json.NewEncoder(os.Stdout).Encode(plan.Response{})
 		syscall.Exit(0)
 	}
