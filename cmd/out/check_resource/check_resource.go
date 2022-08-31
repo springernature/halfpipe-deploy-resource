@@ -27,7 +27,7 @@ func CheckResource(args []string, l logger.CapturingWriter) {
 	l.Println("Making sure we are running with the latest built resource")
 	builtWithRef := readFile(l, "/opt/resource/builtWithRef")
 	currentRef := readFile(l, path.Join(baseDir, "git/.git/ref"))
-	l.Println(fmt.Sprintf("Build with ref '%s', current ref '%s'", builtWithRef, currentRef))
+	l.Println(fmt.Sprintf("Built with ref '%s', current ref '%s'", builtWithRef, currentRef))
 
 	if builtWithRef != currentRef {
 		panic("Running test with old docker image..Thats no good...")

@@ -53,6 +53,32 @@ jobs:
   - put: docker-registry-image-dev
     params:
       build: git
+  - config:
+      image_resource:
+        source:
+          registry_mirror:
+            host: eu-mirror.gcr.io
+          repository: alpine
+          password: ((halfpipe-gcr.private_key))
+          username: _json_key
+        type: registry-image
+      params:
+        CONCOURSE_PASSWORD: ((concourse.password))
+        CONCOURSE_TEAM: ((concourse.team))
+        CONCOURSE_URL: ((concourse.url))
+        CONCOURSE_USERNAME: ((concourse.username))
+      platform: linux
+      run:
+        args:
+          - -c
+          - |
+            wget "$CONCOURSE_URL/api/v1/cli?arch=amd64&platform=linux" -O fly
+            chmod +x fly
+            ./fly -t $CONCOURSE_TEAM login -c $CONCOURSE_URL -u $CONCOURSE_USERNAME -p $CONCOURSE_PASSWORD -n $CONCOURSE_TEAM
+            ./fly -t $CONCOURSE_TEAM check-resource-type -r halfpipe-deploy-resource-v2/cf-resource
+        path: /bin/sh
+    task: check-resource-type
+    timeout: 1h
 
 - name: cleanup_cf
   plan:
