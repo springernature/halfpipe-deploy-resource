@@ -1,5 +1,6 @@
 FROM golang:1.19-buster as builder
 
+
 COPY . /build
 WORKDIR /build
 
@@ -17,8 +18,9 @@ RUN go test ./...
 RUN go build -o /opt/resource/check cmd/check/check.go
 RUN go build -o /opt/resource/out cmd/out/out.go
 RUN go build -o /opt/resource/in cmd/in/in.go
-
 RUN chmod +x /opt/resource/*
+
+ADD .git/ref /opt/resource/builtWithRef
 
 FROM golang:alpine AS resource
 RUN apk add --no-cache bash tzdata ca-certificates jq libc6-compat

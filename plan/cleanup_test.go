@@ -35,7 +35,7 @@ func TestDeletesAppThatNeedsACleanup(t *testing.T) {
 	}
 
 	man := halfpipe_deploy_resource.ParseManifest(`applications:
-- name: MyApp`).Applications[0]
+- name: myApp`).Applications[0]
 
 	expectedPlan := Plan{
 		NewCfCommand("delete", "myApp-DELETE", "-f"),
@@ -68,7 +68,7 @@ func TestDeletesAppsThatNeedsACleanup(t *testing.T) {
 	}
 
 	man := halfpipe_deploy_resource.ParseManifest(`applications:
-- name: MyApp`).Applications[0]
+- name: myApp`).Applications[0]
 
 	expectedPlan := Plan{
 		NewCfCommand("delete", "myApp-DELETE", "-f"),
