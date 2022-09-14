@@ -20,7 +20,7 @@ RUN go build -o /opt/resource/out cmd/out/out.go
 RUN go build -o /opt/resource/in cmd/in/in.go
 RUN chmod +x /opt/resource/*
 
-ADD .git/ref /opt/resource/builtWithRef
+# ADD .git/ref /opt/resource/builtWithRef
 
 FROM golang:alpine AS resource
 RUN apk add --no-cache bash tzdata ca-certificates jq libc6-compat
