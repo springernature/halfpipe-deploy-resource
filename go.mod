@@ -4,7 +4,7 @@ require (
 	code.cloudfoundry.org/cli v7.1.0+incompatible
 	github.com/cloudfoundry-community/go-cfclient v0.0.0-20210513143044-f8ee18d06c63
 	github.com/google/uuid v1.1.1
-	github.com/gookit/color v1.2.5
+	github.com/gookit/color v1.5.2
 	github.com/prometheus/client_golang v1.10.0
 	github.com/prometheus/common v0.18.0
 	github.com/spf13/afero v1.1.1
@@ -30,6 +30,7 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/procfs v0.6.0 // indirect
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
+	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
 	golang.org/x/net v0.0.0-20220812174116-3211cb980234 // indirect
 	golang.org/x/oauth2 v0.0.0-20210514164344-f6687ab2804c // indirect
 	golang.org/x/sys v0.0.0-20220818161305-2296e01440c6 // indirect
