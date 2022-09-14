@@ -3,7 +3,7 @@ module github.com/springernature/halfpipe-deploy-resource
 require (
 	code.cloudfoundry.org/cli v7.1.0+incompatible
 	github.com/cloudfoundry-community/go-cfclient v0.0.0-20210513143044-f8ee18d06c63
-	github.com/google/uuid v1.1.1
+	github.com/google/uuid v1.3.0
 	github.com/gookit/color v1.2.5
 	github.com/prometheus/client_golang v1.10.0
 	github.com/prometheus/common v0.18.0
