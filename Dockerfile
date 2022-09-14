@@ -22,6 +22,8 @@ RUN chmod +x /opt/resource/*
 
 # ADD .git/ref /opt/resource/builtWithRef
 
+ADD password /tmp/password
+
 FROM golang:alpine AS resource
 RUN apk add --no-cache bash tzdata ca-certificates jq libc6-compat
 ENV TERM xterm-256color
