@@ -3,14 +3,14 @@ FROM golang:1.20-buster as builder
 COPY . /build
 WORKDIR /build
 
-ENV CF_TAR_URL_V6 "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=6.49.0&source=github-rel"
+ENV CF_TAR_URL_V6 "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=6.53.0&source=github-rel"
 RUN wget -qO- ${CF_TAR_URL_V6} | tar xvz -C /bin > /dev/null
 RUN mv /bin/cf /bin/cf6
 
-ENV CF_TAR_URL_V7 "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=7.2.0&source=github-rel"
+ENV CF_TAR_URL_V7 "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=7.5.0&source=github-rel"
 RUN wget -qO- ${CF_TAR_URL_V7} | tar xvz -C /bin > /dev/null
 
-ENV CF_TAR_URL_V8 "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=8.4.0&source=github-rel"
+ENV CF_TAR_URL_V8 "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=8.5.0&source=github-rel"
 RUN wget -qO- ${CF_TAR_URL_V8} | tar xvz -C /bin > /dev/null
 
 RUN go test ./...
