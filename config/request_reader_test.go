@@ -83,7 +83,7 @@ func TestReadRequest(t *testing.T) {
 				AppPath:      "/github/workspace/app",
 				TestDomain:   "test domain",
 				DockerTag:    "docker-tag",
-				CliVersion:   "cf6",
+				CliVersion:   "cf7",
 				Vars: map[string]string{
 					"VAR":   "a",
 					"VAR2":  "b",
@@ -162,6 +162,25 @@ func TestReadRequest(t *testing.T) {
       "testDomain":"springernature.app"
    }
 }`
+
+		validRequestWithVersionPathAndOldCfCli := `{
+   "source": {
+      "api":"api",
+      "org":"org",
+      "password":"password",
+      "space":"space",
+      "username":"username"
+   },
+   "params": {
+      "appPath":"git/app",
+      "buildVersionPath":"version/version",
+      "command":"halfpipe-push",
+      "gitRefPath":"git/.git/ref",
+      "manifestPath":"git/app/cf/manifest-qa.yml",
+      "testDomain":"springernature.app",
+	  "cliVersion": "cf6"
+   }
+}`
 		t.Run("fails to read git ref file", func(t *testing.T) {
 			fs := afero.Afero{Fs: afero.NewMemMapFs()}
 
@@ -214,7 +233,7 @@ func TestReadRequest(t *testing.T) {
 					ManifestPath: "/tmp/buildDir/git/app/cf/manifest-qa.yml",
 					AppPath:      "/tmp/buildDir/git/app",
 					TestDomain:   "springernature.app",
-					CliVersion:   "cf6",
+					CliVersion:   "cf7",
 				},
 				Metadata: Metadata{
 					GitRef:    "ref",
@@ -262,7 +281,7 @@ func TestReadRequest(t *testing.T) {
 			fs := afero.Afero{Fs: afero.NewMemMapFs()}
 			fs.WriteFile("/tmp/buildDir/git/.git/ref", []byte("ref"), 0777)
 			fs.WriteFile("/tmp/buildDir/version/version", []byte("version"), 0777)
-			stdin := strings.NewReader(validRequestWithVersionPath)
+			stdin := strings.NewReader(validRequestWithVersionPathAndOldCfCli)
 			rr := NewRequestReader([]string{"/opt/resource/out", "/tmp/buildDir"}, map[string]string{}, stdin, fs, &okManifestReadWriter)
 
 			request, err := rr.ReadRequest()

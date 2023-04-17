@@ -201,7 +201,7 @@ func (r RequestReader) ReadRequest() (request Request, err error) {
 	}
 
 	if request.Params.CliVersion == "" {
-		request.Params.CliVersion = "cf6"
+		request.Params.CliVersion = "cf7"
 	}
 
 	if e := request.Verify(r.isActions()); e != nil {
