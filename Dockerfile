@@ -1,4 +1,4 @@
-FROM golang:1.20-alpine as builder
+FROM golang:1.21-alpine as builder
 
 COPY . /build
 WORKDIR /build
@@ -21,7 +21,7 @@ RUN chmod +x /opt/resource/*
 
 ADD .git/ref /opt/resource/builtWithRef
 
-FROM golang:1.20-alpine AS resource
+FROM golang:1.21-alpine AS resource
 RUN apk add --no-cache bash tzdata ca-certificates jq libc6-compat
 ENV TERM xterm-256color
 COPY --from=builder /opt/resource/* /opt/resource/
