@@ -67,13 +67,13 @@ func main() {
 	switch requestConfig.Params.Command {
 	case "":
 		panic("params.command must not be empty")
-	case config.PUSH, config.CHECK, config.PROMOTE, config.DELETE, config.CLEANUP, config.ROLLING_DEPLOY, config.DELETE_CANDIDATE, config.ALL:
+	case config.PUSH, config.CHECK, config.PROMOTE, config.DELETE, config.CLEANUP, config.ROLLING_DEPLOY, config.DELETE_CANDIDATE, config.ALL, config.LOGS:
 
 		if requestConfig.Params.CliVersion == "" {
 			requestConfig.Params.CliVersion = "cf6"
 		}
 
-		p, err = plan.NewPlanner(manifest.NewManifestReadWrite(fs), plan.NewPushPlan(), plan.NewCheckPlan(), plan.NewPromotePlan(privateDomains), plan.NewCleanupPlan(), plan.NewRollingDeployPlan(), plan.NewDeleteCandidatePlan()).Plan(requestConfig, appsSummary)
+		p, err = plan.NewPlanner(manifest.NewManifestReadWrite(fs), plan.NewPushPlan(), plan.NewCheckPlan(), plan.NewPromotePlan(privateDomains), plan.NewCleanupPlan(), plan.NewRollingDeployPlan(), plan.NewDeleteCandidatePlan(), plan.NewLogsPlan()).Plan(requestConfig, appsSummary)
 	default:
 		panic(fmt.Sprintf("Command '%s' not supported", requestConfig.Params.Command))
 	}
