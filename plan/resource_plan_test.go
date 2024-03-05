@@ -31,6 +31,7 @@ var validRequest = config.Request{
 			"VAR2": "bb",
 			"VAR4": "cc",
 		},
+		Team: "myTeam",
 	},
 }
 
@@ -144,7 +145,11 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 - name: myApp
   env:
     VAR2: bb
-    VAR4: cc`)
+    VAR4: cc
+  metadata:
+    labels:
+      team: myTeam
+`)
 
 		manifestReader := ManifestReadWriteStub{
 			manifest: halfpipe_deploy_resource.ParseManifest(`applications:
@@ -171,6 +176,86 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 		assert.Equal(t, validRequest.Params.ManifestPath, manifestReader.readPath)
 		assert.Equal(t, validRequest.Params.ManifestPath, manifestReader.writePath)
 		assert.Equal(t, expectedManifest, manifestReader.savedManifest)
+
+		t.Run("Changes team label if present", func(t *testing.T) {
+			expectedManifest := halfpipe_deploy_resource.ParseManifest(`applications:
+- name: myApp
+  env:
+    VAR2: bb
+    VAR4: cc
+  metadata:
+    annotations:
+      someAnnotation: yo
+    labels:
+      myLabel: myValue
+      environment: dev
+      team: myTeam
+`)
+			manifestReader := ManifestReadWriteStub{
+				manifest: halfpipe_deploy_resource.ParseManifest(`applications:
+- name: myApp
+  metadata:
+    annotations:
+      someAnnotation: yo
+    labels:
+      myLabel: myValue
+      environment: dev
+      team: myHardcodedTeam
+`)}
+
+			planner := NewPlanner(&manifestReader, &fakePushPlanner{
+				plan: Plan{
+					NewCfCommand("yay"),
+				},
+			}, nil, nil, nil, nil, nil, nil)
+
+			r := validRequest
+			r.Params.BuildVersionPath = ""
+			r.Params.GitRefPath = ""
+			_, err := planner.Plan(r, nil)
+
+			assert.NoError(t, err)
+
+			assert.Equal(t, expectedManifest, manifestReader.savedManifest)
+
+		})
+
+		t.Run("Does nothing with labels if team is not defined", func(t *testing.T) {
+			expectedManifest := halfpipe_deploy_resource.ParseManifest(`applications:
+- name: myApp
+  env:
+    VAR2: bb
+    VAR4: cc
+  metadata:
+    annotations:
+     a: b
+`)
+			manifestReader := ManifestReadWriteStub{
+				manifest: halfpipe_deploy_resource.ParseManifest(`applications:
+- name: myApp
+  metadata:
+    annotations:
+      a: b
+`)}
+
+			planner := NewPlanner(&manifestReader, &fakePushPlanner{
+				plan: Plan{
+					NewCfCommand("yay"),
+				},
+			}, nil, nil, nil, nil, nil, nil)
+
+			r := validRequest
+			r.Params.BuildVersionPath = ""
+			r.Params.GitRefPath = ""
+			r.Params.Team = ""
+			_, err := planner.Plan(r, nil)
+
+			assert.NoError(t, err)
+
+			assert.Equal(t, expectedManifest, manifestReader.savedManifest)
+
+		})
+
 	})
 
 	t.Run("Rolling deploy planner", func(t *testing.T) {
@@ -180,7 +265,10 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 - name: myApp
   env:
     VAR2: bb
-    VAR4: cc`)
+    VAR4: cc
+  metadata:
+    labels:
+      team: myTeam`)
 
 		manifestReader := ManifestReadWriteStub{
 			manifest: halfpipe_deploy_resource.ParseManifest(`applications:
