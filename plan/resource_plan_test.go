@@ -226,6 +226,36 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
   env:
     VAR2: bb
     VAR4: cc
+`)
+			manifestReader := ManifestReadWriteStub{
+				manifest: halfpipe_deploy_resource.ParseManifest(`applications:
+- name: myApp
+`)}
+
+			planner := NewPlanner(&manifestReader, &fakePushPlanner{
+				plan: Plan{
+					NewCfCommand("yay"),
+				},
+			}, nil, nil, nil, nil, nil, nil)
+
+			r := validRequest
+			r.Params.BuildVersionPath = ""
+			r.Params.GitRefPath = ""
+			r.Params.Team = ""
+			_, err := planner.Plan(r, nil)
+
+			assert.NoError(t, err)
+
+			assert.Equal(t, expectedManifest, manifestReader.savedManifest)
+
+		})
+
+		t.Run("Does nothing with labels if team is not defined but there are some annotations", func(t *testing.T) {
+			expectedManifest := halfpipe_deploy_resource.ParseManifest(`applications:
+- name: myApp
+  env:
+    VAR2: bb
+    VAR4: cc
   metadata:
     annotations:
      a: b
