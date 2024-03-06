@@ -57,7 +57,7 @@ func (p planner) Plan(request config.Request, appsSummary []cfclient.AppSummary)
 
 	switch request.Params.Command {
 	case config.PUSH, config.ROLLING_DEPLOY:
-		if err = p.updateManifestWithVars(request); err != nil {
+		if err = p.updateManifestWithVarsAndLabels(request); err != nil {
 			return
 		}
 
@@ -68,7 +68,7 @@ func (p planner) Plan(request config.Request, appsSummary []cfclient.AppSummary)
 			pl = append(pl, p.rollingDeployPlan.Plan(appUnderDeployment, request)...)
 		}
 	case config.ALL:
-		if err = p.updateManifestWithVars(request); err != nil {
+		if err = p.updateManifestWithVarsAndLabels(request); err != nil {
 			return
 		}
 		pl = append(pl, p.pushPlan.Plan(appUnderDeployment, request)...)
@@ -94,7 +94,7 @@ func (p planner) readManifest(manifestPath string) (manifestparser.Manifest, err
 	return p.manifestReaderWrite.ReadManifest(manifestPath)
 }
 
-func (p planner) updateManifestWithVars(request config.Request) (err error) {
+func (p planner) updateManifestWithVarsAndLabels(request config.Request) (err error) {
 	if len(request.Params.Vars) > 0 || request.Params.GitRefPath != "" {
 		apps, e := p.readManifest(request.Params.ManifestPath)
 		if e != nil {
@@ -103,7 +103,8 @@ func (p planner) updateManifestWithVars(request config.Request) (err error) {
 		}
 
 		env := make(map[any]any)
-
+		metadata := make(map[any]any)
+		labels := make(map[any]any)
 		// We just assume the first app in the manifest is the app under deployment.
 		// We lint that this is the case in the halfpipe linter.
 		app := apps.Applications[0]
@@ -112,6 +113,12 @@ func (p planner) updateManifestWithVars(request config.Request) (err error) {
 		}
 		if app.RemainingManifestFields["env"] != nil {
 			env = app.RemainingManifestFields["env"].(map[any]any)
+		}
+		if app.RemainingManifestFields["metadata"] != nil {
+			metadata = app.RemainingManifestFields["metadata"].(map[any]any)
+			if metadata["labels"] != nil {
+				labels = metadata["labels"].(map[any]any)
+			}
 		}
 
 		if request.Metadata.GitRef != "" {
@@ -122,9 +129,16 @@ func (p planner) updateManifestWithVars(request config.Request) (err error) {
 			env["BUILD_VERSION"] = request.Metadata.Version
 		}
 
+		if request.Params.Team != "" {
+			labels["team"] = request.Params.Team
+			metadata["labels"] = labels
+			app.RemainingManifestFields["metadata"] = metadata
+		}
+
 		for k, v := range request.Params.Vars {
 			env[k] = v
 		}
+
 		app.RemainingManifestFields["env"] = env
 		apps.Applications[0] = app
 
