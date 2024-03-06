@@ -217,6 +217,7 @@ jobs:
         testDomain: springernature.app
         vars:
           RUN: test_resource_cf6_3
+        team: engineering-enablement
     - put: cf
       params:
         command: halfpipe-check
@@ -338,6 +339,7 @@ jobs:
         cliVersion: cf7
         vars:
           RUN: test_resource_cf7_3
+        team: engineering-enablement
     - put: cf
       params:
         command: halfpipe-check
@@ -461,6 +463,7 @@ jobs:
         cliVersion: cf8
         vars:
           RUN: test_resource_cf8_3
+        team: engineering-enablement
     - put: cf
       params:
         command: halfpipe-check
