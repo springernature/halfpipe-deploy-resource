@@ -20,9 +20,10 @@ type planner struct {
 	checkPlan           CheckPlan
 	deleteCandidatePlan DeleteCandidatePlan
 	logsPlan            LogsPlan
+	checkLabelsPlan     CheckLabelsPlan
 }
 
-func NewPlanner(manifestReaderWrite manifest.ReaderWriter, pushPlan PushPlan, checkPlan CheckPlan, promotePlan PromotePlan, cleanupPlan CleanupPlan, rollingDeployPlan RollingDeployPlan, deleteCandidatePlan DeleteCandidatePlan, logsPlan LogsPlan) ResourcePlan {
+func NewPlanner(manifestReaderWrite manifest.ReaderWriter, pushPlan PushPlan, checkPlan CheckPlan, promotePlan PromotePlan, cleanupPlan CleanupPlan, rollingDeployPlan RollingDeployPlan, deleteCandidatePlan DeleteCandidatePlan, logsPlan LogsPlan, checkLabelsPlan CheckLabelsPlan) ResourcePlan {
 	return planner{
 		manifestReaderWrite: manifestReaderWrite,
 		pushPlan:            pushPlan,
@@ -32,6 +33,7 @@ func NewPlanner(manifestReaderWrite manifest.ReaderWriter, pushPlan PushPlan, ch
 		rollingDeployPlan:   rollingDeployPlan,
 		deleteCandidatePlan: deleteCandidatePlan,
 		logsPlan:            logsPlan,
+		checkLabelsPlan:     checkLabelsPlan,
 	}
 }
 
@@ -60,6 +62,7 @@ func (p planner) Plan(request config.Request, appsSummary []cfclient.AppSummary)
 		if err = p.updateManifestWithVarsAndLabels(request); err != nil {
 			return
 		}
+		pl = append(pl, p.checkLabelsPlan.Plan(appUnderDeployment, request.Source.Org, request.Source.Space)...)
 
 		switch request.Params.Command {
 		case config.PUSH:
@@ -71,6 +74,7 @@ func (p planner) Plan(request config.Request, appsSummary []cfclient.AppSummary)
 		if err = p.updateManifestWithVarsAndLabels(request); err != nil {
 			return
 		}
+		pl = append(pl, p.checkLabelsPlan.Plan(appUnderDeployment, request.Source.Org, request.Source.Space)...)
 		pl = append(pl, p.pushPlan.Plan(appUnderDeployment, request)...)
 		pl = append(pl, p.checkPlan.Plan(appUnderDeployment, request.Source.Org, request.Source.Space)...)
 		pl = append(pl, p.promotePlan.Plan(appUnderDeployment, request, appsSummary)...)
