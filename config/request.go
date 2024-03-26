@@ -14,6 +14,7 @@ type Request struct {
 
 type Metadata struct {
 	GitRef    string
+	GitRepo   string
 	Version   string
 	DockerTag string
 	AppName   string
@@ -36,6 +37,7 @@ type Params struct {
 	TestDomain       string
 	Vars             map[string]string
 	GitRefPath       string
+	GitUri           string
 	BuildVersionPath string
 	Timeout          string
 	PreStartCommand  string

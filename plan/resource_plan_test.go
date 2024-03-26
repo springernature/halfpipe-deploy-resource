@@ -21,17 +21,19 @@ var validRequest = config.Request{
 		Password: "e",
 	},
 	Params: config.Params{
-		ManifestPath:     "manifest.yml",
-		AppPath:          "",
-		TestDomain:       "kehe.com",
-		Command:          config.PUSH,
-		GitRefPath:       "gitRefPath",
+		ManifestPath: "manifest.yml",
+		AppPath:      "",
+		TestDomain:   "kehe.com",
+		Command:      config.PUSH,
+		GitRefPath:   "gitRefPath",
+
 		BuildVersionPath: "buildVersionPath",
 		Vars: map[string]string{
 			"VAR2": "bb",
 			"VAR4": "cc",
 		},
-		Team: "myTeam",
+		Team:   "myTeam",
+		GitUri: "git@github.com:springernature/halfpipe-deploy-resource.git",
 	},
 }
 
@@ -149,6 +151,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
   metadata:
     labels:
       team: myTeam
+      gitRepo: halfpipe-deploy-resource
 `)
 
 		manifestReader := ManifestReadWriteStub{
@@ -191,6 +194,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
       myLabel: myValue
       environment: dev
       team: myTeam
+      gitRepo: halfpipe-deploy-resource
 `)
 			manifestReader := ManifestReadWriteStub{
 				manifest: halfpipe_deploy_resource.ParseManifest(`applications:
@@ -221,7 +225,8 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 
 		})
 
-		t.Run("Does nothing with labels if team is not defined", func(t *testing.T) {
+		t.Run("Does nothing with labels if team is not defined and gitUri unset", func(t *testing.T) {
+
 			expectedManifest := halfpipe_deploy_resource.ParseManifest(`applications:
 - name: myApp
   env:
@@ -242,6 +247,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			r := validRequest
 			r.Params.BuildVersionPath = ""
 			r.Params.GitRefPath = ""
+			r.Params.GitUri = ""
 			r.Params.Team = ""
 			_, err := planner.Plan(r, nil)
 
@@ -278,6 +284,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			r := validRequest
 			r.Params.BuildVersionPath = ""
 			r.Params.GitRefPath = ""
+			r.Params.GitUri = ""
 			r.Params.Team = ""
 			_, err := planner.Plan(r, nil)
 
@@ -299,7 +306,9 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
     VAR4: cc
   metadata:
     labels:
-      team: myTeam`)
+      team: myTeam
+      gitRepo: halfpipe-deploy-resource
+`)
 
 		manifestReader := ManifestReadWriteStub{
 			manifest: halfpipe_deploy_resource.ParseManifest(`applications:

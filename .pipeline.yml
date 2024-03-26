@@ -139,6 +139,7 @@ jobs:
       appPath: git/.integration_test
       command: halfpipe-push
       gitRefPath: git/.git/ref
+      gitUri: git@github.com:springernature/halfpipe-deploy-resource.git
       manifestPath: git/.integration_test/manifest-cf6.yml
       testDomain: springernature.app
       vars:
@@ -176,6 +177,7 @@ jobs:
         appPath: git/.integration_test
         command: halfpipe-push
         gitRefPath: git/.git/ref
+        gitUri: git@github.com:springernature/halfpipe-deploy-resource.git
         manifestPath: git/.integration_test/manifest-cf6.yml
         testDomain: springernature.app
         vars:
@@ -213,6 +215,7 @@ jobs:
         appPath: git/.integration_test
         command: halfpipe-push
         gitRefPath: git/.git/ref
+        gitUri: git@github.com:springernature/halfpipe-deploy-resource.git
         manifestPath: git/.integration_test/manifest-cf6.yml
         testDomain: springernature.app
         vars:
@@ -252,6 +255,7 @@ jobs:
         appPath: git/.integration_test
         command: halfpipe-push
         gitRefPath: git/.git/ref
+        gitUri: git@github.com:springernature/halfpipe-deploy-resource.git
         manifestPath: git/.integration_test/manifest-cf7.yml
         testDomain: springernature.app
         cliVersion: cf7
@@ -293,6 +297,7 @@ jobs:
         appPath: git/.integration_test
         command: halfpipe-push
         gitRefPath: git/.git/ref
+        gitUri: git@github.com:springernature/halfpipe-deploy-resource.git
         manifestPath: git/.integration_test/manifest-cf7.yml
         testDomain: springernature.app
         cliVersion: cf7
@@ -334,6 +339,7 @@ jobs:
         appPath: git/.integration_test
         command: halfpipe-push
         gitRefPath: git/.git/ref
+        gitUri: git@github.com:springernature/halfpipe-deploy-resource.git
         manifestPath: git/.integration_test/manifest-cf7.yml
         testDomain: springernature.app
         cliVersion: cf7
@@ -376,6 +382,7 @@ jobs:
         appPath: git/.integration_test
         command: halfpipe-push
         gitRefPath: git/.git/ref
+        gitUri: git@github.com:springernature/halfpipe-deploy-resource.git
         manifestPath: git/.integration_test/manifest-cf8.yml
         testDomain: springernature.app
         cliVersion: cf8
@@ -417,6 +424,7 @@ jobs:
         appPath: git/.integration_test
         command: halfpipe-push
         gitRefPath: git/.git/ref
+        gitUri: git@github.com:springernature/halfpipe-deploy-resource.git
         manifestPath: git/.integration_test/manifest-cf8.yml
         testDomain: springernature.app
         cliVersion: cf8
@@ -458,6 +466,7 @@ jobs:
         appPath: git/.integration_test
         command: halfpipe-push
         gitRefPath: git/.git/ref
+        gitUri: git@github.com:springernature/halfpipe-deploy-resource.git
         manifestPath: git/.integration_test/manifest-cf8.yml
         testDomain: springernature.app
         cliVersion: cf8

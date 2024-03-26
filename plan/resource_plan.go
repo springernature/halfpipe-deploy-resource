@@ -5,6 +5,7 @@ import (
 	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/springernature/halfpipe-deploy-resource/config"
 	"github.com/springernature/halfpipe-deploy-resource/manifest"
+	"strings"
 )
 
 type ResourcePlan interface {
@@ -133,8 +134,20 @@ func (p planner) updateManifestWithVarsAndLabels(request config.Request) (err er
 			env["BUILD_VERSION"] = request.Metadata.Version
 		}
 
-		if request.Params.Team != "" {
-			labels["team"] = request.Params.Team
+		if request.Params.Team != "" || request.Params.GitUri != "" {
+			if request.Params.Team != "" {
+				labels["team"] = request.Params.Team
+			}
+			if request.Params.GitUri != "" {
+				p1 := strings.Split(request.Params.GitUri, "/")
+				if len(p1) == 2 {
+					p2 := strings.Split(p1[1], ".")
+					if len(p2) == 2 {
+						labels["gitRepo"] = p2[0]
+					}
+				}
+			}
+
 			metadata["labels"] = labels
 			app.RemainingManifestFields["metadata"] = metadata
 		}
