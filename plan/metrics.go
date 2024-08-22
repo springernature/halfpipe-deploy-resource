@@ -1,8 +1,9 @@
 package plan
 
 import (
-	"github.com/prometheus/common/expfmt"
 	"time"
+
+	"github.com/prometheus/common/expfmt"
 
 	"github.com/springernature/halfpipe-deploy-resource/config"
 
@@ -24,19 +25,19 @@ func NewMetrics(request config.Request, url string) Metrics {
 		request:   request,
 		startTime: time.Now(),
 		successCounter: prometheus.NewCounter(prometheus.CounterOpts{
-			Name: "halfpipe_cf_success",
-			Help: "Successful invocation of halfpipe cf deployment",
+			Name:        "halfpipe_cf_success",
+			Help:        "Successful invocation of halfpipe cf deployment",
 			ConstLabels: labels,
 		}),
 		failureCounter: prometheus.NewCounter(prometheus.CounterOpts{
-			Name: "halfpipe_cf_failure",
-			Help: "Unsuccessful invocation of halfpipe cf deployment",
+			Name:        "halfpipe_cf_failure",
+			Help:        "Unsuccessful invocation of halfpipe cf deployment",
 			ConstLabels: labels,
 		}),
 		timerHistogram: prometheus.NewHistogram(prometheus.HistogramOpts{
-			Name:    "halfpipe_cf_duration_seconds",
-			Help:    "Time taken in seconds for successful invocation of halfpipe cf deployment",
-			Buckets: []float64{30, 60, 90, 120, 150, 180, 210, 240, 270, 300},
+			Name:        "halfpipe_cf_duration_seconds",
+			Help:        "Time taken in seconds for successful invocation of halfpipe cf deployment",
+			Buckets:     []float64{30, 60, 90, 120, 150, 180, 210, 240, 270, 300},
 			ConstLabels: labels,
 		}),
 	}
@@ -64,7 +65,7 @@ func (p *prometheusMetrics) Failure() error {
 
 func (p *prometheusMetrics) push(metrics ...prometheus.Collector) error {
 	pusher := push.New(p.url, p.request.Params.Command)
-	pusher.Format(expfmt.FmtText)
+	pusher.Format(expfmt.NewFormat(expfmt.TypeTextPlain))
 	for _, m := range metrics {
 		pusher.Collector(m)
 	}
