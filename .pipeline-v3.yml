@@ -1,4 +1,4 @@
-# fly -t engineering-enablement set-pipeline -p halfpipe-deploy-resource-v3 -c .pipeline.yml
+# fly -t engineering-enablement set-pipeline -p halfpipe-deploy-resource-v3 -c .pipeline-v3.yml
 
 groups: []
 resources:
