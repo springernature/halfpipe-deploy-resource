@@ -31,7 +31,7 @@ func (p Plan) Execute(executor Executor, cfClient *cfclient.Client, logger *logg
 		if isActions {
 			prefix = "::group::"
 		}
-		logger.Println(color.New(color.FgGreen).Sprintf("%s$ %s", prefix, c.String()))
+		logger.Println(fmt.Sprintf("%s%s", prefix, color.New(color.FgGreen).Sprintf("$ %s", c.String())))
 
 		errChan := make(chan error, 1)
 
