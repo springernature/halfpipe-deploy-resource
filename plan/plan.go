@@ -25,9 +25,13 @@ func (p Plan) String() (s string) {
 	return
 }
 
-func (p Plan) Execute(executor Executor, cfClient *cfclient.Client, logger *logger.CapturingWriter, timeout time.Duration) (err error) {
+func (p Plan) Execute(executor Executor, cfClient *cfclient.Client, logger *logger.CapturingWriter, timeout time.Duration, isActions bool) (err error) {
 	for _, c := range p {
-		logger.Println(color.New(color.FgGreen).Sprintf("$ %s", c.String()))
+		prefix := ""
+		if isActions {
+			prefix = "::group::"
+		}
+		logger.Println(color.New(color.FgGreen).Sprintf("%s$ %s", prefix, c.String()))
 
 		errChan := make(chan error, 1)
 
@@ -75,6 +79,9 @@ func (p Plan) Execute(executor Executor, cfClient *cfclient.Client, logger *logg
 			return errors.New(fmt.Sprintf("command time out after %s", timeout.String()))
 		}
 		logger.Println()
+		if isActions {
+			logger.Println("::endgroup::")
+		}
 	}
 	return
 }

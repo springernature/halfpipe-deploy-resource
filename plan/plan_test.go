@@ -57,7 +57,7 @@ func TestPlan_ExecutePassesOnError(t *testing.T) {
 		NewCfCommand("error"),
 	}
 
-	err := p.Execute(newMockExecutorWithError(expectedError), &cfclient.Client{}, &discardLogger, 1*time.Second)
+	err := p.Execute(newMockExecutorWithError(expectedError), &cfclient.Client{}, &discardLogger, 1*time.Second, false)
 
 	assert.Equal(t, expectedError, err)
 }
@@ -79,7 +79,7 @@ func TestPlan_ExecutePassesOnErrorIfItHappensInTheMiddleOfThePlan(t *testing.T) 
 			return []string{}, expectedError
 		}
 		return []string{}, nil
-	}), &cfclient.Client{}, &discardLogger, 1*time.Minute)
+	}), &cfclient.Client{}, &discardLogger, 1*time.Minute, false)
 
 	assert.Equal(t, 3, numberOfCalls)
 	assert.Equal(t, expectedError, err)
@@ -95,7 +95,7 @@ func TestPlan_ExecuteErrorsWhenACommandTimesOut(t *testing.T) {
 	err := p.Execute(newMockExecutorWithFunction(func(command Command) ([]string, error) {
 		time.Sleep(10 * time.Millisecond)
 		return []string{}, nil
-	}), &cfclient.Client{}, &discardLogger, 5*time.Millisecond)
+	}), &cfclient.Client{}, &discardLogger, 5*time.Millisecond, false)
 
 	assert.Equal(t, expectedError, err)
 }
@@ -112,7 +112,7 @@ func TestPlan_ExecuteErrorsWhenACompoundCommandTimesOut(t *testing.T) {
 	err := p.Execute(newMockExecutorWithFunction(func(command Command) ([]string, error) {
 		time.Sleep(10 * time.Millisecond)
 		return []string{}, nil
-	}), &cfclient.Client{}, &discardLogger, 5*time.Millisecond)
+	}), &cfclient.Client{}, &discardLogger, 5*time.Millisecond, false)
 
 	assert.Equal(t, expectedError, err)
 }
@@ -127,7 +127,7 @@ func TestPlan_ExecuteErrorsWhenACommandWithClientTimesOut(t *testing.T) {
 		}, "description"),
 	}
 
-	err := p.Execute(nil, &cfclient.Client{}, &discardLogger, 5*time.Millisecond)
+	err := p.Execute(nil, &cfclient.Client{}, &discardLogger, 5*time.Millisecond, false)
 
 	assert.Equal(t, expectedError, err)
 }
@@ -145,7 +145,7 @@ func TestPlan_Execute(t *testing.T) {
 	err := p.Execute(newMockExecutorWithFunction(func(command Command) ([]string, error) {
 		numberOfCalls++
 		return []string{}, nil
-	}), &cfclient.Client{}, &discardLogger, 1*time.Minute)
+	}), &cfclient.Client{}, &discardLogger, 1*time.Minute, false)
 
 	assert.Nil(t, err)
 	assert.Equal(t, 4, numberOfCalls)

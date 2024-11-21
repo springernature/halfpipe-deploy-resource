@@ -91,7 +91,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = p.Execute(plan.NewCFCliExecutor(&logger, requestConfig), cfClient, &logger, timeout); err != nil {
+	if err = p.Execute(plan.NewCFCliExecutor(&logger, requestConfig), cfClient, &logger, timeout, requestConfig.Metadata.IsActions); err != nil {
 		logger.Println(err)
 		logger.Println("")
 		for _, fix := range fixes.SuggestFix(logger.BytesWritten, requestConfig) {
