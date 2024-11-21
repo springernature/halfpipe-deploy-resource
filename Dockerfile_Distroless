@@ -26,5 +26,6 @@ COPY --from=builder /opt/resource/* /opt/resource/
 COPY --from=builder /bin/cf6 /bin/cf6
 COPY --from=builder /bin/cf7 /bin/cf7
 COPY --from=builder /bin/cf8 /bin/cf8
+ENV TERM=xterm-256color
 
 ENTRYPOINT ["/opt/resource/out"]
