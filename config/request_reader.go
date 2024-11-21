@@ -48,6 +48,14 @@ func (r RequestReader) actionRequest() (request Request, err error) {
 		return
 	}
 
+	cliVersion := ""
+	if cv, found := r.environ["INPUT_CLI_VERSION"]; found {
+		cliVersion = cv
+	}
+	if cv, found := r.environ["INPUT_CLIVERSION"]; found {
+		cliVersion = cv
+	}
+
 	request.Params = Params{
 		Command:        r.environ["INPUT_COMMAND"],
 		AppPath:        r.environ["INPUT_APPPATH"],
@@ -56,7 +64,7 @@ func (r RequestReader) actionRequest() (request Request, err error) {
 		DockerUsername: r.environ["INPUT_DOCKERUSERNAME"],
 		DockerPassword: string(dockerPassword),
 		DockerTag:      r.environ["INPUT_DOCKERTAG"],
-		CliVersion:     r.environ["INPUT_CLI_VERSION"],
+		CliVersion:     cliVersion,
 	}
 
 	request.Metadata.IsActions = true

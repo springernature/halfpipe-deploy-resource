@@ -104,6 +104,49 @@ func TestReadRequest(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, expected, req)
+
+		t.Run("cliVersions", func(t *testing.T) {
+			t.Run("INPUT_CLI_VERSION", func(t *testing.T) {
+				env := map[string]string{
+					"INPUT_API":          "api",
+					"INPUT_ORG":          "org",
+					"INPUT_SPACE":        "space",
+					"INPUT_USERNAME":     "username",
+					"INPUT_PASSWORD":     "password",
+					"INPUT_COMMAND":      "command",
+					"INPUT_MANIFESTPATH": "app/cf/manifest.yml",
+					"INPUT_APPPATH":      "app",
+					"GITHUB_WORKSPACE":   "/github/workspace",
+
+					"INPUT_CLI_VERSION": "cf8",
+				}
+				rr := NewRequestReader([]string{}, env, nil, afero.Afero{}, &okManifestReadWriter)
+				req, err := rr.ReadRequest()
+
+				assert.NoError(t, err)
+				assert.Equal(t, "cf8", req.Params.CliVersion)
+			})
+			t.Run("INPUT_CLIVERSION", func(t *testing.T) {
+				env := map[string]string{
+					"INPUT_API":          "api",
+					"INPUT_ORG":          "org",
+					"INPUT_SPACE":        "space",
+					"INPUT_USERNAME":     "username",
+					"INPUT_PASSWORD":     "password",
+					"INPUT_COMMAND":      "command",
+					"INPUT_MANIFESTPATH": "app/cf/manifest.yml",
+					"INPUT_APPPATH":      "app",
+					"GITHUB_WORKSPACE":   "/github/workspace",
+
+					"INPUT_CLIVERSION": "cf8",
+				}
+				rr := NewRequestReader([]string{}, env, nil, afero.Afero{}, &okManifestReadWriter)
+				req, err := rr.ReadRequest()
+
+				assert.NoError(t, err)
+				assert.Equal(t, "cf8", req.Params.CliVersion)
+			})
+		})
 	})
 
 	t.Run("empty app path", func(t *testing.T) {

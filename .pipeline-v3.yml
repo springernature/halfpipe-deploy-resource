@@ -33,7 +33,7 @@ resources:
     api: ((cloudfoundry.api-snpaas))
     org: engineering-enablement
     password: ((cloudfoundry.password-snpaas))
-    space: integration_test
+    space: integration_test_v3
     username: ((cloudfoundry.username-snpaas))
   check_every: 24h
 resource_types:
@@ -53,7 +53,7 @@ jobs:
   - put: docker-registry-image-dev
     params:
       build: git
-      dockerfile: Dockerfile_Distroless
+      dockerfile: git/Dockerfile_Distroless
   - config:
       image_resource:
         source:
@@ -95,7 +95,7 @@ jobs:
         source:
           registry_mirror:
             host: eu-mirror.gcr.io
-          repository: eu.gcr.io/halfpipe-io/cf-resource-v3-dev
+          repository: eu.gcr.io/halfpipe-io/cf-resource-v2-dev
           password: ((halfpipe-gcr.private_key))
           username: _json_key
         type: registry-image
@@ -103,7 +103,7 @@ jobs:
         CF_API: ((cloudfoundry.api-snpaas))
         CF_ORG: engineering-enablement
         CF_PASSWORD: ((cloudfoundry.password-snpaas))
-        CF_SPACE: integration_test
+        CF_SPACE: integration_test_v3
         CF_USERNAME: ((cloudfoundry.username-snpaas))
       platform: linux
       run:
@@ -510,7 +510,7 @@ jobs:
           source:
             registry_mirror:
               host: eu-mirror.gcr.io
-            repository: eu.gcr.io/halfpipe-io/cf-resource-v3-dev
+            repository: eu.gcr.io/halfpipe-io/cf-resource-v2-dev
             password: ((halfpipe-gcr.private_key))
             username: _json_key
           type: registry-image
@@ -518,7 +518,7 @@ jobs:
           CF_API: ((cloudfoundry.api-snpaas))
           CF_ORG: engineering-enablement
           CF_PASSWORD: ((cloudfoundry.password-snpaas))
-          CF_SPACE: integration_test
+          CF_SPACE: integration_test_v3
           CF_USERNAME: ((cloudfoundry.username-snpaas))
         platform: linux
         run:
@@ -563,10 +563,10 @@ jobs:
       build: git
       tag_file: git/.docker-stable-tag
       tag_as_latest: true
-      dockerfile: Dockerfile_Distroless
+      dockerfile: git/Dockerfile_Distroless
   - put: docker-registry-image-stable-dockerhub
     params:
       build: git
       tag_file: git/.docker-stable-tag
       tag_as_latest: true
-      dockerfile: Dockerfile_Distroless
+      dockerfile: git/Dockerfile_Distroless
