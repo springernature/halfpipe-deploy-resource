@@ -33,7 +33,7 @@ func (s ssoPlan) Plan(ssoHost string) (plan Plan) {
 		false,
 	))
 
-	plan = append(plan, NewCfCommand("bind-route-service", "public.springernature.app", "-n", ssoHost))
+	plan = append(plan, NewCfCommand("bind-route-service", "public.springernature.app", "-n", ssoHost, "sso"))
 
 	return
 }

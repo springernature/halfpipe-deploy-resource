@@ -213,6 +213,11 @@ func (r RequestReader) ReadRequest() (request Request, err error) {
 		request.Params.CliVersion = "cf7"
 	}
 
+	if request.Params.Command == SSO {
+		// We require cf8 because we need the `cf route` command
+		request.Params.CliVersion = "cf8"
+	}
+
 	if e := request.Verify(r.isActions()); e != nil {
 		err = e
 		return

@@ -496,7 +496,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 		assert.Equal(t, "cf login -a a -u d -p ******** -o b -s c", p[1].String())
 		assert.Equal(t, "cf service sso || cf create-user-provided-service sso -r https://ee-sso.public.springernature.app", p[2].String())
 		assert.Equal(t, "cf route public.springernature.app -n myHost || cf create-route public.springernature.app -n myHost", p[3].String())
-		assert.Equal(t, "cf bind-route-service public.springernature.app -n myHost", p[4].String())
+		assert.Equal(t, "cf bind-route-service public.springernature.app -n myHost sso", p[4].String())
 	})
 
 }
