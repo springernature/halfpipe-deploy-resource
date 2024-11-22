@@ -47,6 +47,7 @@ type Params struct {
 	CliVersion       string
 	Instances        int
 	Team             string
+	SSOHost          string
 }
 
 func SourceMissingError(field string) error {
@@ -136,6 +137,10 @@ func (params Params) Verify(isActions bool) error {
 	case PROMOTE:
 		if params.TestDomain == "" {
 			return ParamsMissingError("testDomain")
+		}
+	case SSO:
+		if params.SSOHost == "" {
+			return ParamsMissingError("ssoHost")
 		}
 	}
 

@@ -22,9 +22,10 @@ type planner struct {
 	deleteCandidatePlan DeleteCandidatePlan
 	logsPlan            LogsPlan
 	checkLabelsPlan     CheckLabelsPlan
+	ssoPlan             SSOPlan
 }
 
-func NewPlanner(manifestReaderWrite manifest.ReaderWriter, pushPlan PushPlan, checkPlan CheckPlan, promotePlan PromotePlan, cleanupPlan CleanupPlan, rollingDeployPlan RollingDeployPlan, deleteCandidatePlan DeleteCandidatePlan, logsPlan LogsPlan, checkLabelsPlan CheckLabelsPlan) ResourcePlan {
+func NewPlanner(manifestReaderWrite manifest.ReaderWriter, pushPlan PushPlan, checkPlan CheckPlan, promotePlan PromotePlan, cleanupPlan CleanupPlan, rollingDeployPlan RollingDeployPlan, deleteCandidatePlan DeleteCandidatePlan, logsPlan LogsPlan, checkLabelsPlan CheckLabelsPlan, ssoPlan SSOPlan) ResourcePlan {
 	return planner{
 		manifestReaderWrite: manifestReaderWrite,
 		pushPlan:            pushPlan,
@@ -35,6 +36,7 @@ func NewPlanner(manifestReaderWrite manifest.ReaderWriter, pushPlan PushPlan, ch
 		deleteCandidatePlan: deleteCandidatePlan,
 		logsPlan:            logsPlan,
 		checkLabelsPlan:     checkLabelsPlan,
+		ssoPlan:             ssoPlan,
 	}
 }
 
@@ -91,6 +93,8 @@ func (p planner) Plan(request config.Request, appsSummary []cfclient.AppSummary)
 		pl = append(pl, p.deleteCandidatePlan.Plan(appUnderDeployment, appsSummary)...)
 	case config.LOGS:
 		pl = append(pl, p.logsPlan.Plan(appUnderDeployment)...)
+	case config.SSO:
+		pl = append(pl, p.ssoPlan.Plan(request.Params.SSOHost)...)
 	}
 
 	return

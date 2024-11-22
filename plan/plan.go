@@ -43,24 +43,32 @@ func (p Plan) Execute(executor Executor, cfClient *cfclient.Client, logger *logg
 			case compoundCommand:
 				_, err = executor.CliCommand(cmd.left)
 				if cmd.shouldExecute(logger.BytesWritten) {
-					logger.Println("")
-					logger.Println("Failed to push/start application")
+					if cmd.shouldErrorOnRight {
+						logger.Println("")
+						logger.Println("Failed to push/start application")
 
-					// Here we know that we have failed for either
-					// a. cf push failure
-					// b. insufficient resources (which means all instances cannot be started due to lacking resources in CF)
+						// Here we know that we have failed for either
+						// a. cf push failure
+						// b. insufficient resources (which means all instances cannot be started due to lacking resources in CF)
 
-					// If we have a err, we can assume its the `a` option that have failed
-					if err != nil {
-						logger.Println(fmt.Sprintf("$ %s", cmd.right))
-						executor.CliCommand(cmd.right)
-						errChan <- err
-					} else {
-						// This is due to insufficient resources. Maybe?
-						if strings.Contains(string(logger.BytesWritten), `insufficient resources: memory`) {
-							logger.Println(`insufficient resources means that CF is not scaled properly, please contact us in #ee`)
-							errChan <- errors.New("failed to push/start application")
+						// If we have a err, we can assume its the `a` option that have failed
+						if err != nil {
+							logger.Println(fmt.Sprintf("$ %s", cmd.right))
+							executor.CliCommand(cmd.right)
+							errChan <- err
+						} else {
+							// This is due to insufficient resources. Maybe?
+							if strings.Contains(string(logger.BytesWritten), `insufficient resources: memory`) {
+								logger.Println(`insufficient resources means that CF is not scaled properly, please contact us in #ee`)
+								errChan <- errors.New("failed to push/start application")
+							}
 						}
+					} else {
+						// Clear the error as we want to execute the right and continue unless the right errors
+						err = nil
+
+						// Call the right
+						_, err = executor.CliCommand(cmd.right)
 					}
 				}
 				errChan <- err

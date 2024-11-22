@@ -64,7 +64,7 @@ func TestErrorsReadingAppManifest(t *testing.T) {
 	expectedErr := errors.New("blurgh")
 	manifestReader := ManifestReadWriteStub{manifestReadError: expectedErr}
 
-	planner := NewPlanner(&manifestReader, nil, nil, nil, nil, nil, nil, nil, nil)
+	planner := NewPlanner(&manifestReader, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	_, err := planner.Plan(validRequest, nil)
 	assert.Equal(t, expectedErr, err)
@@ -83,7 +83,7 @@ func TestErrorsWhenSavingManifestWithUpdatedVars(t *testing.T) {
 	fs.WriteFile(validRequest.Params.GitRefPath, []byte(""), 0777)
 	fs.WriteFile(validRequest.Params.BuildVersionPath, []byte(""), 0777)
 
-	planner := NewPlanner(&manifestReader, nil, nil, nil, nil, nil, nil, nil, nil)
+	planner := NewPlanner(&manifestReader, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	_, err := planner.Plan(validRequest, nil)
 	assert.Equal(t, expectedErr, err)
@@ -163,7 +163,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			plan: Plan{
 				NewCfCommand("yay"),
 			},
-		}, nil, nil, nil, nil, nil, nil, NewCheckLabelsPlan())
+		}, nil, nil, nil, nil, nil, nil, NewCheckLabelsPlan(), nil)
 
 		r := validRequest
 		r.Params.BuildVersionPath = ""
@@ -212,7 +212,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 				plan: Plan{
 					NewCfCommand("yay"),
 				},
-			}, nil, nil, nil, nil, nil, nil, NewCheckLabelsPlan())
+			}, nil, nil, nil, nil, nil, nil, NewCheckLabelsPlan(), nil)
 
 			r := validRequest
 			r.Params.BuildVersionPath = ""
@@ -242,7 +242,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 				plan: Plan{
 					NewCfCommand("yay"),
 				},
-			}, nil, nil, nil, nil, nil, nil, NewCheckLabelsPlan())
+			}, nil, nil, nil, nil, nil, nil, NewCheckLabelsPlan(), nil)
 
 			r := validRequest
 			r.Params.BuildVersionPath = ""
@@ -279,7 +279,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 				plan: Plan{
 					NewCfCommand("yay"),
 				},
-			}, nil, nil, nil, nil, nil, nil, NewCheckLabelsPlan())
+			}, nil, nil, nil, nil, nil, nil, NewCheckLabelsPlan(), nil)
 
 			r := validRequest
 			r.Params.BuildVersionPath = ""
@@ -319,7 +319,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			plan: Plan{
 				NewCfCommand("yay"),
 			},
-		}, nil, nil, NewCheckLabelsPlan())
+		}, nil, nil, NewCheckLabelsPlan(), nil)
 
 		r := validRequest
 		r.Params.Command = config.ROLLING_DEPLOY
@@ -349,7 +349,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			plan: Plan{
 				NewCfCommand("yay"),
 			},
-		}, nil, nil, nil, nil, nil, nil)
+		}, nil, nil, nil, nil, nil, nil, nil)
 
 		r := validRequest
 		r.Params.Command = config.CHECK
@@ -372,7 +372,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			plan: Plan{
 				NewCfCommand("yay"),
 			},
-		}, nil, nil, nil, nil, nil)
+		}, nil, nil, nil, nil, nil, nil)
 
 		r := validRequest
 		r.Params.Command = config.PROMOTE
@@ -397,7 +397,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			plan: Plan{
 				NewCfCommand("yay"),
 			},
-		}, nil, nil, nil, nil)
+		}, nil, nil, nil, nil, nil)
 
 		t.Run("Works with cleanup command", func(t *testing.T) {
 			r := validRequest
@@ -439,7 +439,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			plan: Plan{
 				NewCfCommand("yay"),
 			},
-		}, nil, nil)
+		}, nil, nil, nil)
 
 		r := validRequest
 		r.Params.Command = config.DELETE_CANDIDATE
@@ -460,7 +460,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 - name: myApp`),
 		}
 
-		planner := NewPlanner(&manifestReader, nil, nil, nil, nil, nil, nil, NewLogsPlan(), nil)
+		planner := NewPlanner(&manifestReader, nil, nil, nil, nil, nil, nil, NewLogsPlan(), nil, nil)
 
 		r := validRequest
 		r.Params.Command = config.LOGS
@@ -474,4 +474,29 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 		assert.Equal(t, "cf login -a a -u d -p ******** -o b -s c", p[1].String())
 		assert.Equal(t, "cf logs myApp-CANDIDATE --recent", p[2].String())
 	})
+
+	t.Run("SSO planner", func(t *testing.T) {
+		manifestReader := ManifestReadWriteStub{
+			manifest: halfpipe_deploy_resource.ParseManifest(`applications:
+- name: myApp`),
+		}
+
+		planner := NewPlanner(&manifestReader, nil, nil, nil, nil, nil, nil, nil, nil, NewSSOPlan())
+
+		r := validRequest
+		r.Params.Command = config.SSO
+		r.Params.SSOHost = "myHost"
+
+		p, err := planner.Plan(r, nil)
+
+		assert.NoError(t, err)
+
+		assert.Len(t, p, 5)
+		assert.Equal(t, "cf --version", p[0].String())
+		assert.Equal(t, "cf login -a a -u d -p ******** -o b -s c", p[1].String())
+		assert.Equal(t, "cf service sso || cf create-user-provided-service sso -r https://ee-sso.public.springernature.app", p[2].String())
+		assert.Equal(t, "cf route public.springernature.app -n myHost || cf create-route public.springernature.app -n myHost", p[3].String())
+		assert.Equal(t, "cf bind-route-service public.springernature.app -n myHost", p[4].String())
+	})
+
 }

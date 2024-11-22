@@ -41,7 +41,7 @@ func (p pushPlan) Plan(manifest manifestparser.Application, request config.Reque
 		func(log []byte) bool {
 			return strings.Contains(string(log), `--recent' for more information`) ||
 				strings.Contains(string(log), `insufficient resources: memory`)
-		}))
+		}, true))
 
 	return
 }

@@ -39,7 +39,7 @@ func (p rollingDeployPlan) Plan(manifest manifestparser.Application, request con
 		"--recent",
 	), func(log []byte) bool {
 		return strings.Contains(string(log), `--recent' for more information`)
-	}))
+	}, true))
 
 	return
 }

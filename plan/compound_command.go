@@ -5,16 +5,18 @@ import "fmt"
 type ShouldExecute func(log []byte) bool
 
 type compoundCommand struct {
-	left          Command
-	right         Command
-	shouldExecute ShouldExecute
+	left               Command
+	right              Command
+	shouldExecute      ShouldExecute
+	shouldErrorOnRight bool
 }
 
-func NewCompoundCommand(left Command, right Command, shouldExecute ShouldExecute) Command {
+func NewCompoundCommand(left Command, right Command, shouldExecute ShouldExecute, shouldErrorOnRight bool) Command {
 	return compoundCommand{
-		left:          left,
-		right:         right,
-		shouldExecute: shouldExecute,
+		left:               left,
+		right:              right,
+		shouldExecute:      shouldExecute,
+		shouldErrorOnRight: shouldErrorOnRight,
 	}
 }
 
