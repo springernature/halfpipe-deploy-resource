@@ -94,9 +94,7 @@ jobs:
         source:
           registry_mirror:
             host: eu-mirror.gcr.io
-          repository: eu.gcr.io/halfpipe-io/cf-resource-v2-dev
-          password: ((halfpipe-gcr.private_key))
-          username: _json_key
+          repository: cloudfoundry/cli
         type: registry-image
       params:
         CF_API: ((cloudfoundry.api-snpaas))
@@ -109,13 +107,13 @@ jobs:
         args:
           - -c
           - |
-            cf7 login -a $CF_API -u $CF_USERNAME -p $CF_PASSWORD -o $CF_ORG -s $CF_SPACE
-            export APPS_TO_DELETE=`cf7 apps |  awk 'NR > 3 { print $1}'`
+            cf login -a $CF_API -u $CF_USERNAME -p $CF_PASSWORD -o $CF_ORG -s $CF_SPACE
+            export APPS_TO_DELETE=`cf apps |  awk 'NR > 3 { print $1}'`
             for app in $APPS_TO_DELETE; do
-              cf7 delete -f $app
+              cf delete -f $app
             done
             echo "Space should now be clean..."
-            cf7 apps
+            cf apps
         path: /bin/sh
     task: cleanup
     timeout: 1h
