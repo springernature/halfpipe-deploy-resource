@@ -507,9 +507,7 @@ jobs:
           source:
             registry_mirror:
               host: eu-mirror.gcr.io
-            repository: eu.gcr.io/halfpipe-io/cf-resource-v2-dev
-            password: ((halfpipe-gcr.private_key))
-            username: _json_key
+            repository: cloudfoundry/cli
           type: registry-image
         params:
           CF_API: ((cloudfoundry.api-snpaas))
@@ -522,26 +520,26 @@ jobs:
           args:
             - -c
             - |
-              cf7 login -a $CF_API -u $CF_USERNAME -p $CF_PASSWORD -o $CF_ORG -s $CF_SPACE
-              cf7 apps > /tmp/apps
+              cf login -a $CF_API -u $CF_USERNAME -p $CF_PASSWORD -o $CF_ORG -s $CF_SPACE
+              cf apps > /tmp/apps
 
               echo Checking for integration-test-app-cf6 and integration-test-app-cf6-OLD
               cat /tmp/apps | egrep '^integration-test-app-cf6\s+'
-              cf7 env integration-test-app-cf6 | grep test_resource_cf6_3
+              cf env integration-test-app-cf6 | grep test_resource_cf6_3
               cat /tmp/apps | grep integration-test-app-cf6-OLD
-              cf7 env integration-test-app-cf6-OLD | grep test_resource_cf6_2
+              cf env integration-test-app-cf6-OLD | grep test_resource_cf6_2
 
               echo Checking for integration-test-app-cf7 and integration-test-app-cf7-OLD
               cat /tmp/apps | egrep '^integration-test-app-cf7\s+'
-              cf7 env integration-test-app-cf7 | grep test_resource_cf7_3
+              cf env integration-test-app-cf7 | grep test_resource_cf7_3
               cat /tmp/apps | grep integration-test-app-cf7-OLD
-              cf7 env integration-test-app-cf7-OLD | grep test_resource_cf7_2
+              cf env integration-test-app-cf7-OLD | grep test_resource_cf7_2
 
               echo Checking for integration-test-app-cf8 and integration-test-app-cf8-OLD
               cat /tmp/apps | egrep '^integration-test-app-cf8\s+'
-              cf7 env integration-test-app-cf8 | grep test_resource_cf8_3
+              cf env integration-test-app-cf8 | grep test_resource_cf8_3
               cat /tmp/apps | grep integration-test-app-cf8-OLD
-              cf7 env integration-test-app-cf8-OLD | grep test_resource_cf8_2
+              cf env integration-test-app-cf8-OLD | grep test_resource_cf8_2
           path: /bin/sh
       task: check_cf_state
       timeout: 1h
