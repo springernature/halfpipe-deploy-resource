@@ -1,8 +1,0 @@
-applications:
-- name: integration-test-app-cf8-v3
-  buildpack: staticfile_buildpack
-  instances: 1
-  routes:
-  - route: integration-test-app1-cf8-v3.springernature.app
-  - route: integration-test-app2-cf8-v3.springernature.app
-  - route: integration-test-app2-cf8-v3.springernature.app/hello
