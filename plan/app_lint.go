@@ -4,6 +4,7 @@ import (
 	"code.cloudfoundry.org/cli/util/manifestparser"
 	"fmt"
 	"github.com/cloudfoundry-community/go-cfclient"
+	"github.com/gookit/color"
 	"github.com/springernature/halfpipe-deploy-resource/logger"
 )
 
@@ -54,9 +55,13 @@ func (p appLintPlan) checkProduct() {
 }
 func (p appLintPlan) createFunc(manifest manifestparser.Application, org, space string) func(*cfclient.Client, *logger.CapturingWriter) error {
 	return func(cfClient *cfclient.Client, logger *logger.CapturingWriter) error {
-		
+
+		printWarning := func(msg string) {
+			logger.Println(color.New(color.FgRed).Sprintf("**WARNING** "), msg)
+		}
+
 		if manifest.Stack == "cflinuxfs3" {
-			logger.Println("'stack: cflinuxfs3' is deprecated. Please update to 'cflinuxfs4'.")
+			printWarning("stack 'cflinuxfs3' is deprecated. Please update to 'cflinuxfs4'.")
 		}
 
 		labels := p.getLabelsForApp(manifest)
@@ -88,7 +93,7 @@ func (p appLintPlan) createFunc(manifest manifestparser.Application, org, space 
 			}
 			logger.Println(fmt.Sprintf("'product' is set. Found '%s' in %s", p, in))
 		} else {
-			logger.Println("'product' is missing in both manifest and space")
+			printWarning("'product' is missing in both manifest and space")
 		}
 
 		if manifestEnvironmentFound || spaceEnvironmentFound {
@@ -100,7 +105,7 @@ func (p appLintPlan) createFunc(manifest manifestparser.Application, org, space 
 			}
 			logger.Println(fmt.Sprintf("'environment' is set. Found '%s' in %s", e, in))
 		} else {
-			logger.Println("'environment' is missing in both manifest and space")
+			printWarning("'environment' is missing in both manifest and space")
 		}
 
 		if !(manifestProductFound || spaceProductFound) || !(manifestEnvironmentFound || spaceEnvironmentFound) {
