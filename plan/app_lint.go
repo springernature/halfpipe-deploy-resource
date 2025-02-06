@@ -54,6 +54,10 @@ func (p appLintPlan) checkProduct() {
 }
 func (p appLintPlan) createFunc(manifest manifestparser.Application, org, space string) func(*cfclient.Client, *logger.CapturingWriter) error {
 	return func(cfClient *cfclient.Client, logger *logger.CapturingWriter) error {
+		
+		if manifest.Stack == "cflinuxfs3" {
+			logger.Println("'stack: cflinuxfs3' is deprecated. Please update to 'cflinuxfs4'.")
+		}
 
 		labels := p.getLabelsForApp(manifest)
 		manifestProduct, manifestProductFound := labels["product"]
@@ -102,7 +106,6 @@ func (p appLintPlan) createFunc(manifest manifestparser.Application, org, space 
 		if !(manifestProductFound || spaceProductFound) || !(manifestEnvironmentFound || spaceEnvironmentFound) {
 			logger.Println("Please see https://ee.public.springernature.app/inventory/ for more information about labels and how to set them!")
 		}
-
 		return nil
 	}
 }
