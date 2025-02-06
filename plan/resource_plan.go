@@ -21,11 +21,11 @@ type planner struct {
 	checkPlan           CheckPlan
 	deleteCandidatePlan DeleteCandidatePlan
 	logsPlan            LogsPlan
-	checkLabelsPlan     CheckLabelsPlan
+	appLintPlan         AppLintPlan
 	ssoPlan             SSOPlan
 }
 
-func NewPlanner(manifestReaderWrite manifest.ReaderWriter, pushPlan PushPlan, checkPlan CheckPlan, promotePlan PromotePlan, cleanupPlan CleanupPlan, rollingDeployPlan RollingDeployPlan, deleteCandidatePlan DeleteCandidatePlan, logsPlan LogsPlan, checkLabelsPlan CheckLabelsPlan, ssoPlan SSOPlan) ResourcePlan {
+func NewPlanner(manifestReaderWrite manifest.ReaderWriter, pushPlan PushPlan, checkPlan CheckPlan, promotePlan PromotePlan, cleanupPlan CleanupPlan, rollingDeployPlan RollingDeployPlan, deleteCandidatePlan DeleteCandidatePlan, logsPlan LogsPlan, appLintPlan AppLintPlan, ssoPlan SSOPlan) ResourcePlan {
 	return planner{
 		manifestReaderWrite: manifestReaderWrite,
 		pushPlan:            pushPlan,
@@ -35,7 +35,7 @@ func NewPlanner(manifestReaderWrite manifest.ReaderWriter, pushPlan PushPlan, ch
 		rollingDeployPlan:   rollingDeployPlan,
 		deleteCandidatePlan: deleteCandidatePlan,
 		logsPlan:            logsPlan,
-		checkLabelsPlan:     checkLabelsPlan,
+		appLintPlan:         appLintPlan,
 		ssoPlan:             ssoPlan,
 	}
 }
@@ -65,7 +65,7 @@ func (p planner) Plan(request config.Request, appsSummary []cfclient.AppSummary)
 		if err = p.updateManifestWithVarsAndLabels(request); err != nil {
 			return
 		}
-		pl = append(pl, p.checkLabelsPlan.Plan(appUnderDeployment, request.Source.Org, request.Source.Space)...)
+		pl = append(pl, p.appLintPlan.Plan(appUnderDeployment, request.Source.Org, request.Source.Space)...)
 
 		switch request.Params.Command {
 		case config.PUSH:
@@ -77,7 +77,7 @@ func (p planner) Plan(request config.Request, appsSummary []cfclient.AppSummary)
 		if err = p.updateManifestWithVarsAndLabels(request); err != nil {
 			return
 		}
-		pl = append(pl, p.checkLabelsPlan.Plan(appUnderDeployment, request.Source.Org, request.Source.Space)...)
+		pl = append(pl, p.appLintPlan.Plan(appUnderDeployment, request.Source.Org, request.Source.Space)...)
 		pl = append(pl, p.pushPlan.Plan(appUnderDeployment, request)...)
 		pl = append(pl, p.checkPlan.Plan(appUnderDeployment, request.Source.Org, request.Source.Space)...)
 		pl = append(pl, p.promotePlan.Plan(appUnderDeployment, request, appsSummary)...)

@@ -7,20 +7,20 @@ import (
 	"github.com/springernature/halfpipe-deploy-resource/logger"
 )
 
-type CheckLabelsPlan interface {
+type AppLintPlan interface {
 	Plan(manifest manifestparser.Application, org, space string) (pl Plan)
 }
 
-type checkLabelsPlan struct {
+type appLintPlan struct {
 }
 
-func (p checkLabelsPlan) Plan(manifest manifestparser.Application, org, space string) (pl Plan) {
-	desc := "Checking app labels"
+func (p appLintPlan) Plan(manifest manifestparser.Application, org, space string) (pl Plan) {
+	desc := "Linting application"
 	pl = append(pl, NewClientCommand(p.createFunc(manifest, org, space), desc))
 	return
 }
 
-func (p checkLabelsPlan) getMetadataInOrgSpace(client *cfclient.Client, orgName, spaceName string) (metadata cfclient.Metadata, err error) {
+func (p appLintPlan) getMetadataInOrgSpace(client *cfclient.Client, orgName, spaceName string) (metadata cfclient.Metadata, err error) {
 	org, err := client.GetOrgByName(orgName)
 	if err != nil {
 		return
@@ -38,7 +38,7 @@ func (p checkLabelsPlan) getMetadataInOrgSpace(client *cfclient.Client, orgName,
 	return
 }
 
-func (p checkLabelsPlan) getLabelsForApp(manifest manifestparser.Application) map[any]any {
+func (p appLintPlan) getLabelsForApp(manifest manifestparser.Application) map[any]any {
 	labels := make(map[any]any)
 	if manifest.RemainingManifestFields["metadata"] != nil {
 		metadata := manifest.RemainingManifestFields["metadata"].(map[any]any)
@@ -49,10 +49,10 @@ func (p checkLabelsPlan) getLabelsForApp(manifest manifestparser.Application) ma
 	return labels
 }
 
-func (p checkLabelsPlan) checkProduct() {
+func (p appLintPlan) checkProduct() {
 
 }
-func (p checkLabelsPlan) createFunc(manifest manifestparser.Application, org, space string) func(*cfclient.Client, *logger.CapturingWriter) error {
+func (p appLintPlan) createFunc(manifest manifestparser.Application, org, space string) func(*cfclient.Client, *logger.CapturingWriter) error {
 	return func(cfClient *cfclient.Client, logger *logger.CapturingWriter) error {
 
 		labels := p.getLabelsForApp(manifest)
@@ -107,6 +107,6 @@ func (p checkLabelsPlan) createFunc(manifest manifestparser.Application, org, sp
 	}
 }
 
-func NewCheckLabelsPlan() CheckLabelsPlan {
-	return checkLabelsPlan{}
+func NewCheckLabelsPlan() AppLintPlan {
+	return appLintPlan{}
 }
