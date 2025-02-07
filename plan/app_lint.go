@@ -61,7 +61,7 @@ func (p appLintPlan) createFunc(manifest manifestparser.Application, org, space 
 		}
 
 		if manifest.Stack == "cflinuxfs3" {
-			printWarning("stack 'cflinuxfs3' is deprecated. Please update to 'cflinuxfs4'.")
+			printWarning("CF stack 'cflinuxfs3' is deprecated. Please see <https://ee.public.springernature.app/paas/cf/stacks/>")
 		}
 
 		labels := p.getLabelsForApp(manifest)
