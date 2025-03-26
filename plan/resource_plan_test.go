@@ -185,6 +185,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			expectedManifest := halfpipe_deploy_resource.ParseManifest(`applications:
 - name: myApp
   env:
+    
     VAR2: bb
     VAR4: cc
   metadata:
