@@ -5,7 +5,6 @@ import (
 	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/springernature/halfpipe-deploy-resource/config"
 	"github.com/springernature/halfpipe-deploy-resource/manifest"
-	"os"
 	"strings"
 )
 
@@ -133,22 +132,17 @@ func (p planner) updateManifestWithVarsAndLabels(request config.Request) (err er
 
 		if request.Metadata.GitRef != "" {
 			env["GIT_REVISION"] = request.Metadata.GitRef
-		} else if os.Getenv("GIT_REVISION") != "" {
-			env["GIT_REVISION"] = os.Getenv("GIT_REVISION")
 		}
 
 		if request.Metadata.Version != "" {
 			env["BUILD_VERSION"] = request.Metadata.Version
-		} else if os.Getenv("BUILD_VERSION") != "" {
-			env["BUILD_VERSION"] = os.Getenv("BUILD_VERSION")
 		}
 
 		if request.Params.Team != "" || request.Params.GitUri != "" {
 			if request.Params.Team != "" {
 				labels["team"] = request.Params.Team
-			} else {
-				labels["team"] = os.Getenv("EE_PLATFORM_TEAM")
 			}
+
 			if request.Params.GitUri != "" {
 				p1 := strings.Split(request.Params.GitUri, "/")
 				if len(p1) == 2 {
