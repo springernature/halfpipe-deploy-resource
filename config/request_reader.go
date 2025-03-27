@@ -182,6 +182,11 @@ func (r RequestReader) addVars(request Request) (updated Request) {
 				updated.Params.Vars[newKey] = v
 			}
 		}
+
+		if r.environ["EE_PLATFORM_TEAM"] != "" {
+			updated.Params.Vars["EE_PLATFORM_TEAM"] = r.environ["EE_PLATFORM_TEAM"]
+		}
+
 		return
 	}
 
