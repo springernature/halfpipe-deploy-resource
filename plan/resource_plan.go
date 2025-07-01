@@ -2,6 +2,7 @@ package plan
 
 import (
 	"code.cloudfoundry.org/cli/util/manifestparser"
+	"fmt"
 	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/springernature/halfpipe-deploy-resource/config"
 	"github.com/springernature/halfpipe-deploy-resource/manifest"
@@ -161,6 +162,8 @@ func (p planner) updateManifestWithVarsAndLabels(request config.Request) (err er
 			env[k] = v
 		}
 
+		p.otelEnv(env, app, request)
+
 		app.RemainingManifestFields["env"] = env
 		apps.Applications[0] = app
 
@@ -169,4 +172,27 @@ func (p planner) updateManifestWithVarsAndLabels(request config.Request) (err er
 		}
 	}
 	return
+}
+
+func (p planner) otelEnv(env map[any]any, app manifestparser.Application, request config.Request) {
+	p.setIfNotOtelPresent(env, "OTEL_EXPORTER_OTLP_PROTOCOL", "http/protobuf")
+	p.setIfNotOtelPresent(env, "OTEL_EXPORTER_OTLP_HEADERS", "X-Scope-OrgId=ee")
+	p.setIfNotOtelPresent(env, "OTEL_SERVICE_NAME", app.Name)
+	p.setIfNotOtelPresent(env, "OTEL_EXPORTER_OTLP_ENDPOINT", "http://opentelemetry-sink.tracing.springernature.io:9095")
+	p.setIfNotOtelPresent(env, "OTEL_PROPAGATORS", "tracecontext")
+
+	namespace := fmt.Sprintf("service.namespace=%s/%s", request.Source.Org, request.Source.Space)
+	job := fmt.Sprintf("job=%s/%s/%s", request.Source.Org, request.Source.Space, app.Name)
+	appName := fmt.Sprintf("cloudfoundry.app.name=%s", app.Name)
+	org := fmt.Sprintf("cloudfoundry.app.org.name=%s", request.Source.Org)
+	space := fmt.Sprintf("cloudfoundry.app.space.name=%s", request.Source.Space)
+	p.setIfNotOtelPresent(env, "OTEL_RESOURCE_ATTRIBUTES", strings.Join([]string{namespace, job, appName, org, space}, ","))
+}
+
+func (p planner) setIfNotOtelPresent(env map[any]any, key string, defaultValue string) map[any]any {
+	if _, found := env[key]; found {
+		return env
+	}
+	env[key] = defaultValue
+	return env
 }

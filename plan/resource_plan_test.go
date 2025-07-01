@@ -142,52 +142,65 @@ func (f *fakeRollingDeployPlanner) Plan(manifest manifestparser.Application, req
 }
 
 func TestCallsOutToCorrectPlanner(t *testing.T) {
-	t.Run("Push planner", func(t *testing.T) {
-		expectedManifest := halfpipe_deploy_resource.ParseManifest(`applications:
+	t.Run("Push planner", func(tt *testing.T) {
+		tt.Run("Pushes", func(ttt *testing.T) {
+			expectedManifest := halfpipe_deploy_resource.ParseManifest(`applications:
 - name: myApp
   env:
     VAR2: bb
     VAR4: cc
+    OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+    OTEL_EXPORTER_OTLP_HEADERS: "X-Scope-OrgId=ee"
+    OTEL_SERVICE_NAME: "myApp"
+    OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:9095"
+    OTEL_PROPAGATORS: "tracecontext"
+    OTEL_RESOURCE_ATTRIBUTES: "service.namespace=b/c,job=b/c/myApp,cloudfoundry.app.name=myApp,cloudfoundry.app.org.name=b,cloudfoundry.app.space.name=c"
   metadata:
     labels:
       team: myTeam
       gitRepo: halfpipe-deploy-resource
 `)
 
-		manifestReader := ManifestReadWriteStub{
-			manifest: halfpipe_deploy_resource.ParseManifest(`applications:
+			manifestReader := ManifestReadWriteStub{
+				manifest: halfpipe_deploy_resource.ParseManifest(`applications:
 - name: myApp`),
-		}
+			}
 
-		planner := NewPlanner(&manifestReader, &fakePushPlanner{
-			plan: Plan{
-				NewCfCommand("yay"),
-			},
-		}, nil, nil, nil, nil, nil, nil, NewCheckLabelsPlan(), nil)
+			planner := NewPlanner(&manifestReader, &fakePushPlanner{
+				plan: Plan{
+					NewCfCommand("yay"),
+				},
+			}, nil, nil, nil, nil, nil, nil, NewCheckLabelsPlan(), nil)
 
-		r := validRequest
-		r.Params.BuildVersionPath = ""
-		r.Params.GitRefPath = ""
-		p, err := planner.Plan(r, nil)
+			r := validRequest
+			r.Params.BuildVersionPath = ""
+			r.Params.GitRefPath = ""
+			p, err := planner.Plan(r, nil)
 
-		assert.NoError(t, err)
+			assert.NoError(ttt, err)
 
-		assert.Len(t, p, 4)
-		assert.Equal(t, "cf --version", p[0].String())
-		assert.Equal(t, "cf login -a a -u d -p ******** -o b -s c", p[1].String())
-		assert.Equal(t, "Linting application", p[2].String())
-		assert.Equal(t, "cf yay", p[3].String())
-		assert.Equal(t, validRequest.Params.ManifestPath, manifestReader.readPath)
-		assert.Equal(t, validRequest.Params.ManifestPath, manifestReader.writePath)
-		assert.Equal(t, expectedManifest, manifestReader.savedManifest)
+			assert.Len(ttt, p, 4)
+			assert.Equal(ttt, "cf --version", p[0].String())
+			assert.Equal(ttt, "cf login -a a -u d -p ******** -o b -s c", p[1].String())
+			assert.Equal(ttt, "Linting application", p[2].String())
+			assert.Equal(ttt, "cf yay", p[3].String())
+			assert.Equal(ttt, validRequest.Params.ManifestPath, manifestReader.readPath)
+			assert.Equal(ttt, validRequest.Params.ManifestPath, manifestReader.writePath)
+			assert.Equal(ttt, expectedManifest, manifestReader.savedManifest)
+		})
 
-		t.Run("Changes team label if present", func(t *testing.T) {
+		tt.Run("Changes team label if present", func(ttt *testing.T) {
 			expectedManifest := halfpipe_deploy_resource.ParseManifest(`applications:
 - name: myApp
   env:
-    
     VAR2: bb
     VAR4: cc
+    OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+    OTEL_EXPORTER_OTLP_HEADERS: "X-Scope-OrgId=ee"
+    OTEL_SERVICE_NAME: "myApp"
+    OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:9095"
+    OTEL_PROPAGATORS: "tracecontext"
+    OTEL_RESOURCE_ATTRIBUTES: "service.namespace=b/c,job=b/c/myApp,cloudfoundry.app.name=myApp,cloudfoundry.app.org.name=b,cloudfoundry.app.space.name=c"
   metadata:
     annotations:
       someAnnotation: yo
@@ -220,19 +233,24 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			r.Params.GitRefPath = ""
 			_, err := planner.Plan(r, nil)
 
-			assert.NoError(t, err)
-
-			assert.Equal(t, expectedManifest, manifestReader.savedManifest)
+			assert.NoError(ttt, err)
+			assert.Equal(ttt, expectedManifest, manifestReader.savedManifest)
 
 		})
 
-		t.Run("Does nothing with labels if team is not defined and gitUri unset", func(t *testing.T) {
+		tt.Run("Does nothing with labels if team is not defined and gitUri unset", func(ttt *testing.T) {
 
 			expectedManifest := halfpipe_deploy_resource.ParseManifest(`applications:
 - name: myApp
   env:
     VAR2: bb
     VAR4: cc
+    OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+    OTEL_EXPORTER_OTLP_HEADERS: "X-Scope-OrgId=ee"
+    OTEL_SERVICE_NAME: "myApp"
+    OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:9095"
+    OTEL_PROPAGATORS: "tracecontext"
+    OTEL_RESOURCE_ATTRIBUTES: "service.namespace=b/c,job=b/c/myApp,cloudfoundry.app.name=myApp,cloudfoundry.app.org.name=b,cloudfoundry.app.space.name=c"
 `)
 			manifestReader := ManifestReadWriteStub{
 				manifest: halfpipe_deploy_resource.ParseManifest(`applications:
@@ -252,18 +270,24 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			r.Params.Team = ""
 			_, err := planner.Plan(r, nil)
 
-			assert.NoError(t, err)
+			assert.NoError(ttt, err)
 
-			assert.Equal(t, expectedManifest, manifestReader.savedManifest)
+			assert.Equal(ttt, expectedManifest, manifestReader.savedManifest)
 
 		})
 
-		t.Run("Does nothing with labels if team is not defined but there are some annotations", func(t *testing.T) {
+		tt.Run("Does nothing with labels if team is not defined but there are some annotations", func(ttt *testing.T) {
 			expectedManifest := halfpipe_deploy_resource.ParseManifest(`applications:
 - name: myApp
   env:
     VAR2: bb
     VAR4: cc
+    OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+    OTEL_EXPORTER_OTLP_HEADERS: "X-Scope-OrgId=ee"
+    OTEL_SERVICE_NAME: "myApp"
+    OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:9095" 
+    OTEL_PROPAGATORS: "tracecontext"
+    OTEL_RESOURCE_ATTRIBUTES: "service.namespace=b/c,job=b/c/myApp,cloudfoundry.app.name=myApp,cloudfoundry.app.org.name=b,cloudfoundry.app.space.name=c"
   metadata:
     annotations:
      a: b
@@ -289,15 +313,60 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			r.Params.Team = ""
 			_, err := planner.Plan(r, nil)
 
-			assert.NoError(t, err)
+			assert.NoError(ttt, err)
 
-			assert.Equal(t, expectedManifest, manifestReader.savedManifest)
+			assert.Equal(ttt, expectedManifest, manifestReader.savedManifest)
+
+		})
+
+		tt.Run("Does not overwrite OTEL stuff thats already in the manifest", func(ttt *testing.T) {
+			expectedManifest := halfpipe_deploy_resource.ParseManifest(`applications:
+- name: myApp
+  env:
+    VAR2: bb
+    VAR4: cc
+    OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+    OTEL_EXPORTER_OTLP_HEADERS: "X-Scope-OrgId=ee"
+    OTEL_SERVICE_NAME: "BLAAAAH"
+    OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:9095"
+    OTEL_PROPAGATORS: "tracecontext"
+    OTEL_RESOURCE_ATTRIBUTES: "service.namespace=b/c,job=b/c/myApp,cloudfoundry.app.name=myApp,cloudfoundry.app.org.name=b,cloudfoundry.app.space.name=c"
+  metadata:
+    annotations:
+     a: b
+`)
+			manifestReader := ManifestReadWriteStub{
+				manifest: halfpipe_deploy_resource.ParseManifest(`applications:
+- name: myApp
+  env:
+    OTEL_SERVICE_NAME: "BLAAAAH"
+  metadata:
+    annotations:
+      a: b
+`)}
+
+			planner := NewPlanner(&manifestReader, &fakePushPlanner{
+				plan: Plan{
+					NewCfCommand("yay"),
+				},
+			}, nil, nil, nil, nil, nil, nil, NewCheckLabelsPlan(), nil)
+
+			r := validRequest
+			r.Params.BuildVersionPath = ""
+			r.Params.GitRefPath = ""
+			r.Params.GitUri = ""
+			r.Params.Team = ""
+			_, err := planner.Plan(r, nil)
+
+			assert.NoError(ttt, err)
+
+			assert.Equal(ttt, expectedManifest, manifestReader.savedManifest)
 
 		})
 
 	})
 
-	t.Run("Rolling deploy planner", func(t *testing.T) {
+	t.Run("Rolling deploy planner", func(tt *testing.T) {
 		expectedPath := validRequest.Params.ManifestPath
 
 		expectedManifest := halfpipe_deploy_resource.ParseManifest(`applications:
@@ -305,6 +374,12 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
   env:
     VAR2: bb
     VAR4: cc
+    OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+    OTEL_EXPORTER_OTLP_HEADERS: "X-Scope-OrgId=ee"
+    OTEL_SERVICE_NAME: "myApp"
+    OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:9095"
+    OTEL_PROPAGATORS: "tracecontext"
+    OTEL_RESOURCE_ATTRIBUTES: "service.namespace=b/c,job=b/c/myApp,cloudfoundry.app.name=myApp,cloudfoundry.app.org.name=b,cloudfoundry.app.space.name=c"
   metadata:
     labels:
       team: myTeam
@@ -328,16 +403,16 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 		r.Params.GitRefPath = ""
 		p, err := planner.Plan(r, nil)
 
-		assert.NoError(t, err)
+		assert.NoError(tt, err)
 
-		assert.Len(t, p, 4)
-		assert.Equal(t, "cf --version", p[0].String())
-		assert.Equal(t, "cf login -a a -u d -p ******** -o b -s c", p[1].String())
-		assert.Equal(t, "Linting application", p[2].String())
-		assert.Equal(t, "cf yay", p[3].String())
-		assert.Equal(t, expectedPath, manifestReader.readPath)
-		assert.Equal(t, expectedPath, manifestReader.writePath)
-		assert.Equal(t, expectedManifest, manifestReader.savedManifest)
+		assert.Len(tt, p, 4)
+		assert.Equal(tt, "cf --version", p[0].String())
+		assert.Equal(tt, "cf login -a a -u d -p ******** -o b -s c", p[1].String())
+		assert.Equal(tt, "Linting application", p[2].String())
+		assert.Equal(tt, "cf yay", p[3].String())
+		assert.Equal(tt, expectedPath, manifestReader.readPath)
+		assert.Equal(tt, expectedPath, manifestReader.writePath)
+		assert.Equal(tt, expectedManifest, manifestReader.savedManifest)
 	})
 
 	t.Run("Check planner", func(t *testing.T) {
