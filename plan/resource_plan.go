@@ -1,12 +1,13 @@
 package plan
 
 import (
-	"code.cloudfoundry.org/cli/util/manifestparser"
 	"fmt"
+	"strings"
+
+	"code.cloudfoundry.org/cli/util/manifestparser"
 	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/springernature/halfpipe-deploy-resource/config"
 	"github.com/springernature/halfpipe-deploy-resource/manifest"
-	"strings"
 )
 
 type ResourcePlan interface {
@@ -100,6 +101,7 @@ func (p planner) Plan(request config.Request, appsSummary []cfclient.AppSummary)
 
 	return
 }
+
 func (p planner) readManifest(manifestPath string) (manifestparser.Manifest, error) {
 	return p.manifestReaderWrite.ReadManifest(manifestPath)
 }
@@ -176,7 +178,11 @@ func (p planner) updateManifestWithVarsAndLabels(request config.Request) (err er
 
 func (p planner) otelEnv(env map[any]any, app manifestparser.Application, request config.Request) {
 	p.setIfNotOtelPresent(env, "OTEL_EXPORTER_OTLP_PROTOCOL", "http/protobuf")
-	p.setIfNotOtelPresent(env, "OTEL_EXPORTER_OTLP_HEADERS", "X-Scope-OrgId=ee")
+	if request.Params.Team != "" {
+		p.setIfNotOtelPresent(env, "OTEL_EXPORTER_OTLP_HEADERS", fmt.Sprintf("X-Scope-OrgId=%s", request.Params.Team))
+	} else {
+		p.setIfNotOtelPresent(env, "OTEL_EXPORTER_OTLP_HEADERS", "X-Scope-OrgId=anonymous")
+	}
 	p.setIfNotOtelPresent(env, "OTEL_SERVICE_NAME", app.Name)
 	p.setIfNotOtelPresent(env, "OTEL_EXPORTER_OTLP_ENDPOINT", "http://opentelemetry-sink.tracing.springernature.io:80")
 	p.setIfNotOtelPresent(env, "OTEL_PROPAGATORS", "tracecontext")
