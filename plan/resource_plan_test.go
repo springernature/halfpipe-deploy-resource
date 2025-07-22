@@ -1,13 +1,14 @@
 package plan
 
 import (
-	"code.cloudfoundry.org/cli/util/manifestparser"
 	"errors"
+	"testing"
+
+	"code.cloudfoundry.org/cli/util/manifestparser"
 	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/spf13/afero"
-	"github.com/springernature/halfpipe-deploy-resource"
+	halfpipe_deploy_resource "github.com/springernature/halfpipe-deploy-resource"
 	"github.com/stretchr/testify/assert"
-	"testing"
 
 	"github.com/springernature/halfpipe-deploy-resource/config"
 )
@@ -152,7 +153,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
     OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
     OTEL_EXPORTER_OTLP_HEADERS: "X-Scope-OrgId=ee"
     OTEL_SERVICE_NAME: "myApp"
-    OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:9095"
+    OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:80"
     OTEL_PROPAGATORS: "tracecontext"
     OTEL_RESOURCE_ATTRIBUTES: "service.namespace=b/c,job=b/c/myApp,cloudfoundry.app.name=myApp,cloudfoundry.app.org.name=b,cloudfoundry.app.space.name=c"
   metadata:
@@ -198,7 +199,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
     OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
     OTEL_EXPORTER_OTLP_HEADERS: "X-Scope-OrgId=ee"
     OTEL_SERVICE_NAME: "myApp"
-    OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:9095"
+    OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:80"
     OTEL_PROPAGATORS: "tracecontext"
     OTEL_RESOURCE_ATTRIBUTES: "service.namespace=b/c,job=b/c/myApp,cloudfoundry.app.name=myApp,cloudfoundry.app.org.name=b,cloudfoundry.app.space.name=c"
   metadata:
@@ -220,7 +221,8 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
       myLabel: myValue
       environment: dev
       team: myHardcodedTeam
-`)}
+`),
+			}
 
 			planner := NewPlanner(&manifestReader, &fakePushPlanner{
 				plan: Plan{
@@ -235,11 +237,9 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 
 			assert.NoError(ttt, err)
 			assert.Equal(ttt, expectedManifest, manifestReader.savedManifest)
-
 		})
 
 		tt.Run("Does nothing with labels if team is not defined and gitUri unset", func(ttt *testing.T) {
-
 			expectedManifest := halfpipe_deploy_resource.ParseManifest(`applications:
 - name: myApp
   env:
@@ -248,14 +248,15 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
     OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
     OTEL_EXPORTER_OTLP_HEADERS: "X-Scope-OrgId=ee"
     OTEL_SERVICE_NAME: "myApp"
-    OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:9095"
+    OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:80"
     OTEL_PROPAGATORS: "tracecontext"
     OTEL_RESOURCE_ATTRIBUTES: "service.namespace=b/c,job=b/c/myApp,cloudfoundry.app.name=myApp,cloudfoundry.app.org.name=b,cloudfoundry.app.space.name=c"
 `)
 			manifestReader := ManifestReadWriteStub{
 				manifest: halfpipe_deploy_resource.ParseManifest(`applications:
 - name: myApp
-`)}
+`),
+			}
 
 			planner := NewPlanner(&manifestReader, &fakePushPlanner{
 				plan: Plan{
@@ -273,7 +274,6 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			assert.NoError(ttt, err)
 
 			assert.Equal(ttt, expectedManifest, manifestReader.savedManifest)
-
 		})
 
 		tt.Run("Does nothing with labels if team is not defined but there are some annotations", func(ttt *testing.T) {
@@ -285,7 +285,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
     OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
     OTEL_EXPORTER_OTLP_HEADERS: "X-Scope-OrgId=ee"
     OTEL_SERVICE_NAME: "myApp"
-    OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:9095" 
+    OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:80" 
     OTEL_PROPAGATORS: "tracecontext"
     OTEL_RESOURCE_ATTRIBUTES: "service.namespace=b/c,job=b/c/myApp,cloudfoundry.app.name=myApp,cloudfoundry.app.org.name=b,cloudfoundry.app.space.name=c"
   metadata:
@@ -298,7 +298,8 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
   metadata:
     annotations:
       a: b
-`)}
+`),
+			}
 
 			planner := NewPlanner(&manifestReader, &fakePushPlanner{
 				plan: Plan{
@@ -316,7 +317,6 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			assert.NoError(ttt, err)
 
 			assert.Equal(ttt, expectedManifest, manifestReader.savedManifest)
-
 		})
 
 		tt.Run("Does not overwrite OTEL stuff thats already in the manifest", func(ttt *testing.T) {
@@ -328,7 +328,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
     OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
     OTEL_EXPORTER_OTLP_HEADERS: "X-Scope-OrgId=ee"
     OTEL_SERVICE_NAME: "BLAAAAH"
-    OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:9095"
+    OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:80"
     OTEL_PROPAGATORS: "tracecontext"
     OTEL_RESOURCE_ATTRIBUTES: "service.namespace=b/c,job=b/c/myApp,cloudfoundry.app.name=myApp,cloudfoundry.app.org.name=b,cloudfoundry.app.space.name=c"
   metadata:
@@ -343,7 +343,8 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
   metadata:
     annotations:
       a: b
-`)}
+`),
+			}
 
 			planner := NewPlanner(&manifestReader, &fakePushPlanner{
 				plan: Plan{
@@ -361,9 +362,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			assert.NoError(ttt, err)
 
 			assert.Equal(ttt, expectedManifest, manifestReader.savedManifest)
-
 		})
-
 	})
 
 	t.Run("Rolling deploy planner", func(tt *testing.T) {
@@ -377,7 +376,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
     OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
     OTEL_EXPORTER_OTLP_HEADERS: "X-Scope-OrgId=ee"
     OTEL_SERVICE_NAME: "myApp"
-    OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:9095"
+    OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:80"
     OTEL_PROPAGATORS: "tracecontext"
     OTEL_RESOURCE_ATTRIBUTES: "service.namespace=b/c,job=b/c/myApp,cloudfoundry.app.name=myApp,cloudfoundry.app.org.name=b,cloudfoundry.app.space.name=c"
   metadata:
@@ -502,7 +501,6 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			assert.Equal(t, "cf login -a a -u d -p ******** -o b -s c", p[1].String())
 			assert.Equal(t, "cf yay", p[2].String())
 		})
-
 	})
 
 	t.Run("Delete Candidate planner", func(t *testing.T) {
@@ -574,5 +572,4 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 		assert.Equal(t, "cf route public.springernature.app -n myHost || cf create-route public.springernature.app -n myHost", p[3].String())
 		assert.Equal(t, "cf bind-route-service public.springernature.app -n myHost sso", p[4].String())
 	})
-
 }
