@@ -178,7 +178,7 @@ func (p planner) otelEnv(env map[any]any, app manifestparser.Application, reques
 	p.setIfNotOtelPresent(env, "OTEL_EXPORTER_OTLP_PROTOCOL", "http/protobuf")
 	p.setIfNotOtelPresent(env, "OTEL_EXPORTER_OTLP_HEADERS", "X-Scope-OrgId=ee")
 	p.setIfNotOtelPresent(env, "OTEL_SERVICE_NAME", app.Name)
-	p.setIfNotOtelPresent(env, "OTEL_EXPORTER_OTLP_ENDPOINT", "http://opentelemetry-sink.tracing.springernature.io:9095")
+	p.setIfNotOtelPresent(env, "OTEL_EXPORTER_OTLP_ENDPOINT", "http://opentelemetry-sink.tracing.springernature.io:80")
 	p.setIfNotOtelPresent(env, "OTEL_PROPAGATORS", "tracecontext")
 
 	namespace := fmt.Sprintf("service.namespace=%s/%s", request.Source.Org, request.Source.Space)
