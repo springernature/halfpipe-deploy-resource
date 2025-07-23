@@ -151,7 +151,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
     VAR2: bb
     VAR4: cc
     OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
-    OTEL_EXPORTER_OTLP_HEADERS: "X-Scope-OrgId=ee"
+    OTEL_EXPORTER_OTLP_HEADERS: "X-Scope-OrgId=myTeam"
     OTEL_SERVICE_NAME: "myApp"
     OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:80"
     OTEL_PROPAGATORS: "tracecontext"
@@ -197,7 +197,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
     VAR2: bb
     VAR4: cc
     OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
-    OTEL_EXPORTER_OTLP_HEADERS: "X-Scope-OrgId=ee"
+    OTEL_EXPORTER_OTLP_HEADERS: "X-Scope-OrgId=myTeam"
     OTEL_SERVICE_NAME: "myApp"
     OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:80"
     OTEL_PROPAGATORS: "tracecontext"
@@ -246,7 +246,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
     VAR2: bb
     VAR4: cc
     OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
-    OTEL_EXPORTER_OTLP_HEADERS: "X-Scope-OrgId=ee"
+    OTEL_EXPORTER_OTLP_HEADERS: "X-Scope-OrgId=anonymous"
     OTEL_SERVICE_NAME: "myApp"
     OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:80"
     OTEL_PROPAGATORS: "tracecontext"
@@ -283,7 +283,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
     VAR2: bb
     VAR4: cc
     OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
-    OTEL_EXPORTER_OTLP_HEADERS: "X-Scope-OrgId=ee"
+    OTEL_EXPORTER_OTLP_HEADERS: "X-Scope-OrgId=anonymous"
     OTEL_SERVICE_NAME: "myApp"
     OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:80" 
     OTEL_PROPAGATORS: "tracecontext"
@@ -326,7 +326,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
     VAR2: bb
     VAR4: cc
     OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
-    OTEL_EXPORTER_OTLP_HEADERS: "X-Scope-OrgId=ee"
+    OTEL_EXPORTER_OTLP_HEADERS: "X-Scope-OrgId=anonymous"
     OTEL_SERVICE_NAME: "BLAAAAH"
     OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:80"
     OTEL_PROPAGATORS: "tracecontext"
@@ -374,7 +374,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
     VAR2: bb
     VAR4: cc
     OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
-    OTEL_EXPORTER_OTLP_HEADERS: "X-Scope-OrgId=ee"
+    OTEL_EXPORTER_OTLP_HEADERS: "X-Scope-OrgId=myTeam"
     OTEL_SERVICE_NAME: "myApp"
     OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:80"
     OTEL_PROPAGATORS: "tracecontext"
