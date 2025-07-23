@@ -178,11 +178,13 @@ func (p planner) updateManifestWithVarsAndLabels(request config.Request) (err er
 
 func (p planner) otelEnv(env map[any]any, app manifestparser.Application, request config.Request) {
 	p.setIfNotOtelPresent(env, "OTEL_EXPORTER_OTLP_PROTOCOL", "http/protobuf")
-	if request.Params.Team != "" {
-		p.setIfNotOtelPresent(env, "OTEL_EXPORTER_OTLP_HEADERS", fmt.Sprintf("X-Scope-OrgId=%s", request.Params.Team))
-	} else {
-		p.setIfNotOtelPresent(env, "OTEL_EXPORTER_OTLP_HEADERS", "X-Scope-OrgId=anonymous")
+
+	team := request.Params.Team
+	if team == "" {
+		team = "anonymous"
 	}
+	p.setIfNotOtelPresent(env, "OTEL_EXPORTER_OTLP_HEADERS", fmt.Sprintf("X-Scope-OrgId=%s", team))
+
 	p.setIfNotOtelPresent(env, "OTEL_SERVICE_NAME", app.Name)
 	p.setIfNotOtelPresent(env, "OTEL_EXPORTER_OTLP_ENDPOINT", "http://opentelemetry-sink.tracing.springernature.io:80")
 	p.setIfNotOtelPresent(env, "OTEL_PROPAGATORS", "tracecontext")
