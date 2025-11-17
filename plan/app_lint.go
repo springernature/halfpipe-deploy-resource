@@ -67,9 +67,10 @@ func (p appLintPlan) createFunc(manifest manifestparser.Application, org, space 
 		labels := p.getLabelsForApp(manifest)
 		manifestProduct, manifestProductFound := labels["product"]
 		manifestEnvironment, manifestEnvironmentFound := labels["environment"]
+		manifestEAID, manifestEAIDFound := labels["eaid"]
 
-		if manifestProductFound && manifestEnvironmentFound {
-			logger.Println(fmt.Sprintf(`Found product '%s' and environment '%s' in manifest`, manifestProduct, manifestEnvironment))
+		if manifestProductFound && manifestEnvironmentFound && manifestEAIDFound {
+			logger.Println(fmt.Sprintf(`Found product '%s', environment '%s'  and EAID '%s' in manifest`, manifestProduct, manifestEnvironment, manifestEAID))
 			return nil
 		}
 
@@ -83,6 +84,7 @@ func (p appLintPlan) createFunc(manifest manifestparser.Application, org, space 
 
 		spaceProduct, spaceProductFound := metadata.Labels["product"]
 		spaceEnvironment, spaceEnvironmentFound := metadata.Labels["environment"]
+		spaceEAID, spaceEAIDFound := metadata.Labels["eaid"]
 
 		if manifestProductFound || spaceProductFound {
 			p := manifestProduct
@@ -108,7 +110,19 @@ func (p appLintPlan) createFunc(manifest manifestparser.Application, org, space 
 			printWarning("'environment' is missing in both manifest and space")
 		}
 
-		if !(manifestProductFound || spaceProductFound) || !(manifestEnvironmentFound || spaceEnvironmentFound) {
+		if manifestEAIDFound || spaceEAIDFound {
+			e := manifestEAID
+			in := "manifest"
+			if !manifestEAIDFound {
+				e = spaceEAID
+				in = "space"
+			}
+			logger.Println(fmt.Sprintf("'eaid' is set. Found '%s' in %s", e, in))
+		} else {
+			printWarning("'eaid' is missing in both manifest and space")
+		}
+
+		if !(manifestProductFound || spaceProductFound || spaceEAIDFound) || !(manifestEnvironmentFound || spaceEnvironmentFound || manifestEAIDFound) {
 			logger.Println("Please see https://ee.public.springernature.app/inventory/ for more information about labels and how to set them!")
 		}
 		return nil
