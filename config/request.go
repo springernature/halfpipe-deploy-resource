@@ -13,12 +13,13 @@ type Request struct {
 }
 
 type Metadata struct {
-	GitRef    string
-	GitRepo   string
-	Version   string
-	DockerTag string
-	AppName   string
-	IsActions bool
+	GitRef     string
+	GitRepo    string
+	Version    string
+	DockerTag  string
+	AppName    string
+	IsActions  bool
+	DeployedBy string
 }
 
 type Source struct {

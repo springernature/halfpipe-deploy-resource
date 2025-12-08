@@ -172,6 +172,16 @@ func TestReadRequest(t *testing.T) {
 	})
 
 	t.Run("Concourse", func(t *testing.T) {
+		env := map[string]string{
+			"ATC_EXTERNAL_URL":    "https://concourse.io",
+			"BUILD_TEAM_NAME":     "myTeam",
+			"BUILD_PIPELINE_NAME": "myPipeline",
+			"BUILD_JOB_NAME":      "myJob",
+			"BUILD_NAME":          "2226",
+		}
+
+		expectedUrl := "https://concourse.io/teams/myTeam/pipelines/myPipeline/jobs/myJob/builds/2226"
+
 		validRequestWithoutVersionPath := `{
    "source": {
       "api":"api",
@@ -228,7 +238,7 @@ func TestReadRequest(t *testing.T) {
 			fs := afero.Afero{Fs: afero.NewMemMapFs()}
 
 			stdin := strings.NewReader(validRequestWithoutVersionPath)
-			rr := NewRequestReader([]string{"/opt/resource/out", "/tmp/buildDir"}, map[string]string{}, stdin, fs, &okManifestReadWriter)
+			rr := NewRequestReader([]string{"/opt/resource/out", "/tmp/buildDir"}, env, stdin, fs, &okManifestReadWriter)
 
 			_, err := rr.ReadRequest()
 			assert.Error(t, err)
@@ -239,7 +249,7 @@ func TestReadRequest(t *testing.T) {
 			fs := afero.Afero{Fs: afero.NewMemMapFs()}
 			fs.WriteFile("/tmp/buildDir/git/.git/ref", []byte("ref"), 0777)
 			stdin := strings.NewReader(validRequestWithVersionPath)
-			rr := NewRequestReader([]string{"/opt/resource/out", "/tmp/buildDir"}, map[string]string{}, stdin, fs, &okManifestReadWriter)
+			rr := NewRequestReader([]string{"/opt/resource/out", "/tmp/buildDir"}, env, stdin, fs, &okManifestReadWriter)
 
 			_, err := rr.ReadRequest()
 			assert.Error(t, err)
@@ -255,7 +265,7 @@ func TestReadRequest(t *testing.T) {
 			fs := afero.Afero{Fs: afero.NewMemMapFs()}
 			fs.WriteFile("/tmp/buildDir/git/.git/ref", []byte("ref"), 0777)
 			stdin := strings.NewReader(validRequestWithoutVersionPath)
-			rr := NewRequestReader([]string{"/opt/resource/out", "/tmp/buildDir"}, map[string]string{}, stdin, fs, &errorManifestReadWriter)
+			rr := NewRequestReader([]string{"/opt/resource/out", "/tmp/buildDir"}, env, stdin, fs, &errorManifestReadWriter)
 
 			_, err := rr.ReadRequest()
 			assert.Equal(t, returnError, err)
@@ -279,16 +289,17 @@ func TestReadRequest(t *testing.T) {
 					CliVersion:   "cf7",
 				},
 				Metadata: Metadata{
-					GitRef:    "ref",
-					AppName:   appName,
-					IsActions: false,
+					GitRef:     "ref",
+					AppName:    appName,
+					IsActions:  false,
+					DeployedBy: expectedUrl,
 				},
 			}
 
 			fs := afero.Afero{Fs: afero.NewMemMapFs()}
 			fs.WriteFile("/tmp/buildDir/git/.git/ref", []byte("ref"), 0777)
 			stdin := strings.NewReader(validRequestWithoutVersionPath)
-			rr := NewRequestReader([]string{"/opt/resource/out", "/tmp/buildDir"}, map[string]string{}, stdin, fs, &okManifestReadWriter)
+			rr := NewRequestReader([]string{"/opt/resource/out", "/tmp/buildDir"}, env, stdin, fs, &okManifestReadWriter)
 
 			request, err := rr.ReadRequest()
 			assert.NoError(t, err)
@@ -315,9 +326,10 @@ func TestReadRequest(t *testing.T) {
 					CliVersion:       "cf6",
 				},
 				Metadata: Metadata{
-					GitRef:  "ref",
-					Version: "version",
-					AppName: appName,
+					GitRef:     "ref",
+					Version:    "version",
+					AppName:    appName,
+					DeployedBy: expectedUrl,
 				},
 			}
 
@@ -325,7 +337,7 @@ func TestReadRequest(t *testing.T) {
 			fs.WriteFile("/tmp/buildDir/git/.git/ref", []byte("ref"), 0777)
 			fs.WriteFile("/tmp/buildDir/version/version", []byte("version"), 0777)
 			stdin := strings.NewReader(validRequestWithVersionPathAndOldCfCli)
-			rr := NewRequestReader([]string{"/opt/resource/out", "/tmp/buildDir"}, map[string]string{}, stdin, fs, &okManifestReadWriter)
+			rr := NewRequestReader([]string{"/opt/resource/out", "/tmp/buildDir"}, env, stdin, fs, &okManifestReadWriter)
 
 			request, err := rr.ReadRequest()
 			assert.NoError(t, err)

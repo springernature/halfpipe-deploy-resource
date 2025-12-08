@@ -3,9 +3,9 @@ package config
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"github.com/springernature/halfpipe-deploy-resource/manifest"
 	"io"
-	"io/ioutil"
 	"path"
 	"strings"
 
@@ -74,7 +74,7 @@ func (r RequestReader) actionRequest() (request Request, err error) {
 }
 
 func (r RequestReader) concourseRequest() (request Request, err error) {
-	data, err := ioutil.ReadAll(r.stdin)
+	data, err := io.ReadAll(r.stdin)
 	if err != nil {
 		return
 	}
@@ -228,6 +228,7 @@ func (r RequestReader) ReadRequest() (request Request, err error) {
 		return
 	}
 
+	request = r.setDeployedBy(request)
 	request = r.setFullPathInRequest(request)
 	request = r.addVars(request)
 	request, err = r.addGitRefAndVersion(request)
@@ -237,4 +238,22 @@ func (r RequestReader) ReadRequest() (request Request, err error) {
 	request, err = r.addAppName(request)
 
 	return
+}
+
+func (r RequestReader) setDeployedBy(request Request) Request {
+	updated := request
+	if r.isActions() {
+
+	} else {
+		u := fmt.Sprintf(
+			"%s/teams/%s/pipelines/%s/jobs/%s/builds/%s",
+			r.environ["ATC_EXTERNAL_URL"],
+			r.environ["BUILD_TEAM_NAME"],
+			r.environ["BUILD_PIPELINE_NAME"],
+			r.environ["BUILD_JOB_NAME"],
+			r.environ["BUILD_NAME"],
+		)
+		updated.Metadata.DeployedBy = u
+	}
+	return updated
 }
