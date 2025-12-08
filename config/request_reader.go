@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/springernature/halfpipe-deploy-resource/manifest"
 	"io"
+	"net/url"
 	"path"
 	"strings"
 
@@ -253,7 +254,9 @@ func (r RequestReader) setDeployedBy(request Request) Request {
 			r.environ["BUILD_JOB_NAME"],
 			r.environ["BUILD_NAME"],
 		)
-		updated.Metadata.DeployedBy = u
+		if safe, err := url.Parse(u); err == nil && safe != nil {
+			updated.Metadata.DeployedBy = safe.String()
+		}
 	}
 	return updated
 }

@@ -176,11 +176,11 @@ func TestReadRequest(t *testing.T) {
 			"ATC_EXTERNAL_URL":    "https://concourse.io",
 			"BUILD_TEAM_NAME":     "myTeam",
 			"BUILD_PIPELINE_NAME": "myPipeline",
-			"BUILD_JOB_NAME":      "myJob",
+			"BUILD_JOB_NAME":      "my Job",
 			"BUILD_NAME":          "2226",
 		}
 
-		expectedUrl := "https://concourse.io/teams/myTeam/pipelines/myPipeline/jobs/myJob/builds/2226"
+		expectedUrl := "https://concourse.io/teams/myTeam/pipelines/myPipeline/jobs/my%20Job/builds/2226"
 
 		validRequestWithoutVersionPath := `{
    "source": {
