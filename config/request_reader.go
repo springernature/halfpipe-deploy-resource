@@ -245,18 +245,43 @@ func (r RequestReader) setDeployedBy(request Request) Request {
 	updated := request
 	if r.isActions() {
 
+		ref := r.environ["GITHUB_WORKFLOW_REF"]
+		firstPart := strings.Split(ref, "@")[0]
+		actionsPath := strings.Replace(firstPart, "/.github/", "/actions/", 1)
+
+		p := fmt.Sprintf("https://github.com/%s", actionsPath)
+		d := fmt.Sprintf("https://github.com/%s/actions/runs/%s", r.environ["GITHUB_REPOSITORY"], r.environ["GITHUB_RUN_ID"])
+
+		if safe, err := url.Parse(d); err == nil && safe != nil {
+			updated.Metadata.DeployedBy = safe.String()
+		}
+
+		if safe, err := url.Parse(p); err == nil && safe != nil {
+			updated.Metadata.Pipeline = safe.String()
+		}
 	} else {
-		u := fmt.Sprintf(
-			"%s/teams/%s/pipelines/%s/jobs/%s/builds/%s",
+		p := fmt.Sprintf(
+			"%s/teams/%s/pipelines/%s",
 			r.environ["ATC_EXTERNAL_URL"],
 			r.environ["BUILD_TEAM_NAME"],
 			r.environ["BUILD_PIPELINE_NAME"],
+		)
+
+		u := fmt.Sprintf(
+			"%s/jobs/%s/builds/%s",
+			p,
 			r.environ["BUILD_JOB_NAME"],
 			r.environ["BUILD_NAME"],
 		)
+
 		if safe, err := url.Parse(u); err == nil && safe != nil {
 			updated.Metadata.DeployedBy = safe.String()
 		}
+
+		if safe, err := url.Parse(p); err == nil && safe != nil {
+			updated.Metadata.Pipeline = safe.String()
+		}
+
 	}
 	return updated
 }

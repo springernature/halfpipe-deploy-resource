@@ -20,6 +20,7 @@ type Metadata struct {
 	AppName    string
 	IsActions  bool
 	DeployedBy string
+	Pipeline   string
 }
 
 type Source struct {

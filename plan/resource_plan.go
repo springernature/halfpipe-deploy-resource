@@ -145,6 +145,10 @@ func (p planner) updateManifestWithVarsAndLabels(request config.Request) (err er
 			env["EE_DEPLOYED_BY"] = request.Metadata.DeployedBy
 		}
 
+		if request.Metadata.Pipeline != "" {
+			env["EE_PIPELINE"] = request.Metadata.Pipeline
+		}
+
 		if request.Params.Team != "" || request.Params.GitUri != "" {
 			if request.Params.Team != "" {
 				labels["team"] = request.Params.Team

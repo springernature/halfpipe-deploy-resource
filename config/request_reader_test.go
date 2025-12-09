@@ -51,22 +51,25 @@ func TestReadRequest(t *testing.T) {
 
 	t.Run("Action", func(t *testing.T) {
 		env := map[string]string{
-			"INPUT_API":          "api",
-			"INPUT_ORG":          "org",
-			"INPUT_SPACE":        "space",
-			"INPUT_USERNAME":     "username",
-			"INPUT_PASSWORD":     "password",
-			"INPUT_COMMAND":      "command",
-			"INPUT_MANIFESTPATH": "app/cf/manifest.yml",
-			"INPUT_APPPATH":      "app",
-			"INPUT_TESTDOMAIN":   "test domain",
-			"INPUT_DOCKERTAG":    "docker-tag",
-			"GIT_REVISION":       "ref",
-			"BUILD_VERSION":      "run number",
-			"GITHUB_WORKSPACE":   "/github/workspace",
-			"CF_ENV_VAR_VAR":     "a",
-			"CF_ENV_VAR_VAR2":    "b",
-			"CF_ENV_VAR_var_3":   "c",
+			"INPUT_API":           "api",
+			"INPUT_ORG":           "org",
+			"INPUT_SPACE":         "space",
+			"INPUT_USERNAME":      "username",
+			"INPUT_PASSWORD":      "password",
+			"INPUT_COMMAND":       "command",
+			"INPUT_MANIFESTPATH":  "app/cf/manifest.yml",
+			"INPUT_APPPATH":       "app",
+			"INPUT_TESTDOMAIN":    "test domain",
+			"INPUT_DOCKERTAG":     "docker-tag",
+			"GIT_REVISION":        "ref",
+			"BUILD_VERSION":       "run number",
+			"GITHUB_WORKSPACE":    "/github/workspace",
+			"CF_ENV_VAR_VAR":      "a",
+			"CF_ENV_VAR_VAR2":     "b",
+			"CF_ENV_VAR_var_3":    "c",
+			"GITHUB_WORKFLOW_REF": "springernature/ee-test-actions/.github/workflows/ant.yml@refs/heads/main",
+			"GITHUB_RUN_ID":       "19900194601",
+			"GITHUB_REPOSITORY":   "springernature/ee-test-actions",
 		}
 
 		expected := Request{
@@ -91,11 +94,13 @@ func TestReadRequest(t *testing.T) {
 				},
 			},
 			Metadata: Metadata{
-				GitRef:    "ref",
-				Version:   "run number",
-				DockerTag: "docker-tag",
-				AppName:   appName,
-				IsActions: true,
+				GitRef:     "ref",
+				Version:    "run number",
+				DockerTag:  "docker-tag",
+				AppName:    appName,
+				IsActions:  true,
+				DeployedBy: "https://github.com/springernature/ee-test-actions/actions/runs/19900194601",
+				Pipeline:   "https://github.com/springernature/ee-test-actions/actions/workflows/ant.yml",
 			},
 		}
 
@@ -180,7 +185,8 @@ func TestReadRequest(t *testing.T) {
 			"BUILD_NAME":          "2226",
 		}
 
-		expectedUrl := "https://concourse.io/teams/myTeam/pipelines/myPipeline/jobs/my%20Job/builds/2226"
+		expectedDeployedBy := "https://concourse.io/teams/myTeam/pipelines/myPipeline/jobs/my%20Job/builds/2226"
+		expectedPipeline := "https://concourse.io/teams/myTeam/pipelines/myPipeline"
 
 		validRequestWithoutVersionPath := `{
    "source": {
@@ -292,7 +298,8 @@ func TestReadRequest(t *testing.T) {
 					GitRef:     "ref",
 					AppName:    appName,
 					IsActions:  false,
-					DeployedBy: expectedUrl,
+					DeployedBy: expectedDeployedBy,
+					Pipeline:   expectedPipeline,
 				},
 			}
 
@@ -329,7 +336,8 @@ func TestReadRequest(t *testing.T) {
 					GitRef:     "ref",
 					Version:    "version",
 					AppName:    appName,
-					DeployedBy: expectedUrl,
+					DeployedBy: expectedDeployedBy,
+					Pipeline:   expectedPipeline,
 				},
 			}
 

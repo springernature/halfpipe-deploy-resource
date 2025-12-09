@@ -37,7 +37,8 @@ var validRequest = config.Request{
 		GitUri: "git@github.com:springernature/halfpipe-deploy-resource.git",
 	},
 	Metadata: config.Metadata{
-		DeployedBy: "https://some.ci.system/link",
+		DeployedBy: "https://some.ci.system/link/to/run",
+		Pipeline:   "https://some.ci.system/link/to/pipeline",
 	},
 }
 
@@ -159,7 +160,8 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
     OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:80"
     OTEL_PROPAGATORS: "tracecontext"
     OTEL_RESOURCE_ATTRIBUTES: "service.namespace=b/c,job=b/c/myApp,cloudfoundry.app.name=myApp,cloudfoundry.app.org.name=b,cloudfoundry.app.space.name=c"
-    EE_DEPLOYED_BY: "https://some.ci.system/link"
+    EE_DEPLOYED_BY: "https://some.ci.system/link/to/run"
+    EE_PIPELINE: "https://some.ci.system/link/to/pipeline"
   metadata:
     labels:
       team: myTeam
@@ -206,7 +208,8 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
     OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:80"
     OTEL_PROPAGATORS: "tracecontext"
     OTEL_RESOURCE_ATTRIBUTES: "service.namespace=b/c,job=b/c/myApp,cloudfoundry.app.name=myApp,cloudfoundry.app.org.name=b,cloudfoundry.app.space.name=c"
-    EE_DEPLOYED_BY: "https://some.ci.system/link"
+    EE_DEPLOYED_BY: "https://some.ci.system/link/to/run"
+    EE_PIPELINE: "https://some.ci.system/link/to/pipeline"
   metadata:
     annotations:
       someAnnotation: yo
@@ -256,7 +259,8 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
     OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:80"
     OTEL_PROPAGATORS: "tracecontext"
     OTEL_RESOURCE_ATTRIBUTES: "service.namespace=b/c,job=b/c/myApp,cloudfoundry.app.name=myApp,cloudfoundry.app.org.name=b,cloudfoundry.app.space.name=c"
-    EE_DEPLOYED_BY: "https://some.ci.system/link"
+    EE_DEPLOYED_BY: "https://some.ci.system/link/to/run"
+    EE_PIPELINE: "https://some.ci.system/link/to/pipeline"
 `)
 			manifestReader := ManifestReadWriteStub{
 				manifest: halfpipe_deploy_resource.ParseManifest(`applications:
@@ -294,7 +298,8 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
     OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:80" 
     OTEL_PROPAGATORS: "tracecontext"
     OTEL_RESOURCE_ATTRIBUTES: "service.namespace=b/c,job=b/c/myApp,cloudfoundry.app.name=myApp,cloudfoundry.app.org.name=b,cloudfoundry.app.space.name=c"
-    EE_DEPLOYED_BY: "https://some.ci.system/link"
+    EE_DEPLOYED_BY: "https://some.ci.system/link/to/run"
+    EE_PIPELINE: "https://some.ci.system/link/to/pipeline"
   metadata:
     annotations:
      a: b
@@ -338,7 +343,8 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
     OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:80"
     OTEL_PROPAGATORS: "tracecontext"
     OTEL_RESOURCE_ATTRIBUTES: "service.namespace=b/c,job=b/c/myApp,cloudfoundry.app.name=myApp,cloudfoundry.app.org.name=b,cloudfoundry.app.space.name=c"
-    EE_DEPLOYED_BY: "https://some.ci.system/link"
+    EE_DEPLOYED_BY: "https://some.ci.system/link/to/run"
+    EE_PIPELINE: "https://some.ci.system/link/to/pipeline"
   metadata:
     annotations:
      a: b
@@ -387,7 +393,8 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
     OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-sink.tracing.springernature.io:80"
     OTEL_PROPAGATORS: "tracecontext"
     OTEL_RESOURCE_ATTRIBUTES: "service.namespace=b/c,job=b/c/myApp,cloudfoundry.app.name=myApp,cloudfoundry.app.org.name=b,cloudfoundry.app.space.name=c"
-    EE_DEPLOYED_BY: "https://some.ci.system/link"
+    EE_DEPLOYED_BY: "https://some.ci.system/link/to/run"
+    EE_PIPELINE: "https://some.ci.system/link/to/pipeline"
   metadata:
     labels:
       team: myTeam
