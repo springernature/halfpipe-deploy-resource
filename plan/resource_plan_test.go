@@ -162,6 +162,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
     OTEL_RESOURCE_ATTRIBUTES: "service.namespace=b/c,job=b/c/myApp,cloudfoundry.app.name=myApp,cloudfoundry.app.org.name=b,cloudfoundry.app.space.name=c"
     EE_DEPLOYED_BY: "https://some.ci.system/link/to/run"
     EE_PIPELINE: "https://some.ci.system/link/to/pipeline"
+    EE_MANIFEST_PATH: "manifest.yml"
   metadata:
     labels:
       team: myTeam
@@ -210,6 +211,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
     OTEL_RESOURCE_ATTRIBUTES: "service.namespace=b/c,job=b/c/myApp,cloudfoundry.app.name=myApp,cloudfoundry.app.org.name=b,cloudfoundry.app.space.name=c"
     EE_DEPLOYED_BY: "https://some.ci.system/link/to/run"
     EE_PIPELINE: "https://some.ci.system/link/to/pipeline"
+    EE_MANIFEST_PATH: "manifest.yml"
   metadata:
     annotations:
       someAnnotation: yo
@@ -261,6 +263,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
     OTEL_RESOURCE_ATTRIBUTES: "service.namespace=b/c,job=b/c/myApp,cloudfoundry.app.name=myApp,cloudfoundry.app.org.name=b,cloudfoundry.app.space.name=c"
     EE_DEPLOYED_BY: "https://some.ci.system/link/to/run"
     EE_PIPELINE: "https://some.ci.system/link/to/pipeline"
+    EE_MANIFEST_PATH: "manifest.yml"
 `)
 			manifestReader := ManifestReadWriteStub{
 				manifest: halfpipe_deploy_resource.ParseManifest(`applications:
@@ -300,6 +303,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
     OTEL_RESOURCE_ATTRIBUTES: "service.namespace=b/c,job=b/c/myApp,cloudfoundry.app.name=myApp,cloudfoundry.app.org.name=b,cloudfoundry.app.space.name=c"
     EE_DEPLOYED_BY: "https://some.ci.system/link/to/run"
     EE_PIPELINE: "https://some.ci.system/link/to/pipeline"
+    EE_MANIFEST_PATH: "manifest.yml"
   metadata:
     annotations:
      a: b
@@ -345,6 +349,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
     OTEL_RESOURCE_ATTRIBUTES: "service.namespace=b/c,job=b/c/myApp,cloudfoundry.app.name=myApp,cloudfoundry.app.org.name=b,cloudfoundry.app.space.name=c"
     EE_DEPLOYED_BY: "https://some.ci.system/link/to/run"
     EE_PIPELINE: "https://some.ci.system/link/to/pipeline"
+    EE_MANIFEST_PATH: "manifest.yml"
   metadata:
     annotations:
      a: b
@@ -395,6 +400,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
     OTEL_RESOURCE_ATTRIBUTES: "service.namespace=b/c,job=b/c/myApp,cloudfoundry.app.name=myApp,cloudfoundry.app.org.name=b,cloudfoundry.app.space.name=c"
     EE_DEPLOYED_BY: "https://some.ci.system/link/to/run"
     EE_PIPELINE: "https://some.ci.system/link/to/pipeline"
+    EE_MANIFEST_PATH: "manifest.yml"
   metadata:
     labels:
       team: myTeam
