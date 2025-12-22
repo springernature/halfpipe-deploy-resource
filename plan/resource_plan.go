@@ -149,6 +149,8 @@ func (p planner) updateManifestWithVarsAndLabels(request config.Request) (err er
 			env["EE_PIPELINE"] = request.Metadata.Pipeline
 		}
 
+		env["EE_MANIFEST_PATH"] = request.Params.ManifestPath
+
 		if request.Params.Team != "" || request.Params.GitUri != "" {
 			if request.Params.Team != "" {
 				labels["team"] = request.Params.Team
