@@ -95,6 +95,7 @@ func TestReadRequest(t *testing.T) {
 			},
 			Metadata: Metadata{
 				GitRef:     "ref",
+				GitRepo:    "ee-test-actions",
 				Version:    "run number",
 				DockerTag:  "docker-tag",
 				AppName:    appName,
@@ -122,6 +123,7 @@ func TestReadRequest(t *testing.T) {
 					"INPUT_MANIFESTPATH": "app/cf/manifest.yml",
 					"INPUT_APPPATH":      "app",
 					"GITHUB_WORKSPACE":   "/github/workspace",
+					"GITHUB_REPOSITORY":  "springernature/ee-test-actions",
 
 					"INPUT_CLI_VERSION": "cf8",
 				}
@@ -142,6 +144,7 @@ func TestReadRequest(t *testing.T) {
 					"INPUT_MANIFESTPATH": "app/cf/manifest.yml",
 					"INPUT_APPPATH":      "app",
 					"GITHUB_WORKSPACE":   "/github/workspace",
+					"GITHUB_REPOSITORY":  "springernature/ee-test-actions",
 
 					"INPUT_CLIVERSION": "cf8",
 				}
@@ -167,6 +170,7 @@ func TestReadRequest(t *testing.T) {
 			"GIT_REVISION":       "ref",
 			"BUILD_VERSION":      "run number",
 			"GITHUB_WORKSPACE":   "/github/workspace",
+			"GITHUB_REPOSITORY":  "springernature/ee-test-actions",
 		}
 
 		rr := NewRequestReader([]string{}, env, nil, afero.Afero{}, &okManifestReadWriter)
@@ -201,7 +205,8 @@ func TestReadRequest(t *testing.T) {
       "command":"halfpipe-push",
       "gitRefPath":"git/.git/ref",
       "manifestPath":"git/app/cf/manifest-qa.yml",
-      "testDomain":"springernature.app"
+      "testDomain":"springernature.app",
+      "gitUri": "git@github.com:springernature/acdc-alert-service.git"
    }
 }`
 		validRequestWithVersionPath := `{
@@ -288,6 +293,7 @@ func TestReadRequest(t *testing.T) {
 				},
 				Params: Params{
 					Command:      "halfpipe-push",
+					GitUri:       "git@github.com:springernature/acdc-alert-service.git",
 					GitRefPath:   "/tmp/buildDir/git/.git/ref",
 					ManifestPath: "/tmp/buildDir/git/app/cf/manifest-qa.yml",
 					AppPath:      "/tmp/buildDir/git/app",
@@ -296,6 +302,7 @@ func TestReadRequest(t *testing.T) {
 				},
 				Metadata: Metadata{
 					GitRef:     "ref",
+					GitRepo:    "acdc-alert-service",
 					AppName:    appName,
 					IsActions:  false,
 					DeployedBy: expectedDeployedBy,

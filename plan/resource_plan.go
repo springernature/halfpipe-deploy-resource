@@ -151,19 +151,13 @@ func (p planner) updateManifestWithVarsAndLabels(request config.Request) (err er
 
 		env["EE_MANIFEST_PATH"] = request.Params.ManifestPath
 
-		if request.Params.Team != "" || request.Params.GitUri != "" {
+		if request.Params.Team != "" || request.Metadata.GitRepo != "" {
 			if request.Params.Team != "" {
 				labels["team"] = request.Params.Team
 			}
 
-			if request.Params.GitUri != "" {
-				p1 := strings.Split(request.Params.GitUri, "/")
-				if len(p1) == 2 {
-					p2 := strings.Split(p1[1], ".")
-					if len(p2) == 2 {
-						labels["gitRepo"] = p2[0]
-					}
-				}
+			if request.Metadata.GitRepo != "" {
+				labels["gitRepo"] = request.Metadata.GitRepo
 			}
 
 			metadata["labels"] = labels

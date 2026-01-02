@@ -39,6 +39,7 @@ var validRequest = config.Request{
 	Metadata: config.Metadata{
 		DeployedBy: "https://some.ci.system/link/to/run",
 		Pipeline:   "https://some.ci.system/link/to/pipeline",
+		GitRepo:    "halfpipe-deploy-resource",
 	},
 }
 
@@ -282,6 +283,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			r.Params.GitRefPath = ""
 			r.Params.GitUri = ""
 			r.Params.Team = ""
+			r.Metadata.GitRepo = ""
 			_, err := planner.Plan(r, nil)
 
 			assert.NoError(ttt, err)
@@ -328,6 +330,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			r.Params.GitRefPath = ""
 			r.Params.GitUri = ""
 			r.Params.Team = ""
+			r.Metadata.GitRepo = ""
 			_, err := planner.Plan(r, nil)
 
 			assert.NoError(ttt, err)
@@ -376,6 +379,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			r.Params.GitRefPath = ""
 			r.Params.GitUri = ""
 			r.Params.Team = ""
+			r.Metadata.GitRepo = ""
 			_, err := planner.Plan(r, nil)
 
 			assert.NoError(ttt, err)

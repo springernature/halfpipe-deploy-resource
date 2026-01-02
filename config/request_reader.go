@@ -233,6 +233,7 @@ func (r RequestReader) ReadRequest() (request Request, err error) {
 	request = r.setFullPathInRequest(request)
 	request = r.addVars(request)
 	request, err = r.addGitRefAndVersion(request)
+	request = r.addGitRepo(request)
 	if err != nil {
 		return
 	}
@@ -282,6 +283,24 @@ func (r RequestReader) setDeployedBy(request Request) Request {
 			updated.Metadata.Pipeline = safe.String()
 		}
 
+	}
+	return updated
+}
+
+func (r RequestReader) addGitRepo(request Request) Request {
+	updated := request
+
+	if r.isActions() {
+		parts := strings.Split(r.environ["GITHUB_REPOSITORY"], "/")
+		updated.Metadata.GitRepo = parts[1]
+	} else {
+		p1 := strings.Split(request.Params.GitUri, "/")
+		if len(p1) == 2 {
+			p2 := strings.Split(p1[1], ".")
+			if len(p2) == 2 {
+				updated.Metadata.GitRepo = p2[0]
+			}
+		}
 	}
 	return updated
 }
