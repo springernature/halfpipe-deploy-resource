@@ -67,6 +67,7 @@ func (r RequestReader) actionRequest() (request Request, err error) {
 		DockerTag:      r.environ["INPUT_DOCKERTAG"],
 		CliVersion:     cliVersion,
 		SSOHost:        r.environ["INPUT_SSOHOST"],
+		Team:           r.environ["INPUT_TEAM"],
 	}
 
 	request.Metadata.IsActions = true
