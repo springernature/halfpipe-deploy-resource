@@ -17,7 +17,7 @@ func (s ssoPlan) Plan(ssoHost string) (plan Plan) {
 		NewCfCommand("service", "sso"),
 		NewCfCommand("create-user-provided-service", "sso", "-r", "https://ee-sso.public.springernature.app"),
 		func(log []byte) bool {
-			return strings.Contains(string(log), "Service instance sso not found")
+			return strings.Contains(string(log), "Service instance 'sso' not found")
 		},
 		false,
 	))
