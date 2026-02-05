@@ -5,7 +5,7 @@ component:
   type: application_module
   system: halfpipe
   owner: engineering-enablement
-  language: bash
+  language: go
   lifecycle: core
   tier: mission-critical
   properties:
