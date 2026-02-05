@@ -1,0 +1,13 @@
+version: 1
+component:
+  name: halfpipe-deploy-resource
+  description: Concourse resource for CF Deploys
+  type: application_module
+  system: halfpipe
+  owner: engineering-enablement
+  language: bash
+  lifecycle: core
+  tier: mission-critical
+  properties:
+    pipelines:
+      - concourse_engineering-enablement_halfpipe-deploy-resource-v2_5968
