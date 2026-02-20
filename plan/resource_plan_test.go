@@ -70,7 +70,7 @@ func TestErrorsReadingAppManifest(t *testing.T) {
 	expectedErr := errors.New("blurgh")
 	manifestReader := ManifestReadWriteStub{manifestReadError: expectedErr}
 
-	planner := NewPlanner(&manifestReader, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	planner := NewPlanner(&manifestReader, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	_, err := planner.Plan(validRequest, nil)
 	assert.Equal(t, expectedErr, err)
@@ -89,7 +89,7 @@ func TestErrorsWhenSavingManifestWithUpdatedVars(t *testing.T) {
 	fs.WriteFile(validRequest.Params.GitRefPath, []byte(""), 0777)
 	fs.WriteFile(validRequest.Params.BuildVersionPath, []byte(""), 0777)
 
-	planner := NewPlanner(&manifestReader, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	planner := NewPlanner(&manifestReader, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	_, err := planner.Plan(validRequest, nil)
 	assert.Equal(t, expectedErr, err)
@@ -123,6 +123,10 @@ type fakeDeleteCandidatePlanner struct {
 	plan Plan
 }
 
+type fakeStopCandidatePlanner struct {
+	plan Plan
+}
+
 func (f fakeCheckPlanner) Plan(manifest manifestparser.Application, org, space string) (pl Plan) {
 	return f.plan
 }
@@ -136,6 +140,10 @@ func (f fakeCleanupPlanner) Plan(manifest manifestparser.Application, summary []
 }
 
 func (f fakeDeleteCandidatePlanner) Plan(manifest manifestparser.Application, summary []cfclient.AppSummary) (pl Plan) {
+	return f.plan
+}
+
+func (f fakeStopCandidatePlanner) Plan(manifest manifestparser.Application, summary []cfclient.AppSummary) (pl Plan) {
 	return f.plan
 }
 
@@ -179,7 +187,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 				plan: Plan{
 					NewCfCommand("yay"),
 				},
-			}, nil, nil, nil, nil, nil, nil, NewCheckLabelsPlan(), nil)
+			}, nil, nil, nil, nil, nil, nil, nil, NewCheckLabelsPlan(), nil)
 
 			r := validRequest
 			r.Params.BuildVersionPath = ""
@@ -239,7 +247,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 				plan: Plan{
 					NewCfCommand("yay"),
 				},
-			}, nil, nil, nil, nil, nil, nil, NewCheckLabelsPlan(), nil)
+			}, nil, nil, nil, nil, nil, nil, nil, NewCheckLabelsPlan(), nil)
 
 			r := validRequest
 			r.Params.BuildVersionPath = ""
@@ -276,7 +284,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 				plan: Plan{
 					NewCfCommand("yay"),
 				},
-			}, nil, nil, nil, nil, nil, nil, NewCheckLabelsPlan(), nil)
+			}, nil, nil, nil, nil, nil, nil, nil, NewCheckLabelsPlan(), nil)
 
 			r := validRequest
 			r.Params.BuildVersionPath = ""
@@ -323,7 +331,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 				plan: Plan{
 					NewCfCommand("yay"),
 				},
-			}, nil, nil, nil, nil, nil, nil, NewCheckLabelsPlan(), nil)
+			}, nil, nil, nil, nil, nil, nil, nil, NewCheckLabelsPlan(), nil)
 
 			r := validRequest
 			r.Params.BuildVersionPath = ""
@@ -372,7 +380,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 				plan: Plan{
 					NewCfCommand("yay"),
 				},
-			}, nil, nil, nil, nil, nil, nil, NewCheckLabelsPlan(), nil)
+			}, nil, nil, nil, nil, nil, nil, nil, NewCheckLabelsPlan(), nil)
 
 			r := validRequest
 			r.Params.BuildVersionPath = ""
@@ -420,7 +428,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			plan: Plan{
 				NewCfCommand("yay"),
 			},
-		}, nil, nil, NewCheckLabelsPlan(), nil)
+		}, nil, nil, nil, NewCheckLabelsPlan(), nil)
 
 		r := validRequest
 		r.Params.Command = config.ROLLING_DEPLOY
@@ -450,7 +458,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			plan: Plan{
 				NewCfCommand("yay"),
 			},
-		}, nil, nil, nil, nil, nil, nil, nil)
+		}, nil, nil, nil, nil, nil, nil, nil, nil)
 
 		r := validRequest
 		r.Params.Command = config.CHECK
@@ -473,7 +481,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			plan: Plan{
 				NewCfCommand("yay"),
 			},
-		}, nil, nil, nil, nil, nil, nil)
+		}, nil, nil, nil, nil, nil, nil, nil)
 
 		r := validRequest
 		r.Params.Command = config.PROMOTE
@@ -498,7 +506,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			plan: Plan{
 				NewCfCommand("yay"),
 			},
-		}, nil, nil, nil, nil, nil)
+		}, nil, nil, nil, nil, nil, nil)
 
 		t.Run("Works with cleanup command", func(t *testing.T) {
 			r := validRequest
@@ -539,10 +547,35 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			plan: Plan{
 				NewCfCommand("yay"),
 			},
-		}, nil, nil, nil)
+		}, nil, nil, nil, nil)
 
 		r := validRequest
 		r.Params.Command = config.DELETE_CANDIDATE
+
+		p, err := planner.Plan(r, nil)
+
+		assert.NoError(t, err)
+
+		assert.Len(t, p, 3)
+		assert.Equal(t, "cf --version", p[0].String())
+		assert.Equal(t, "cf login -a a -u d -p ******** -o b -s c", p[1].String())
+		assert.Equal(t, "cf yay", p[2].String())
+	})
+
+	t.Run("Stop Candidate planner", func(t *testing.T) {
+		manifestReader := ManifestReadWriteStub{
+			manifest: halfpipe_deploy_resource.ParseManifest(`applications:
+- name: myApp`),
+		}
+
+		planner := NewPlanner(&manifestReader, nil, nil, nil, nil, nil, nil, &fakeStopCandidatePlanner{
+			plan: Plan{
+				NewCfCommand("yay"),
+			},
+		}, nil, nil, nil)
+
+		r := validRequest
+		r.Params.Command = config.STOP_CANDIDATE
 
 		p, err := planner.Plan(r, nil)
 
@@ -560,7 +593,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 - name: myApp`),
 		}
 
-		planner := NewPlanner(&manifestReader, nil, nil, nil, nil, nil, nil, NewLogsPlan(), nil, nil)
+		planner := NewPlanner(&manifestReader, nil, nil, nil, nil, nil, nil, nil, NewLogsPlan(), nil, nil)
 
 		r := validRequest
 		r.Params.Command = config.LOGS
@@ -581,7 +614,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 - name: myApp`),
 		}
 
-		planner := NewPlanner(&manifestReader, nil, nil, nil, nil, nil, nil, nil, nil, NewSSOPlan())
+		planner := NewPlanner(&manifestReader, nil, nil, nil, nil, nil, nil, nil, nil, nil, NewSSOPlan())
 
 		r := validRequest
 		r.Params.Command = config.SSO

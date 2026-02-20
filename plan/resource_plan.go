@@ -22,12 +22,13 @@ type planner struct {
 	cleanupPlan         CleanupPlan
 	checkPlan           CheckPlan
 	deleteCandidatePlan DeleteCandidatePlan
+	stopCandidatePlan   StopCandidatePlan
 	logsPlan            LogsPlan
 	appLintPlan         AppLintPlan
 	ssoPlan             SSOPlan
 }
 
-func NewPlanner(manifestReaderWrite manifest.ReaderWriter, pushPlan PushPlan, checkPlan CheckPlan, promotePlan PromotePlan, cleanupPlan CleanupPlan, rollingDeployPlan RollingDeployPlan, deleteCandidatePlan DeleteCandidatePlan, logsPlan LogsPlan, appLintPlan AppLintPlan, ssoPlan SSOPlan) ResourcePlan {
+func NewPlanner(manifestReaderWrite manifest.ReaderWriter, pushPlan PushPlan, checkPlan CheckPlan, promotePlan PromotePlan, cleanupPlan CleanupPlan, rollingDeployPlan RollingDeployPlan, deleteCandidatePlan DeleteCandidatePlan, stopCandidatePlan StopCandidatePlan, logsPlan LogsPlan, appLintPlan AppLintPlan, ssoPlan SSOPlan) ResourcePlan {
 	return planner{
 		manifestReaderWrite: manifestReaderWrite,
 		pushPlan:            pushPlan,
@@ -36,6 +37,7 @@ func NewPlanner(manifestReaderWrite manifest.ReaderWriter, pushPlan PushPlan, ch
 		checkPlan:           checkPlan,
 		rollingDeployPlan:   rollingDeployPlan,
 		deleteCandidatePlan: deleteCandidatePlan,
+		stopCandidatePlan:   stopCandidatePlan,
 		logsPlan:            logsPlan,
 		appLintPlan:         appLintPlan,
 		ssoPlan:             ssoPlan,
@@ -93,6 +95,8 @@ func (p planner) Plan(request config.Request, appsSummary []cfclient.AppSummary)
 		pl = append(pl, p.cleanupPlan.Plan(appUnderDeployment, appsSummary)...)
 	case config.DELETE_CANDIDATE:
 		pl = append(pl, p.deleteCandidatePlan.Plan(appUnderDeployment, appsSummary)...)
+	case config.STOP_CANDIDATE:
+		pl = append(pl, p.stopCandidatePlan.Plan(appUnderDeployment, appsSummary)...)
 	case config.LOGS:
 		pl = append(pl, p.logsPlan.Plan(appUnderDeployment)...)
 	case config.SSO:
