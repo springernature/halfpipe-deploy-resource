@@ -111,82 +111,80 @@ func (p planner) readManifest(manifestPath string) (manifestparser.Manifest, err
 }
 
 func (p planner) updateManifestWithVarsAndLabels(request config.Request) (err error) {
-	if len(request.Params.Vars) > 0 || request.Params.GitRefPath != "" {
-		apps, e := p.readManifest(request.Params.ManifestPath)
-		if e != nil {
-			err = e
-			return
+	apps, e := p.readManifest(request.Params.ManifestPath)
+	if e != nil {
+		err = e
+		return
+	}
+
+	env := make(map[any]any)
+	metadata := make(map[any]any)
+	labels := make(map[any]any)
+	// We just assume the first app in the manifest is the app under deployment.
+	// We lint that this is the case in the halfpipe linter.
+	app := apps.Applications[0]
+	if app.RemainingManifestFields == nil {
+		app.RemainingManifestFields = map[string]any{}
+	}
+	if app.RemainingManifestFields["env"] != nil {
+		env = app.RemainingManifestFields["env"].(map[any]any)
+	}
+	if app.RemainingManifestFields["metadata"] != nil {
+		metadata = app.RemainingManifestFields["metadata"].(map[any]any)
+		if metadata["labels"] != nil {
+			labels = metadata["labels"].(map[any]any)
+		}
+	}
+
+	if request.Metadata.GitRef != "" {
+		env["GIT_REVISION"] = request.Metadata.GitRef
+	}
+
+	if request.Metadata.Version != "" {
+		env["BUILD_VERSION"] = request.Metadata.Version
+	}
+
+	if request.Metadata.DeployedBy != "" {
+		env["EE_DEPLOYED_BY"] = request.Metadata.DeployedBy
+	}
+
+	if request.Metadata.Pipeline != "" {
+		env["EE_PIPELINE"] = request.Metadata.Pipeline
+	}
+
+	env["EE_MANIFEST_PATH"] = request.Params.ManifestPath
+
+	if request.Params.Team != "" || request.Metadata.GitRepo != "" || request.Params.EAID != "" {
+		if request.Params.Team != "" {
+			labels["team"] = request.Params.Team
+			labels["ee_platform_team"] = request.Params.Team
+			env["EE_PLATFORM_TEAM"] = request.Params.Team
 		}
 
-		env := make(map[any]any)
-		metadata := make(map[any]any)
-		labels := make(map[any]any)
-		// We just assume the first app in the manifest is the app under deployment.
-		// We lint that this is the case in the halfpipe linter.
-		app := apps.Applications[0]
-		if app.RemainingManifestFields == nil {
-			app.RemainingManifestFields = map[string]any{}
-		}
-		if app.RemainingManifestFields["env"] != nil {
-			env = app.RemainingManifestFields["env"].(map[any]any)
-		}
-		if app.RemainingManifestFields["metadata"] != nil {
-			metadata = app.RemainingManifestFields["metadata"].(map[any]any)
-			if metadata["labels"] != nil {
-				labels = metadata["labels"].(map[any]any)
-			}
+		if request.Metadata.GitRepo != "" {
+			labels["gitRepo"] = request.Metadata.GitRepo
 		}
 
-		if request.Metadata.GitRef != "" {
-			env["GIT_REVISION"] = request.Metadata.GitRef
+		if request.Params.EAID != "" {
+			labels["eaid"] = request.Params.EAID
+			env["EAID"] = request.Params.EAID
 		}
 
-		if request.Metadata.Version != "" {
-			env["BUILD_VERSION"] = request.Metadata.Version
-		}
+		metadata["labels"] = labels
+		app.RemainingManifestFields["metadata"] = metadata
+	}
 
-		if request.Metadata.DeployedBy != "" {
-			env["EE_DEPLOYED_BY"] = request.Metadata.DeployedBy
-		}
+	for k, v := range request.Params.Vars {
+		env[k] = v
+	}
 
-		if request.Metadata.Pipeline != "" {
-			env["EE_PIPELINE"] = request.Metadata.Pipeline
-		}
+	p.otelEnv(env, app, request)
 
-		env["EE_MANIFEST_PATH"] = request.Params.ManifestPath
+	app.RemainingManifestFields["env"] = env
+	apps.Applications[0] = app
 
-		if request.Params.Team != "" || request.Metadata.GitRepo != "" || request.Params.EAID != "" {
-			if request.Params.Team != "" {
-				labels["team"] = request.Params.Team
-				labels["ee_platform_team"] = request.Params.Team
-				env["EE_PLATFORM_TEAM"] = request.Params.Team
-			}
-
-			if request.Metadata.GitRepo != "" {
-				labels["gitRepo"] = request.Metadata.GitRepo
-			}
-
-			if request.Params.EAID != "" {
-				labels["eaid"] = request.Params.EAID
-				env["EAID"] = request.Params.EAID
-			}
-
-			metadata["labels"] = labels
-			app.RemainingManifestFields["metadata"] = metadata
-		}
-
-		for k, v := range request.Params.Vars {
-			env[k] = v
-		}
-
-		p.otelEnv(env, app, request)
-
-		app.RemainingManifestFields["env"] = env
-		apps.Applications[0] = app
-
-		if err = p.manifestReaderWrite.WriteManifest(request.Params.ManifestPath, apps); err != nil {
-			return
-		}
+	if err = p.manifestReaderWrite.WriteManifest(request.Params.ManifestPath, apps); err != nil {
+		return
 	}
 	return
 }
