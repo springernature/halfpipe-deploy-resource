@@ -49,6 +49,7 @@ type Params struct {
 	CliVersion       string
 	Instances        int
 	Team             string
+	EAID             string
 	SSOHost          string
 }
 

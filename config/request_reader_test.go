@@ -61,6 +61,8 @@ func TestReadRequest(t *testing.T) {
 			"INPUT_APPPATH":       "app",
 			"INPUT_TESTDOMAIN":    "test domain",
 			"INPUT_DOCKERTAG":     "docker-tag",
+			"INPUT_TEAM":          "team1",
+			"INPUT_EAID":          "eaid1",
 			"GIT_REVISION":        "ref",
 			"BUILD_VERSION":       "run number",
 			"GITHUB_WORKSPACE":    "/github/workspace",
@@ -92,6 +94,8 @@ func TestReadRequest(t *testing.T) {
 					"VAR2":  "b",
 					"var_3": "c",
 				},
+				Team: "team1",
+				EAID: "eaid1",
 			},
 			Metadata: Metadata{
 				GitRef:     "ref",
@@ -206,7 +210,9 @@ func TestReadRequest(t *testing.T) {
       "gitRefPath":"git/.git/ref",
       "manifestPath":"git/app/cf/manifest-qa.yml",
       "testDomain":"springernature.app",
-      "gitUri": "git@github.com:springernature/acdc-alert-service.git"
+      "gitUri": "git@github.com:springernature/acdc-alert-service.git",
+      "team": "team1",
+      "eaid": "eaid1"
    }
 }`
 		validRequestWithVersionPath := `{
@@ -299,6 +305,8 @@ func TestReadRequest(t *testing.T) {
 					AppPath:      "/tmp/buildDir/git/app",
 					TestDomain:   "springernature.app",
 					CliVersion:   "cf7",
+					Team:         "team1",
+					EAID:         "eaid1",
 				},
 				Metadata: Metadata{
 					GitRef:     "ref",

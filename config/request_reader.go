@@ -68,6 +68,7 @@ func (r RequestReader) actionRequest() (request Request, err error) {
 		CliVersion:     cliVersion,
 		SSOHost:        r.environ["INPUT_SSOHOST"],
 		Team:           r.environ["INPUT_TEAM"],
+		EAID:           r.environ["INPUT_EAID"],
 	}
 
 	request.Metadata.IsActions = true
