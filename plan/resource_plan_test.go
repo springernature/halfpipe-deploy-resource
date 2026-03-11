@@ -34,6 +34,7 @@ var validRequest = config.Request{
 			"VAR4": "cc",
 		},
 		Team:   "myTeam",
+		EAID:   "eaid",
 		GitUri: "git@github.com:springernature/halfpipe-deploy-resource.git",
 	},
 	Metadata: config.Metadata{
@@ -172,9 +173,13 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
     EE_DEPLOYED_BY: "https://some.ci.system/link/to/run"
     EE_PIPELINE: "https://some.ci.system/link/to/pipeline"
     EE_MANIFEST_PATH: "manifest.yml"
+    EE_PLATFORM_TEAM: "myTeam"
+    EAID: "eaid"
   metadata:
     labels:
       team: myTeam
+      ee_platform_team: myTeam
+      eaid: eaid
       gitRepo: halfpipe-deploy-resource
 `)
 
@@ -221,6 +226,8 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
     EE_DEPLOYED_BY: "https://some.ci.system/link/to/run"
     EE_PIPELINE: "https://some.ci.system/link/to/pipeline"
     EE_MANIFEST_PATH: "manifest.yml"
+    EE_PLATFORM_TEAM: "myTeam"
+    EAID: "eaid"
   metadata:
     annotations:
       someAnnotation: yo
@@ -228,6 +235,8 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
       myLabel: myValue
       environment: dev
       team: myTeam
+      ee_platform_team: myTeam
+      eaid: eaid
       gitRepo: halfpipe-deploy-resource
 `)
 			manifestReader := ManifestReadWriteStub{
@@ -291,6 +300,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			r.Params.GitRefPath = ""
 			r.Params.GitUri = ""
 			r.Params.Team = ""
+			r.Params.EAID = ""
 			r.Metadata.GitRepo = ""
 			_, err := planner.Plan(r, nil)
 
@@ -338,6 +348,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			r.Params.GitRefPath = ""
 			r.Params.GitUri = ""
 			r.Params.Team = ""
+			r.Params.EAID = ""
 			r.Metadata.GitRepo = ""
 			_, err := planner.Plan(r, nil)
 
@@ -387,6 +398,7 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
 			r.Params.GitRefPath = ""
 			r.Params.GitUri = ""
 			r.Params.Team = ""
+			r.Params.EAID = ""
 			r.Metadata.GitRepo = ""
 			_, err := planner.Plan(r, nil)
 
@@ -413,9 +425,13 @@ func TestCallsOutToCorrectPlanner(t *testing.T) {
     EE_DEPLOYED_BY: "https://some.ci.system/link/to/run"
     EE_PIPELINE: "https://some.ci.system/link/to/pipeline"
     EE_MANIFEST_PATH: "manifest.yml"
+    EE_PLATFORM_TEAM: "myTeam"
+    EAID: "eaid"
   metadata:
     labels:
       team: myTeam
+      ee_platform_team: myTeam
+      eaid: eaid
       gitRepo: halfpipe-deploy-resource
 `)
 
