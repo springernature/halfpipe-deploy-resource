@@ -21,6 +21,6 @@ func (k *CapturingWriter) Write(p []byte) (n int, err error) {
 	return k.Writer.Write(p)
 }
 
-func (k *CapturingWriter) Println(v ...interface{}) (n int, err error) {
-	return k.Write([]byte(fmt.Sprintln(v...)))
+func (k *CapturingWriter) Println(v ...any) (n int, err error) {
+	return k.Write(fmt.Appendln(nil, v...))
 }

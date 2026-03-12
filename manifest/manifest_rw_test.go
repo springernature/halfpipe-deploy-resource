@@ -52,7 +52,7 @@ func TestWriteManifest(t *testing.T) {
 				{
 					Name:      "myApp",
 					DiskQuota: "1337G",
-					RemainingManifestFields: map[string]interface{}{
+					RemainingManifestFields: map[string]any{
 						"routes": []map[string]string{
 							{"route": "myRoute.com"},
 						},
@@ -89,7 +89,7 @@ func TestWriteManifest(t *testing.T) {
 			Applications: []manifestparser.Application{
 				{
 					Name: "myApp",
-					RemainingManifestFields: map[string]interface{}{
+					RemainingManifestFields: map[string]any{
 						"routes": []map[string]string{
 							{"route": "myRoute.com"},
 						},
