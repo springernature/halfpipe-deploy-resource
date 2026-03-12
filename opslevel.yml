@@ -1,9 +1,9 @@
 version: 1
 component:
-  name: halfpipe-deploy-resource
+  name: Halfpipe Deploy Resource
   description: Concourse resource for CF Deploys
   type: application_module
-  system: halfpipe
+  system: APPL-437
   owner: engineering-enablement
   language: go
   lifecycle: core
