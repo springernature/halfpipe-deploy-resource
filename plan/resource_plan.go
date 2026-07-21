@@ -5,13 +5,13 @@ import (
 	"strings"
 
 	"code.cloudfoundry.org/cli/util/manifestparser"
-	"github.com/cloudfoundry-community/go-cfclient"
+	"github.com/cloudfoundry/go-cfclient/v3/resource"
 	"github.com/springernature/halfpipe-deploy-resource/config"
 	"github.com/springernature/halfpipe-deploy-resource/manifest"
 )
 
 type ResourcePlan interface {
-	Plan(request config.Request, appsSummary []cfclient.AppSummary) (plan Plan, err error)
+	Plan(request config.Request, appsSummary []*resource.App) (plan Plan, err error)
 }
 
 type planner struct {
@@ -44,7 +44,7 @@ func NewPlanner(manifestReaderWrite manifest.ReaderWriter, pushPlan PushPlan, ch
 	}
 }
 
-func (p planner) Plan(request config.Request, appsSummary []cfclient.AppSummary) (pl Plan, err error) {
+func (p planner) Plan(request config.Request, appsSummary []*resource.App) (pl Plan, err error) {
 	// Here we assume that the request is complete.
 	// It has already been verified.
 	newManifest, err := p.readManifest(request.Params.ManifestPath)

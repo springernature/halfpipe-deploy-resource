@@ -1,7 +1,7 @@
 package plan
 
 import (
-	"github.com/cloudfoundry-community/go-cfclient"
+	"github.com/cloudfoundry/go-cfclient/v3/resource"
 	"github.com/springernature/halfpipe-deploy-resource"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -9,7 +9,7 @@ import (
 
 func TestPromoteWorkerApp(t *testing.T) {
 	t.Run("No previously deployed version", func(t *testing.T) {
-		summary := []cfclient.AppSummary{
+		summary := []*resource.App{
 			{
 				Name:  "myApp-CANDIDATE",
 				State: "STARTED",
@@ -26,12 +26,12 @@ func TestPromoteWorkerApp(t *testing.T) {
 			NewCfCommand("rename", createCandidateAppName(man.Name), man.Name),
 		}
 
-		plan := NewPromotePlan([]cfclient.Domain{}).Plan(man, validRequest, summary)
+		plan := NewPromotePlan([]*resource.Domain{}).Plan(man, validRequest, summary)
 		assert.Equal(t, expectedPlan, plan)
 	})
 
 	t.Run("One previously deployed stopped version", func(t *testing.T) {
-		summary := []cfclient.AppSummary{
+		summary := []*resource.App{
 			{
 				Name:  "myApp-CANDIDATE",
 				State: "STARTED",
@@ -53,13 +53,13 @@ func TestPromoteWorkerApp(t *testing.T) {
 			NewCfCommand("rename", createCandidateAppName(man.Name), man.Name),
 		}
 
-		plan := NewPromotePlan([]cfclient.Domain{}).Plan(man, validRequest, summary)
+		plan := NewPromotePlan([]*resource.Domain{}).Plan(man, validRequest, summary)
 		//assert.Nil(t, err)
 		assert.Equal(t, expectedPlan, plan)
 	})
 
 	t.Run("One previously deployed started version", func(t *testing.T) {
-		summary := []cfclient.AppSummary{
+		summary := []*resource.App{
 			{
 				Name:  "myApp-CANDIDATE",
 				State: "STARTED",
@@ -82,12 +82,12 @@ func TestPromoteWorkerApp(t *testing.T) {
 			NewCfCommand("rename", createCandidateAppName(man.Name), man.Name),
 		}
 
-		plan := NewPromotePlan([]cfclient.Domain{}).Plan(man, validRequest, summary)
+		plan := NewPromotePlan([]*resource.Domain{}).Plan(man, validRequest, summary)
 		assert.Equal(t, expectedPlan, plan)
 	})
 
 	t.Run("One previously deployed started version with an stopped old version", func(t *testing.T) {
-		summary := []cfclient.AppSummary{
+		summary := []*resource.App{
 			{
 				Name:  "myApp-CANDIDATE",
 				State: "STARTED",
@@ -115,12 +115,12 @@ func TestPromoteWorkerApp(t *testing.T) {
 			NewCfCommand("rename", createCandidateAppName(man.Name), man.Name),
 		}
 
-		plan := NewPromotePlan([]cfclient.Domain{}).Plan(man, validRequest, summary)
+		plan := NewPromotePlan([]*resource.Domain{}).Plan(man, validRequest, summary)
 		assert.Equal(t, expectedPlan, plan)
 	})
 
 	t.Run("One previously deployed started version with an stopped old version and a uncleaned up DELETE app", func(t *testing.T) {
-		summary := []cfclient.AppSummary{
+		summary := []*resource.App{
 			{
 				Name:  "myApp-CANDIDATE",
 				State: "STARTED",
@@ -152,12 +152,12 @@ func TestPromoteWorkerApp(t *testing.T) {
 			NewCfCommand("rename", createCandidateAppName(man.Name), man.Name),
 		}
 
-		plan := NewPromotePlan([]cfclient.Domain{}).Plan(man, validRequest, summary)
+		plan := NewPromotePlan([]*resource.Domain{}).Plan(man, validRequest, summary)
 		assert.Equal(t, expectedPlan, plan)
 	})
 
 	t.Run("One previously deployed started version with an stopped old version and a couple of uncleaned DELETE apps", func(t *testing.T) {
-		summary := []cfclient.AppSummary{
+		summary := []*resource.App{
 			{
 				Name:  "myApp-CANDIDATE",
 				State: "STARTED",
@@ -197,14 +197,14 @@ func TestPromoteWorkerApp(t *testing.T) {
 			NewCfCommand("rename", createCandidateAppName(man.Name), man.Name),
 		}
 
-		plan := NewPromotePlan([]cfclient.Domain{}).Plan(man, validRequest, summary)
+		plan := NewPromotePlan([]*resource.Domain{}).Plan(man, validRequest, summary)
 		assert.Equal(t, expectedPlan, plan)
 	})
 }
 
 func TestPromoteNormalApp(t *testing.T) {
 	t.Run("No previously deployed version and routes in the manifest", func(t *testing.T) {
-		summary := []cfclient.AppSummary{
+		summary := []*resource.App{
 			{
 				Name:  "myApp-CANDIDATE",
 				State: "STARTED",
@@ -226,12 +226,12 @@ func TestPromoteNormalApp(t *testing.T) {
 			NewCfCommand("rename", createCandidateAppName(man.Name), man.Name),
 		}
 
-		plan := NewPromotePlan([]cfclient.Domain{}).Plan(man, validRequest, summary)
+		plan := NewPromotePlan([]*resource.Domain{}).Plan(man, validRequest, summary)
 		assert.Equal(t, expectedPlan, plan)
 	})
 
 	t.Run("No previously deployed version and routes in the manifest with path", func(t *testing.T) {
-		summary := []cfclient.AppSummary{
+		summary := []*resource.App{
 			{
 				Name:  "myApp-CANDIDATE",
 				State: "STARTED",
@@ -253,12 +253,12 @@ func TestPromoteNormalApp(t *testing.T) {
 			NewCfCommand("rename", createCandidateAppName(man.Name), man.Name),
 		}
 
-		plan := NewPromotePlan([]cfclient.Domain{}).Plan(man, validRequest, summary)
+		plan := NewPromotePlan([]*resource.Domain{}).Plan(man, validRequest, summary)
 		assert.Equal(t, expectedPlan, plan)
 	})
 
 	t.Run("No previously deployed version and a route that is a domain", func(t *testing.T) {
-		summary := []cfclient.AppSummary{
+		summary := []*resource.App{
 			{
 				Name:  "myApp-CANDIDATE",
 				State: "STARTED",
@@ -273,7 +273,7 @@ func TestPromoteNormalApp(t *testing.T) {
 `
 		man := halfpipe_deploy_resource.ParseManifest(manifest).Applications[0]
 
-		privateRoutesInOrg := []cfclient.Domain{
+		privateRoutesInOrg := []*resource.Domain{
 			{
 				Name: "thisIsASpaceOwnedDomain.com",
 			},
@@ -291,7 +291,7 @@ func TestPromoteNormalApp(t *testing.T) {
 	})
 
 	t.Run("No previously deployed version and a route that is a domain with a path", func(t *testing.T) {
-		summary := []cfclient.AppSummary{
+		summary := []*resource.App{
 			{
 				Name:  "myApp-CANDIDATE",
 				State: "STARTED",
@@ -306,7 +306,7 @@ func TestPromoteNormalApp(t *testing.T) {
 `
 		man := halfpipe_deploy_resource.ParseManifest(manifest).Applications[0]
 
-		privateRoutesInOrg := []cfclient.Domain{
+		privateRoutesInOrg := []*resource.Domain{
 			{
 				Name: "thisIsASpaceOwnedDomain.com",
 			},
@@ -324,7 +324,7 @@ func TestPromoteNormalApp(t *testing.T) {
 	})
 
 	t.Run("No previously deployed version and a route that is a sub domain", func(t *testing.T) {
-		summary := []cfclient.AppSummary{
+		summary := []*resource.App{
 			{
 				Name:  "myApp-CANDIDATE",
 				State: "STARTED",
@@ -339,7 +339,7 @@ func TestPromoteNormalApp(t *testing.T) {
 `
 		man := halfpipe_deploy_resource.ParseManifest(manifest).Applications[0]
 
-		privateRoutesInOrg := []cfclient.Domain{
+		privateRoutesInOrg := []*resource.Domain{
 			{
 				Name: "thisIsASpaceOwnedDomain.com",
 			},
@@ -357,7 +357,7 @@ func TestPromoteNormalApp(t *testing.T) {
 	})
 
 	t.Run("If there is already a DELETE-1", func(t *testing.T) {
-		summary := []cfclient.AppSummary{
+		summary := []*resource.App{
 			{
 				Name:  "myApp-CANDIDATE",
 				State: "STARTED",
@@ -384,7 +384,7 @@ func TestPromoteNormalApp(t *testing.T) {
 `
 		man := halfpipe_deploy_resource.ParseManifest(manifest).Applications[0]
 
-		privateRoutesInOrg := []cfclient.Domain{
+		privateRoutesInOrg := []*resource.Domain{
 			{
 				Name: "thisIsASpaceOwnedDomain.com",
 			},

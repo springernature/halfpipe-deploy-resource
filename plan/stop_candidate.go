@@ -2,17 +2,17 @@ package plan
 
 import (
 	"code.cloudfoundry.org/cli/util/manifestparser"
-	"github.com/cloudfoundry-community/go-cfclient"
+	"github.com/cloudfoundry/go-cfclient/v3/resource"
 )
 
 type StopCandidatePlan interface {
-	Plan(manifest manifestparser.Application, summary []cfclient.AppSummary) (pl Plan)
+	Plan(manifest manifestparser.Application, summary []*resource.App) (pl Plan)
 }
 
 type stopCandidatePlan struct {
 }
 
-func (p stopCandidatePlan) Plan(manifest manifestparser.Application, summary []cfclient.AppSummary) (pl Plan) {
+func (p stopCandidatePlan) Plan(manifest manifestparser.Application, summary []*resource.App) (pl Plan) {
 	pl = Plan{}
 
 	for _, appSummary := range summary {

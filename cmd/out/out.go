@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/springernature/halfpipe-deploy-resource/cmd/out/check_resource"
@@ -13,7 +14,9 @@ import (
 	"github.com/springernature/halfpipe-deploy-resource/fixes"
 	"github.com/springernature/halfpipe-deploy-resource/logger"
 
-	"github.com/cloudfoundry-community/go-cfclient"
+	cfclient "github.com/cloudfoundry/go-cfclient/v3/client"
+	cfconfig "github.com/cloudfoundry/go-cfclient/v3/config"
+	"github.com/cloudfoundry/go-cfclient/v3/resource"
 	"github.com/spf13/afero"
 	"github.com/springernature/halfpipe-deploy-resource/config"
 	"github.com/springernature/halfpipe-deploy-resource/manifest"
@@ -128,31 +131,41 @@ func getTimeout(request config.Request) (time.Duration, error) {
 	return time.ParseDuration(request.Params.Timeout)
 }
 
-func getApps(request config.Request) (client *cfclient.Client, appSummary []cfclient.AppSummary, privateDomains []cfclient.Domain, err error) {
-	c := &cfclient.Config{
-		ApiAddress: request.Source.API,
-		Username:   request.Source.Username,
-		Password:   request.Source.Password,
-	}
-	client, err = cfclient.NewClient(c)
-	if err != nil {
-		return
-	}
-	org, err := client.GetOrgByName(request.Source.Org)
-	if err != nil {
-		return
-	}
-	space, err := client.GetSpaceByName(request.Source.Space, org.Guid)
-	if err != nil {
-		return
-	}
-	spaceSummary, err := space.Summary()
-	if err != nil {
-		return
-	}
-	appSummary = spaceSummary.Apps
+func getApps(request config.Request) (client *cfclient.Client, appSummary []*resource.App, privateDomains []*resource.Domain, err error) {
+	ctx := context.Background()
 
-	privateDomains, err = org.ListPrivateDomains()
+	c, err := cfconfig.New(request.Source.API, cfconfig.UserPassword(request.Source.Username, request.Source.Password))
+	if err != nil {
+		return
+	}
+	client, err = cfclient.New(c)
+	if err != nil {
+		return
+	}
+
+	orgOpts := cfclient.NewOrganizationListOptions()
+	orgOpts.Names = cfclient.Filter{Values: []string{request.Source.Org}}
+	org, err := client.Organizations.Single(ctx, orgOpts)
+	if err != nil {
+		return
+	}
+
+	spaceOpts := cfclient.NewSpaceListOptions()
+	spaceOpts.Names = cfclient.Filter{Values: []string{request.Source.Space}}
+	spaceOpts.OrganizationGUIDs = cfclient.Filter{Values: []string{org.GUID}}
+	space, err := client.Spaces.Single(ctx, spaceOpts)
+	if err != nil {
+		return
+	}
+
+	appOpts := cfclient.NewAppListOptions()
+	appOpts.SpaceGUIDs = cfclient.Filter{Values: []string{space.GUID}}
+	appSummary, err = client.Applications.ListAll(ctx, appOpts)
+	if err != nil {
+		return
+	}
+
+	privateDomains, err = client.Domains.ListForOrganizationAll(ctx, org.GUID, cfclient.NewDomainListOptions())
 	if err != nil {
 		return
 	}

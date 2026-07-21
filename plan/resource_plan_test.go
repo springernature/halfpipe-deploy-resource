@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"code.cloudfoundry.org/cli/util/manifestparser"
-	"github.com/cloudfoundry-community/go-cfclient"
+	"github.com/cloudfoundry/go-cfclient/v3/resource"
 	"github.com/spf13/afero"
 	halfpipe_deploy_resource "github.com/springernature/halfpipe-deploy-resource"
 	"github.com/stretchr/testify/assert"
@@ -132,19 +132,19 @@ func (f fakeCheckPlanner) Plan(manifest manifestparser.Application, org, space s
 	return f.plan
 }
 
-func (f fakePromotePlanner) Plan(manifest manifestparser.Application, request config.Request, summary []cfclient.AppSummary) (pl Plan) {
+func (f fakePromotePlanner) Plan(manifest manifestparser.Application, request config.Request, summary []*resource.App) (pl Plan) {
 	return f.plan
 }
 
-func (f fakeCleanupPlanner) Plan(manifest manifestparser.Application, summary []cfclient.AppSummary) (pl Plan) {
+func (f fakeCleanupPlanner) Plan(manifest manifestparser.Application, summary []*resource.App) (pl Plan) {
 	return f.plan
 }
 
-func (f fakeDeleteCandidatePlanner) Plan(manifest manifestparser.Application, summary []cfclient.AppSummary) (pl Plan) {
+func (f fakeDeleteCandidatePlanner) Plan(manifest manifestparser.Application, summary []*resource.App) (pl Plan) {
 	return f.plan
 }
 
-func (f fakeStopCandidatePlanner) Plan(manifest manifestparser.Application, summary []cfclient.AppSummary) (pl Plan) {
+func (f fakeStopCandidatePlanner) Plan(manifest manifestparser.Application, summary []*resource.App) (pl Plan) {
 	return f.plan
 }
 

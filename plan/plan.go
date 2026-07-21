@@ -3,7 +3,7 @@ package plan
 import (
 	"errors"
 	"fmt"
-	"github.com/cloudfoundry-community/go-cfclient"
+	"github.com/cloudfoundry/go-cfclient/v3/client"
 	"github.com/gookit/color"
 	"github.com/springernature/halfpipe-deploy-resource/logger"
 	"strings"
@@ -25,7 +25,7 @@ func (p Plan) String() (s string) {
 	return
 }
 
-func (p Plan) Execute(executor Executor, cfClient *cfclient.Client, logger *logger.CapturingWriter, timeout time.Duration, isActions bool) (err error) {
+func (p Plan) Execute(executor Executor, cfClient *client.Client, logger *logger.CapturingWriter, timeout time.Duration, isActions bool) (err error) {
 	for _, c := range p {
 		prefix := ""
 		if isActions {

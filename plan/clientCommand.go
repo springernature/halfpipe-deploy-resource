@@ -1,20 +1,20 @@
 package plan
 
 import (
-	"github.com/cloudfoundry-community/go-cfclient"
+	"github.com/cloudfoundry/go-cfclient/v3/client"
 	"github.com/springernature/halfpipe-deploy-resource/logger"
 )
 
 type ClientCommand interface {
-	CallWithCfClient(client *cfclient.Client, logger *logger.CapturingWriter) error
+	CallWithCfClient(client *client.Client, logger *logger.CapturingWriter) error
 }
 
 type clientCommand struct {
-	fun func(client *cfclient.Client, logger *logger.CapturingWriter) error
+	fun         func(client *client.Client, logger *logger.CapturingWriter) error
 	description string
 }
 
-func (c clientCommand) CallWithCfClient(client *cfclient.Client, logger *logger.CapturingWriter) error {
+func (c clientCommand) CallWithCfClient(client *client.Client, logger *logger.CapturingWriter) error {
 	return c.fun(client, logger)
 }
 
@@ -42,9 +42,9 @@ func (c clientCommand) Cmd() string {
 	return ""
 }
 
-func NewClientCommand(fun func(client *cfclient.Client, logger *logger.CapturingWriter) error, description string) Command {
+func NewClientCommand(fun func(client *client.Client, logger *logger.CapturingWriter) error, description string) Command {
 	return clientCommand{
-		fun: fun,
+		fun:         fun,
 		description: description,
 	}
 }

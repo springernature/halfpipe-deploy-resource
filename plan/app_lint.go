@@ -2,8 +2,10 @@ package plan
 
 import (
 	"code.cloudfoundry.org/cli/util/manifestparser"
+	"context"
 	"fmt"
-	"github.com/cloudfoundry-community/go-cfclient"
+	cfclient "github.com/cloudfoundry/go-cfclient/v3/client"
+	"github.com/cloudfoundry/go-cfclient/v3/resource"
 	"github.com/gookit/color"
 	"github.com/springernature/halfpipe-deploy-resource/logger"
 )
@@ -21,21 +23,14 @@ func (p appLintPlan) Plan(manifest manifestparser.Application, org, space string
 	return
 }
 
-func (p appLintPlan) getMetadataInOrgSpace(client *cfclient.Client, orgName, spaceName string) (metadata cfclient.Metadata, err error) {
-	org, err := client.GetOrgByName(orgName)
+func (p appLintPlan) getMetadataInOrgSpace(ctx context.Context, cf *cfclient.Client, orgName, spaceName string) (metadata resource.Metadata, err error) {
+	_, space, err := getOrgAndSpace(ctx, cf, orgName, spaceName)
 	if err != nil {
 		return
 	}
-	space, err := client.GetSpaceByName(spaceName, org.Guid)
-	if err != nil {
-		return
+	if space.Metadata != nil {
+		metadata = *space.Metadata
 	}
-	meta, err := client.SpaceMetadata(space.Guid)
-	if err != nil {
-		return
-	}
-	metadata = *meta
-
 	return
 }
 
@@ -53,6 +48,15 @@ func (p appLintPlan) getLabelsForApp(manifest manifestparser.Application) map[an
 func (p appLintPlan) checkProduct() {
 
 }
+
+func stringLabel(labels map[string]*string, key string) (value string, found bool) {
+	v, ok := labels[key]
+	if !ok || v == nil {
+		return "", false
+	}
+	return *v, true
+}
+
 func (p appLintPlan) createFunc(manifest manifestparser.Application, org, space string) func(*cfclient.Client, *logger.CapturingWriter) error {
 	return func(cfClient *cfclient.Client, logger *logger.CapturingWriter) error {
 
@@ -75,16 +79,16 @@ func (p appLintPlan) createFunc(manifest manifestparser.Application, org, space 
 		}
 
 		logger.Println(fmt.Sprintf("Fetching metadata labels set on '%s/%s'", org, space))
-		metadata, err := p.getMetadataInOrgSpace(cfClient, org, space)
+		metadata, err := p.getMetadataInOrgSpace(context.Background(), cfClient, org, space)
 		if err != nil {
 			logger.Println(fmt.Sprintf(`\t Failed to fetch: %s`, err.Error()))
 			logger.Println("\t Lets continue...")
 			return nil
 		}
 
-		spaceProduct, spaceProductFound := metadata.Labels["product"]
-		spaceEnvironment, spaceEnvironmentFound := metadata.Labels["environment"]
-		spaceEAID, spaceEAIDFound := metadata.Labels["eaid"]
+		spaceProduct, spaceProductFound := stringLabel(metadata.Labels, "product")
+		spaceEnvironment, spaceEnvironmentFound := stringLabel(metadata.Labels, "environment")
+		spaceEAID, spaceEAIDFound := stringLabel(metadata.Labels, "eaid")
 
 		if manifestProductFound || spaceProductFound {
 			p := manifestProduct

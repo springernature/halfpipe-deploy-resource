@@ -1,14 +1,14 @@
 package plan
 
 import (
-	"github.com/cloudfoundry-community/go-cfclient"
+	"github.com/cloudfoundry/go-cfclient/v3/resource"
 	halfpipe_deploy_resource "github.com/springernature/halfpipe-deploy-resource"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestDoesNothingWhenNoAppsToCleanup(t *testing.T) {
-	summary := []cfclient.AppSummary{
+	summary := []*resource.App{
 		{
 			Name:  "myApp",
 			State: "started",
@@ -24,7 +24,7 @@ func TestDoesNothingWhenNoAppsToCleanup(t *testing.T) {
 }
 
 func TestDeletesAppThatNeedsACleanup(t *testing.T) {
-	summary := []cfclient.AppSummary{
+	summary := []*resource.App{
 		{
 			Name:  "myApp",
 			State: "started",
@@ -47,7 +47,7 @@ func TestDeletesAppThatNeedsACleanup(t *testing.T) {
 }
 
 func TestDeletesAppsThatNeedsACleanup(t *testing.T) {
-	summary := []cfclient.AppSummary{
+	summary := []*resource.App{
 		{
 			Name:  "myApp",
 			State: "started",

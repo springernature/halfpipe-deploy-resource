@@ -2,8 +2,9 @@ package plan
 
 import (
 	"code.cloudfoundry.org/cli/util/manifestparser"
+	"context"
 	"fmt"
-	"github.com/cloudfoundry-community/go-cfclient"
+	cfclient "github.com/cloudfoundry/go-cfclient/v3/client"
 	"github.com/springernature/halfpipe-deploy-resource/logger"
 	"time"
 )
@@ -21,26 +22,10 @@ func (p checkPlan) Plan(manifest manifestparser.Application, org, space string) 
 	return
 }
 
-func (p checkPlan) getAppsInOrgSpace(client *cfclient.Client, orgName, spaceName string) (summary []cfclient.AppSummary, err error) {
-	org, err := client.GetOrgByName(orgName)
-	if err != nil {
-		return
-	}
-	space, err := client.GetSpaceByName(spaceName, org.Guid)
-	if err != nil {
-		return
-	}
-	spaceSummary, err := space.Summary()
-	if err != nil {
-		return
-	}
-	summary = spaceSummary.Apps
-	return
-}
-
 func (p checkPlan) createFunc(candidateAppName, org, space string) func(*cfclient.Client, *logger.CapturingWriter) error {
 	return func(cfClient *cfclient.Client, logger *logger.CapturingWriter) error {
-		apps, err := p.getAppsInOrgSpace(cfClient, org, space)
+		ctx := context.Background()
+		apps, err := getAppsInOrgSpace(ctx, cfClient, org, space)
 		if err != nil {
 			return err
 		}
@@ -48,7 +33,7 @@ func (p checkPlan) createFunc(candidateAppName, org, space string) func(*cfclien
 		appGuid := ""
 		for _, app := range apps {
 			if app.Name == candidateAppName {
-				appGuid = app.Guid
+				appGuid = app.GUID
 				break
 			}
 		}
@@ -57,10 +42,11 @@ func (p checkPlan) createFunc(candidateAppName, org, space string) func(*cfclien
 		}
 
 		for true {
-			instances, err := cfClient.GetAppInstances(appGuid)
+			stats, err := cfClient.Processes.GetStatsForApp(ctx, appGuid, "web")
 			if err != nil {
 				return err
 			}
+			instances := stats.Stats
 
 			numRunning := 0
 			for _, instance := range instances {

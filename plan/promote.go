@@ -3,20 +3,20 @@ package plan
 import (
 	"code.cloudfoundry.org/cli/util/manifestparser"
 	"fmt"
-	"github.com/cloudfoundry-community/go-cfclient"
+	"github.com/cloudfoundry/go-cfclient/v3/resource"
 	"github.com/springernature/halfpipe-deploy-resource/config"
 	"strings"
 )
 
 type PromotePlan interface {
-	Plan(manifest manifestparser.Application, request config.Request, summary []cfclient.AppSummary) (pl Plan)
+	Plan(manifest manifestparser.Application, request config.Request, summary []*resource.App) (pl Plan)
 }
 
 type promotePlan struct {
-	privateDomainsInOrg []cfclient.Domain
+	privateDomainsInOrg []*resource.Domain
 }
 
-func (p promotePlan) Plan(manifest manifestparser.Application, request config.Request, summary []cfclient.AppSummary) (pl Plan) {
+func (p promotePlan) Plan(manifest manifestparser.Application, request config.Request, summary []*resource.App) (pl Plan) {
 	currentLive, currentOld, currentDeletes := p.getPreviousAppState(manifest.Name, summary)
 
 	pl = append(pl, p.addManifestRoutes(manifest)...)
@@ -28,8 +28,8 @@ func (p promotePlan) Plan(manifest manifestparser.Application, request config.Re
 	return
 }
 
-func (p promotePlan) renameOldApp(manifest manifestparser.Application, oldApp cfclient.AppSummary, currentDeletes []cfclient.AppSummary) (cmds []Command) {
-	if oldApp.Name != "" {
+func (p promotePlan) renameOldApp(manifest manifestparser.Application, oldApp *resource.App, currentDeletes []*resource.App) (cmds []Command) {
+	if oldApp != nil {
 		nextI := 0
 		for i := 1; i <= len(currentDeletes); i++ {
 			found := false
@@ -49,8 +49,8 @@ func (p promotePlan) renameOldApp(manifest manifestparser.Application, oldApp cf
 	return
 }
 
-func (p promotePlan) renameAndStopCurrentApp(manifest manifestparser.Application, currentLive cfclient.AppSummary) (cmds []Command) {
-	if currentLive.Name != "" {
+func (p promotePlan) renameAndStopCurrentApp(manifest manifestparser.Application, currentLive *resource.App) (cmds []Command) {
+	if currentLive != nil {
 		cmds = append(cmds, NewCfCommand("rename", manifest.Name, createOldAppName(manifest.Name)))
 		if currentLive.State == "STARTED" {
 			cmds = append(cmds, NewCfCommand("stop", createOldAppName(manifest.Name)))
@@ -63,17 +63,17 @@ func (p promotePlan) renameCandidateToLive(manifest manifestparser.Application) 
 	return NewCfCommand("rename", createCandidateAppName(manifest.Name), manifest.Name)
 }
 
-func (p promotePlan) getPreviousAppState(manifestAppName string, summary []cfclient.AppSummary) (currentLive, currentOld cfclient.AppSummary, currentDeletes []cfclient.AppSummary) {
-	appFinder := func(name string, apps []cfclient.AppSummary) (app cfclient.AppSummary) {
+func (p promotePlan) getPreviousAppState(manifestAppName string, summary []*resource.App) (currentLive, currentOld *resource.App, currentDeletes []*resource.App) {
+	appFinder := func(name string, apps []*resource.App) (app *resource.App) {
 		for _, app := range apps {
 			if app.Name == name {
 				return app
 			}
 		}
-		return
+		return nil
 	}
 
-	deleteAppFinder := func(name string, apps []cfclient.AppSummary) (deleteApps []cfclient.AppSummary) {
+	deleteAppFinder := func(name string, apps []*resource.App) (deleteApps []*resource.App) {
 		for _, app := range apps {
 			if strings.HasPrefix(app.Name, name) {
 				deleteApps = append(deleteApps, app)
@@ -150,7 +150,7 @@ func (p promotePlan) unmapTestRoute(man manifestparser.Application, request conf
 	return
 }
 
-func NewPromotePlan(privateDomainsInOrg []cfclient.Domain) PromotePlan {
+func NewPromotePlan(privateDomainsInOrg []*resource.Domain) PromotePlan {
 	return promotePlan{
 		privateDomainsInOrg: privateDomainsInOrg,
 	}

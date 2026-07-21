@@ -2,7 +2,7 @@ package plan
 
 import (
 	"fmt"
-	"github.com/cloudfoundry-community/go-cfclient"
+	cfclient "github.com/cloudfoundry/go-cfclient/v3/client"
 	"github.com/springernature/halfpipe-deploy-resource/logger"
 	"testing"
 	"time"

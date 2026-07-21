@@ -1,7 +1,7 @@
 package plan
 
 import (
-	"github.com/cloudfoundry-community/go-cfclient"
+	"github.com/cloudfoundry/go-cfclient/v3/resource"
 	"github.com/springernature/halfpipe-deploy-resource"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -17,7 +17,7 @@ func TestDoesTheNeedful(t *testing.T) {
 		NewCfCommand("delete", "myApp-CANDIDATE", "-f"),
 	}
 
-	summary := []cfclient.AppSummary{
+	summary := []*resource.App{
 		{
 			Name:  "myApp",
 			State: "started",
@@ -40,7 +40,7 @@ func TestDoesNothingWhenThereIsNoCandidate(t *testing.T) {
 `
 	man := halfpipe_deploy_resource.ParseManifest(manifest)
 
-	summary := []cfclient.AppSummary{
+	summary := []*resource.App{
 		{
 			Name:  "myApp",
 			State: "started",
