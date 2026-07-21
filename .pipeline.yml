@@ -1,565 +1,601 @@
-# fly -t engineering-enablement set-pipeline -p halfpipe-deploy-resource-v2 -c .pipeline.yml
-
-groups: []
-resources:
-- name: git
-  type: git
-  source:
-    private_key: ((halfpipe-github.private_key))
-    uri: git@github.com:springernature/halfpipe-deploy-resource.git
-  check_every: 10m
-- name: docker-registry-image-dev
-  type: docker-image
-  source:
-    repository: eu.gcr.io/halfpipe-io/cf-resource-v2-dev
-    password: ((halfpipe-gcr.private_key))
-    username: _json_key
-- name: docker-registry-image-stable
-  type: docker-image
-  source:
-    repository: eu.gcr.io/halfpipe-io/cf-resource-v2
-    tag: stable
-    password: ((halfpipe-gcr.private_key))
-    username: _json_key
-- name: docker-registry-image-stable-dockerhub
-  type: docker-image
-  source:
-    repository: platformengineering/cf-resource-v2
-    username: ((platformengineering-dockerhub.username))
-    password: ((platformengineering-dockerhub.password))
-- name: cf
-  type: cf-resource
-  source:
-    api: ((cloudfoundry.api-snpaas))
-    org: engineering-enablement
-    password: ((cloudfoundry.password-snpaas))
-    space: integration_test
-    username: ((cloudfoundry.username-snpaas))
-  check_every: 24h
-resource_types:
-- name: cf-resource
-  type: registry-image
-  source:
-    repository: eu.gcr.io/halfpipe-io/cf-resource-v2-dev
-    password: ((halfpipe-gcr.private_key))
-    username: _json_key
-
 jobs:
-- name: push_test_resource
-  serial: true
-  plan:
-  - get: git
-    trigger: true
-  - put: docker-registry-image-dev
-    params:
-      build: git
+  - name: push_test_resource
+    plan:
+      - get: git
+        trigger: true
+      - params:
+          build: git
+        put: docker-registry-image-dev
+      - config:
+          image_resource:
+            name: ""
+            source:
+              password: ((gcp:platform-gar/token.token))
+              registry_mirror:
+                host: eu-mirror.gcr.io
+              repository: alpine
+              username: oauth2accesstoken
+            type: registry-image
+          params:
+            CONCOURSE_PASSWORD: ((concourse.password))
+            CONCOURSE_TEAM: ((concourse.team))
+            CONCOURSE_URL: ((concourse.url))
+            CONCOURSE_USERNAME: ((concourse.username))
+          platform: linux
+          run:
+            args:
+              - -c
+              - |
+                wget "$CONCOURSE_URL/api/v1/cli?arch=amd64&platform=linux" -O fly
+                chmod +x fly
+                ./fly -t $CONCOURSE_TEAM login -c $CONCOURSE_URL -u $CONCOURSE_USERNAME -p $CONCOURSE_PASSWORD -n $CONCOURSE_TEAM
+                ./fly -t $CONCOURSE_TEAM check-resource-type -r halfpipe-deploy-resource-v2/cf-resource
+            path: /bin/sh
+        task: check-resource-type
+        timeout: 1h
+    serial: true
+  - name: cleanup_cf
+    plan:
+      - get: git
+        passed:
+          - push_test_resource
+      - get: docker-registry-image-dev
+        passed:
+          - push_test_resource
+        trigger: true
+      - config:
+          image_resource:
+            name: ""
+            source:
+              registry_mirror:
+                host: eu-mirror.gcr.io
+              repository: cloudfoundry/cli
+            type: registry-image
+          params:
+            CF_API: ((cloudfoundry.api-snpaas))
+            CF_ORG: engineering-enablement
+            CF_PASSWORD: ((cloudfoundry.password-snpaas))
+            CF_SPACE: integration_test
+            CF_USERNAME: ((cloudfoundry.username-snpaas))
+          platform: linux
+          run:
+            args:
+              - -c
+              - |
+                cf login -a $CF_API -u $CF_USERNAME -p $CF_PASSWORD -o $CF_ORG -s $CF_SPACE
+                export APPS_TO_DELETE=`cf apps |  awk 'NR > 3 { print $1}'`
+                for app in $APPS_TO_DELETE; do
+                  cf delete -f $app
+                done
+                echo "Space should now be clean..."
+                cf apps
+            path: /bin/sh
+        task: cleanup
+        timeout: 1h
+    serial: true
+  - ensure:
+      params:
+        command: halfpipe-cleanup
+        manifestPath: git/.integration_test/manifest-cf6.yml
+      put: cf
+    name: test_resource_cf6_1
+    plan:
+      - get: git
+        passed:
+          - cleanup_cf
+      - get: docker-registry-image-dev
+        passed:
+          - cleanup_cf
+        trigger: true
+      - params:
+          command: check
+        put: cf
+      - params:
+          appPath: git/.integration_test
+          command: halfpipe-push
+          gitRefPath: git/.git/ref
+          gitUri: git@github.com:springernature/halfpipe-deploy-resource.git
+          manifestPath: git/.integration_test/manifest-cf6.yml
+          testDomain: springernature.app
+          vars:
+            RUN: test_resource_cf6_1
+        put: cf
+      - params:
+          command: halfpipe-check
+          manifestPath: git/.integration_test/manifest-cf6.yml
+        put: cf
+      - params:
+          command: halfpipe-promote
+          manifestPath: git/.integration_test/manifest-cf6.yml
+          testDomain: springernature.app
+        put: cf
+    serial: true
+  - ensure:
+      params:
+        command: halfpipe-cleanup
+        manifestPath: git/.integration_test/manifest-cf6.yml
+      put: cf
+    name: test_resource_cf6_2
+    plan:
+      - get: git
+        passed:
+          - test_resource_cf6_1
+      - get: docker-registry-image-dev
+        passed:
+          - test_resource_cf6_1
+        trigger: true
+      - params:
+          command: check
+        put: cf
+      - params:
+          appPath: git/.integration_test
+          command: halfpipe-push
+          gitRefPath: git/.git/ref
+          gitUri: git@github.com:springernature/halfpipe-deploy-resource.git
+          manifestPath: git/.integration_test/manifest-cf6.yml
+          testDomain: springernature.app
+          vars:
+            RUN: test_resource_cf6_2
+        put: cf
+      - params:
+          command: halfpipe-check
+          manifestPath: git/.integration_test/manifest-cf6.yml
+        put: cf
+      - params:
+          command: halfpipe-promote
+          manifestPath: git/.integration_test/manifest-cf6.yml
+          testDomain: springernature.app
+        put: cf
+    serial: true
+  - ensure:
+      params:
+        command: halfpipe-cleanup
+        manifestPath: git/.integration_test/manifest-cf6.yml
+      put: cf
+    name: test_resource_cf6_3
+    plan:
+      - get: git
+        passed:
+          - test_resource_cf6_2
+      - get: docker-registry-image-dev
+        passed:
+          - test_resource_cf6_2
+        trigger: true
+      - params:
+          command: check
+        put: cf
+      - params:
+          appPath: git/.integration_test
+          command: halfpipe-push
+          gitRefPath: git/.git/ref
+          gitUri: git@github.com:springernature/halfpipe-deploy-resource.git
+          manifestPath: git/.integration_test/manifest-cf6.yml
+          team: engineering-enablement
+          testDomain: springernature.app
+          vars:
+            RUN: test_resource_cf6_3
+        put: cf
+      - params:
+          command: halfpipe-check
+          manifestPath: git/.integration_test/manifest-cf6.yml
+        put: cf
+      - params:
+          command: halfpipe-promote
+          manifestPath: git/.integration_test/manifest-cf6.yml
+          testDomain: springernature.app
+        put: cf
+    serial: true
+  - ensure:
+      params:
+        cliVersion: cf7
+        command: halfpipe-cleanup
+        manifestPath: git/.integration_test/manifest-cf7.yml
+      put: cf
+    name: test_resource_cf7_1
+    plan:
+      - get: git
+        passed:
+          - cleanup_cf
+      - get: docker-registry-image-dev
+        passed:
+          - cleanup_cf
+        trigger: true
+      - params:
+          command: check
+        put: cf
+      - params:
+          appPath: git/.integration_test
+          cliVersion: cf7
+          command: halfpipe-push
+          gitRefPath: git/.git/ref
+          gitUri: git@github.com:springernature/halfpipe-deploy-resource.git
+          manifestPath: git/.integration_test/manifest-cf7.yml
+          testDomain: springernature.app
+          vars:
+            RUN: test_resource_cf7_1
+        put: cf
+      - params:
+          cliVersion: cf7
+          command: halfpipe-check
+          manifestPath: git/.integration_test/manifest-cf7.yml
+        put: cf
+      - params:
+          cliVersion: cf7
+          command: halfpipe-promote
+          manifestPath: git/.integration_test/manifest-cf7.yml
+          testDomain: springernature.app
+        put: cf
+    serial: true
+  - ensure:
+      params:
+        cliVersion: cf7
+        command: halfpipe-cleanup
+        manifestPath: git/.integration_test/manifest-cf7.yml
+      put: cf
+    name: test_resource_cf7_2
+    plan:
+      - get: git
+        passed:
+          - test_resource_cf7_1
+      - get: docker-registry-image-dev
+        passed:
+          - test_resource_cf7_1
+        trigger: true
+      - params:
+          command: check
+        put: cf
+      - params:
+          appPath: git/.integration_test
+          cliVersion: cf7
+          command: halfpipe-push
+          gitRefPath: git/.git/ref
+          gitUri: git@github.com:springernature/halfpipe-deploy-resource.git
+          manifestPath: git/.integration_test/manifest-cf7.yml
+          testDomain: springernature.app
+          vars:
+            RUN: test_resource_cf7_2
+        put: cf
+      - params:
+          cliVersion: cf7
+          command: halfpipe-check
+          manifestPath: git/.integration_test/manifest-cf7.yml
+        put: cf
+      - params:
+          cliVersion: cf7
+          command: halfpipe-promote
+          manifestPath: git/.integration_test/manifest-cf7.yml
+          testDomain: springernature.app
+        put: cf
+    serial: true
+  - ensure:
+      params:
+        cliVersion: cf7
+        command: halfpipe-cleanup
+        manifestPath: git/.integration_test/manifest-cf7.yml
+      put: cf
+    name: test_resource_cf7_3
+    plan:
+      - get: git
+        passed:
+          - test_resource_cf7_2
+      - get: docker-registry-image-dev
+        passed:
+          - test_resource_cf7_2
+        trigger: true
+      - params:
+          command: check
+        put: cf
+      - params:
+          appPath: git/.integration_test
+          cliVersion: cf7
+          command: halfpipe-push
+          gitRefPath: git/.git/ref
+          gitUri: git@github.com:springernature/halfpipe-deploy-resource.git
+          manifestPath: git/.integration_test/manifest-cf7.yml
+          team: engineering-enablement
+          testDomain: springernature.app
+          vars:
+            RUN: test_resource_cf7_3
+        put: cf
+      - params:
+          cliVersion: cf7
+          command: halfpipe-check
+          manifestPath: git/.integration_test/manifest-cf7.yml
+        put: cf
+      - params:
+          cliVersion: cf7
+          command: halfpipe-promote
+          manifestPath: git/.integration_test/manifest-cf7.yml
+          testDomain: springernature.app
+        put: cf
+    serial: true
+  - ensure:
+      params:
+        cliVersion: cf8
+        command: halfpipe-cleanup
+        manifestPath: git/.integration_test/manifest-cf8.yml
+      put: cf
+    name: test_resource_cf8_1
+    plan:
+      - get: git
+        passed:
+          - cleanup_cf
+      - get: docker-registry-image-dev
+        passed:
+          - cleanup_cf
+        trigger: true
+      - params:
+          command: check
+        put: cf
+      - params:
+          appPath: git/.integration_test
+          cliVersion: cf8
+          command: halfpipe-push
+          gitRefPath: git/.git/ref
+          gitUri: git@github.com:springernature/halfpipe-deploy-resource.git
+          manifestPath: git/.integration_test/manifest-cf8.yml
+          testDomain: springernature.app
+          vars:
+            RUN: test_resource_cf8_1
+        put: cf
+      - params:
+          cliVersion: cf8
+          command: halfpipe-check
+          manifestPath: git/.integration_test/manifest-cf8.yml
+        put: cf
+      - params:
+          cliVersion: cf8
+          command: halfpipe-promote
+          manifestPath: git/.integration_test/manifest-cf8.yml
+          testDomain: springernature.app
+        put: cf
+    serial: true
+  - ensure:
+      params:
+        cliVersion: cf8
+        command: halfpipe-cleanup
+        manifestPath: git/.integration_test/manifest-cf8.yml
+      put: cf
+    name: test_resource_cf8_2
+    plan:
+      - get: git
+        passed:
+          - test_resource_cf8_1
+      - get: docker-registry-image-dev
+        passed:
+          - test_resource_cf8_1
+        trigger: true
+      - params:
+          command: check
+        put: cf
+      - params:
+          appPath: git/.integration_test
+          cliVersion: cf8
+          command: halfpipe-push
+          gitRefPath: git/.git/ref
+          gitUri: git@github.com:springernature/halfpipe-deploy-resource.git
+          manifestPath: git/.integration_test/manifest-cf8.yml
+          testDomain: springernature.app
+          vars:
+            RUN: test_resource_cf8_2
+        put: cf
+      - params:
+          cliVersion: cf8
+          command: halfpipe-check
+          manifestPath: git/.integration_test/manifest-cf8.yml
+        put: cf
+      - params:
+          cliVersion: cf8
+          command: halfpipe-promote
+          manifestPath: git/.integration_test/manifest-cf8.yml
+          testDomain: springernature.app
+        put: cf
+    serial: true
+  - ensure:
+      params:
+        cliVersion: cf8
+        command: halfpipe-cleanup
+        manifestPath: git/.integration_test/manifest-cf8.yml
+      put: cf
+    name: test_resource_cf8_3
+    plan:
+      - get: git
+        passed:
+          - test_resource_cf8_2
+      - get: docker-registry-image-dev
+        passed:
+          - test_resource_cf8_2
+        trigger: true
+      - params:
+          command: check
+        put: cf
+      - params:
+          appPath: git/.integration_test
+          cliVersion: cf8
+          command: halfpipe-push
+          gitRefPath: git/.git/ref
+          gitUri: git@github.com:springernature/halfpipe-deploy-resource.git
+          manifestPath: git/.integration_test/manifest-cf8.yml
+          team: engineering-enablement
+          testDomain: springernature.app
+          vars:
+            RUN: test_resource_cf8_3
+        put: cf
+      - params:
+          cliVersion: cf8
+          command: halfpipe-check
+          manifestPath: git/.integration_test/manifest-cf8.yml
+        put: cf
+      - params:
+          cliVersion: cf8
+          command: halfpipe-promote
+          manifestPath: git/.integration_test/manifest-cf8.yml
+          testDomain: springernature.app
+        put: cf
+    serial: true
+  - name: check_cf
+    plan:
+      - get: git
+        passed:
+          - test_resource_cf6_3
+          - test_resource_cf7_3
+          - test_resource_cf8_3
+      - get: docker-registry-image-dev
+        passed:
+          - test_resource_cf6_3
+          - test_resource_cf7_3
+          - test_resource_cf8_3
+        trigger: true
+      - config:
+          image_resource:
+            name: ""
+            source:
+              registry_mirror:
+                host: eu-mirror.gcr.io
+              repository: cloudfoundry/cli
+            type: registry-image
+          params:
+            CF_API: ((cloudfoundry.api-snpaas))
+            CF_ORG: engineering-enablement
+            CF_PASSWORD: ((cloudfoundry.password-snpaas))
+            CF_SPACE: integration_test
+            CF_USERNAME: ((cloudfoundry.username-snpaas))
+          platform: linux
+          run:
+            args:
+              - -c
+              - |
+                cf login -a $CF_API -u $CF_USERNAME -p $CF_PASSWORD -o $CF_ORG -s $CF_SPACE
+                cf apps > /tmp/apps
+                
+                echo Checking for integration-test-app-cf6 and integration-test-app-cf6-OLD
+                cat /tmp/apps | egrep '^integration-test-app-cf6\s+'
+                cf env integration-test-app-cf6 | grep test_resource_cf6_3
+                cat /tmp/apps | grep integration-test-app-cf6-OLD
+                cf env integration-test-app-cf6-OLD | grep test_resource_cf6_2
+                
+                echo Checking for integration-test-app-cf7 and integration-test-app-cf7-OLD
+                cat /tmp/apps | egrep '^integration-test-app-cf7\s+'
+                cf env integration-test-app-cf7 | grep test_resource_cf7_3
+                cat /tmp/apps | grep integration-test-app-cf7-OLD
+                cf env integration-test-app-cf7-OLD | grep test_resource_cf7_2
+                
+                echo Checking for integration-test-app-cf8 and integration-test-app-cf8-OLD
+                cat /tmp/apps | egrep '^integration-test-app-cf8\s+'
+                cf env integration-test-app-cf8 | grep test_resource_cf8_3
+                cat /tmp/apps | grep integration-test-app-cf8-OLD
+                cf env integration-test-app-cf8-OLD | grep test_resource_cf8_2
+            path: /bin/sh
+        task: check_cf_state
+        timeout: 1h
+    serial: true
+  - name: cleanup_cf_2
+    plan:
+      - get: git
+        passed:
+          - check_cf
+      - get: docker-registry-image-dev
+        passed:
+          - check_cf
+        trigger: true
+      - config:
+          image_resource:
+            name: ""
+            source:
+              registry_mirror:
+                host: eu-mirror.gcr.io
+              repository: cloudfoundry/cli
+            type: registry-image
+          params:
+            CF_API: ((cloudfoundry.api-snpaas))
+            CF_ORG: engineering-enablement
+            CF_PASSWORD: ((cloudfoundry.password-snpaas))
+            CF_SPACE: integration_test
+            CF_USERNAME: ((cloudfoundry.username-snpaas))
+          platform: linux
+          run:
+            args:
+              - -c
+              - |
+                cf login -a $CF_API -u $CF_USERNAME -p $CF_PASSWORD -o $CF_ORG -s $CF_SPACE
+                export APPS_TO_DELETE=`cf apps |  awk 'NR > 3 { print $1}'`
+                for app in $APPS_TO_DELETE; do
+                  cf delete -f $app
+                done
+                echo "Space should now be clean..."
+                cf apps
+            path: /bin/sh
+        task: cleanup
+        timeout: 1h
+    serial: true
+  - name: push_resource
+    plan:
+      - get: git
+        passed:
+          - check_cf
+        trigger: true
+      - params:
+          build: git
+          tag_as_latest: true
+          tag_file: git/.docker-stable-tag
+        put: docker-registry-image-stable
+      - params:
+          build: git
+          tag_as_latest: true
+          tag_file: git/.docker-stable-tag
+        put: docker-registry-image-stable-dockerhub
+    serial: true
+resource_types:
+  - name: cf-resource
+    source:
+      password: ((halfpipe-gcr.private_key))
+      repository: eu.gcr.io/halfpipe-io/cf-resource-v2-dev
+      username: _json_key
+    type: registry-image
+resources:
+  - check_every: 24h0m0s
+    name: cf
+    source:
+      api: ((cloudfoundry.api-snpaas))
+      org: engineering-enablement
+      password: ((cloudfoundry.password-snpaas))
+      space: integration_test
+      username: ((cloudfoundry.username-snpaas))
+    type: cf-resource
+  - name: docker-registry-image-dev
+    source:
+      password: ((halfpipe-gcr.private_key))
+      repository: eu.gcr.io/halfpipe-io/cf-resource-v2-dev
+      username: _json_key
+    type: docker-image
+  - name: docker-registry-image-stable
+    source:
+      password: ((halfpipe-gcr.private_key))
+      repository: eu.gcr.io/halfpipe-io/cf-resource-v2
+      tag: stable
+      username: _json_key
+    type: docker-image
+  - name: docker-registry-image-stable-dockerhub
+    source:
+      password: ((platformengineering-dockerhub.password))
+      repository: platformengineering/cf-resource-v2
+      username: ((platformengineering-dockerhub.username))
+    type: docker-image
+  - check_every: 10m0s
+    name: git
+    source:
+      private_key: ((halfpipe-github.private_key))
+      uri: git@github.com:springernature/halfpipe-deploy-resource.git
+    type: git
+var_sources:
   - config:
-      image_resource:
-        source:
-          registry_mirror:
-            host: eu-mirror.gcr.io
-          repository: alpine
-          password: ((halfpipe-gcr.private_key))
-          username: _json_key
-        type: registry-image
-      params:
-        CONCOURSE_PASSWORD: ((concourse.password))
-        CONCOURSE_TEAM: ((concourse.team))
-        CONCOURSE_URL: ((concourse.url))
-        CONCOURSE_USERNAME: ((concourse.username))
-      platform: linux
-      run:
-        args:
-          - -c
-          - |
-            wget "$CONCOURSE_URL/api/v1/cli?arch=amd64&platform=linux" -O fly
-            chmod +x fly
-            ./fly -t $CONCOURSE_TEAM login -c $CONCOURSE_URL -u $CONCOURSE_USERNAME -p $CONCOURSE_PASSWORD -n $CONCOURSE_TEAM
-            ./fly -t $CONCOURSE_TEAM check-resource-type -r halfpipe-deploy-resource-v2/cf-resource
-        path: /bin/sh
-    task: check-resource-type
-    timeout: 1h
-
-- name: cleanup_cf
-  plan:
-  - get: git
-    passed:
-      - push_test_resource
-  - get: docker-registry-image-dev
-    passed:
-      - push_test_resource
-    trigger: true
-  - config:
-      image_resource:
-        source:
-          registry_mirror:
-            host: eu-mirror.gcr.io
-          repository: cloudfoundry/cli
-        type: registry-image
-      params:
-        CF_API: ((cloudfoundry.api-snpaas))
-        CF_ORG: engineering-enablement
-        CF_PASSWORD: ((cloudfoundry.password-snpaas))
-        CF_SPACE: integration_test
-        CF_USERNAME: ((cloudfoundry.username-snpaas))
-      platform: linux
-      run:
-        args:
-          - -c
-          - |
-            cf login -a $CF_API -u $CF_USERNAME -p $CF_PASSWORD -o $CF_ORG -s $CF_SPACE
-            export APPS_TO_DELETE=`cf apps |  awk 'NR > 3 { print $1}'`
-            for app in $APPS_TO_DELETE; do
-              cf delete -f $app
-            done
-            echo "Space should now be clean..."
-            cf apps
-        path: /bin/sh
-    task: cleanup
-    timeout: 1h
-  serial: true
-
-- name: test_resource_cf6_1
-  serial: true
-  plan:
-  - get: git
-    passed:
-    - cleanup_cf
-  - get: docker-registry-image-dev
-    passed:
-    - cleanup_cf
-    trigger: true
-  - put: cf
-    params:
-      command: check
-  - put: cf
-    params:
-      appPath: git/.integration_test
-      command: halfpipe-push
-      gitRefPath: git/.git/ref
-      gitUri: git@github.com:springernature/halfpipe-deploy-resource.git
-      manifestPath: git/.integration_test/manifest-cf6.yml
-      testDomain: springernature.app
-      vars:
-        RUN: test_resource_cf6_1
-  - put: cf
-    params:
-      command: halfpipe-check
-      manifestPath: git/.integration_test/manifest-cf6.yml
-  - put: cf
-    params:
-      command: halfpipe-promote
-      manifestPath: git/.integration_test/manifest-cf6.yml
-      testDomain: springernature.app
-  ensure:
-    put: cf
-    params:
-      command: halfpipe-cleanup
-      manifestPath: git/.integration_test/manifest-cf6.yml
-
-- name: test_resource_cf6_2
-  serial: true
-  plan:
-    - get: git
-      passed:
-        - test_resource_cf6_1
-    - get: docker-registry-image-dev
-      passed:
-        - test_resource_cf6_1
-      trigger: true
-    - put: cf
-      params:
-        command: check
-    - put: cf
-      params:
-        appPath: git/.integration_test
-        command: halfpipe-push
-        gitRefPath: git/.git/ref
-        gitUri: git@github.com:springernature/halfpipe-deploy-resource.git
-        manifestPath: git/.integration_test/manifest-cf6.yml
-        testDomain: springernature.app
-        vars:
-          RUN: test_resource_cf6_2
-    - put: cf
-      params:
-        command: halfpipe-check
-        manifestPath: git/.integration_test/manifest-cf6.yml
-    - put: cf
-      params:
-        command: halfpipe-promote
-        manifestPath: git/.integration_test/manifest-cf6.yml
-        testDomain: springernature.app
-  ensure:
-    put: cf
-    params:
-      command: halfpipe-cleanup
-      manifestPath: git/.integration_test/manifest-cf6.yml
-
-- name: test_resource_cf6_3
-  serial: true
-  plan:
-    - get: git
-      passed:
-        - test_resource_cf6_2
-    - get: docker-registry-image-dev
-      passed:
-        - test_resource_cf6_2
-      trigger: true
-    - put: cf
-      params:
-        command: check
-    - put: cf
-      params:
-        appPath: git/.integration_test
-        command: halfpipe-push
-        gitRefPath: git/.git/ref
-        gitUri: git@github.com:springernature/halfpipe-deploy-resource.git
-        manifestPath: git/.integration_test/manifest-cf6.yml
-        testDomain: springernature.app
-        vars:
-          RUN: test_resource_cf6_3
-        team: engineering-enablement
-    - put: cf
-      params:
-        command: halfpipe-check
-        manifestPath: git/.integration_test/manifest-cf6.yml
-    - put: cf
-      params:
-        command: halfpipe-promote
-        manifestPath: git/.integration_test/manifest-cf6.yml
-        testDomain: springernature.app
-  ensure:
-    put: cf
-    params:
-      command: halfpipe-cleanup
-      manifestPath: git/.integration_test/manifest-cf6.yml
-
-
-- name: test_resource_cf7_1
-  serial: true
-  plan:
-    - get: git
-      passed:
-        - cleanup_cf
-    - get: docker-registry-image-dev
-      passed:
-        - cleanup_cf
-      trigger: true
-    - put: cf
-      params:
-        command: check
-    - put: cf
-      params:
-        appPath: git/.integration_test
-        command: halfpipe-push
-        gitRefPath: git/.git/ref
-        gitUri: git@github.com:springernature/halfpipe-deploy-resource.git
-        manifestPath: git/.integration_test/manifest-cf7.yml
-        testDomain: springernature.app
-        cliVersion: cf7
-        vars:
-          RUN: test_resource_cf7_1
-    - put: cf
-      params:
-        command: halfpipe-check
-        manifestPath: git/.integration_test/manifest-cf7.yml
-        cliVersion: cf7
-    - put: cf
-      params:
-        command: halfpipe-promote
-        manifestPath: git/.integration_test/manifest-cf7.yml
-        testDomain: springernature.app
-        cliVersion: cf7
-  ensure:
-    put: cf
-    params:
-      command: halfpipe-cleanup
-      cliVersion: cf7
-      manifestPath: git/.integration_test/manifest-cf7.yml
-
-- name: test_resource_cf7_2
-  serial: true
-  plan:
-    - get: git
-      passed:
-        - test_resource_cf7_1
-    - get: docker-registry-image-dev
-      passed:
-        - test_resource_cf7_1
-      trigger: true
-    - put: cf
-      params:
-        command: check
-    - put: cf
-      params:
-        appPath: git/.integration_test
-        command: halfpipe-push
-        gitRefPath: git/.git/ref
-        gitUri: git@github.com:springernature/halfpipe-deploy-resource.git
-        manifestPath: git/.integration_test/manifest-cf7.yml
-        testDomain: springernature.app
-        cliVersion: cf7
-        vars:
-          RUN: test_resource_cf7_2
-    - put: cf
-      params:
-        command: halfpipe-check
-        manifestPath: git/.integration_test/manifest-cf7.yml
-        cliVersion: cf7
-    - put: cf
-      params:
-        command: halfpipe-promote
-        manifestPath: git/.integration_test/manifest-cf7.yml
-        testDomain: springernature.app
-        cliVersion: cf7
-  ensure:
-    put: cf
-    params:
-      command: halfpipe-cleanup
-      cliVersion: cf7
-      manifestPath: git/.integration_test/manifest-cf7.yml
-
-- name: test_resource_cf7_3
-  serial: true
-  plan:
-    - get: git
-      passed:
-        - test_resource_cf7_2
-    - get: docker-registry-image-dev
-      passed:
-        - test_resource_cf7_2
-      trigger: true
-    - put: cf
-      params:
-        command: check
-    - put: cf
-      params:
-        appPath: git/.integration_test
-        command: halfpipe-push
-        gitRefPath: git/.git/ref
-        gitUri: git@github.com:springernature/halfpipe-deploy-resource.git
-        manifestPath: git/.integration_test/manifest-cf7.yml
-        testDomain: springernature.app
-        cliVersion: cf7
-        vars:
-          RUN: test_resource_cf7_3
-        team: engineering-enablement
-    - put: cf
-      params:
-        command: halfpipe-check
-        manifestPath: git/.integration_test/manifest-cf7.yml
-        cliVersion: cf7
-    - put: cf
-      params:
-        command: halfpipe-promote
-        manifestPath: git/.integration_test/manifest-cf7.yml
-        testDomain: springernature.app
-        cliVersion: cf7
-  ensure:
-    put: cf
-    params:
-      command: halfpipe-cleanup
-      cliVersion: cf7
-      manifestPath: git/.integration_test/manifest-cf7.yml
-
-- name: test_resource_cf8_1
-  serial: true
-  plan:
-    - get: git
-      passed:
-        - cleanup_cf
-    - get: docker-registry-image-dev
-      passed:
-        - cleanup_cf
-      trigger: true
-    - put: cf
-      params:
-        command: check
-    - put: cf
-      params:
-        appPath: git/.integration_test
-        command: halfpipe-push
-        gitRefPath: git/.git/ref
-        gitUri: git@github.com:springernature/halfpipe-deploy-resource.git
-        manifestPath: git/.integration_test/manifest-cf8.yml
-        testDomain: springernature.app
-        cliVersion: cf8
-        vars:
-          RUN: test_resource_cf8_1
-    - put: cf
-      params:
-        command: halfpipe-check
-        manifestPath: git/.integration_test/manifest-cf8.yml
-        cliVersion: cf8
-    - put: cf
-      params:
-        command: halfpipe-promote
-        manifestPath: git/.integration_test/manifest-cf8.yml
-        testDomain: springernature.app
-        cliVersion: cf8
-  ensure:
-    put: cf
-    params:
-      command: halfpipe-cleanup
-      cliVersion: cf8
-      manifestPath: git/.integration_test/manifest-cf8.yml
-
-- name: test_resource_cf8_2
-  serial: true
-  plan:
-    - get: git
-      passed:
-        - test_resource_cf8_1
-    - get: docker-registry-image-dev
-      passed:
-        - test_resource_cf8_1
-      trigger: true
-    - put: cf
-      params:
-        command: check
-    - put: cf
-      params:
-        appPath: git/.integration_test
-        command: halfpipe-push
-        gitRefPath: git/.git/ref
-        gitUri: git@github.com:springernature/halfpipe-deploy-resource.git
-        manifestPath: git/.integration_test/manifest-cf8.yml
-        testDomain: springernature.app
-        cliVersion: cf8
-        vars:
-          RUN: test_resource_cf8_2
-    - put: cf
-      params:
-        command: halfpipe-check
-        manifestPath: git/.integration_test/manifest-cf8.yml
-        cliVersion: cf8
-    - put: cf
-      params:
-        command: halfpipe-promote
-        manifestPath: git/.integration_test/manifest-cf8.yml
-        testDomain: springernature.app
-        cliVersion: cf8
-  ensure:
-    put: cf
-    params:
-      command: halfpipe-cleanup
-      cliVersion: cf8
-      manifestPath: git/.integration_test/manifest-cf8.yml
-
-- name: test_resource_cf8_3
-  serial: true
-  plan:
-    - get: git
-      passed:
-        - test_resource_cf8_2
-    - get: docker-registry-image-dev
-      passed:
-        - test_resource_cf8_2
-      trigger: true
-    - put: cf
-      params:
-        command: check
-    - put: cf
-      params:
-        appPath: git/.integration_test
-        command: halfpipe-push
-        gitRefPath: git/.git/ref
-        gitUri: git@github.com:springernature/halfpipe-deploy-resource.git
-        manifestPath: git/.integration_test/manifest-cf8.yml
-        testDomain: springernature.app
-        cliVersion: cf8
-        vars:
-          RUN: test_resource_cf8_3
-        team: engineering-enablement
-    - put: cf
-      params:
-        command: halfpipe-check
-        manifestPath: git/.integration_test/manifest-cf8.yml
-        cliVersion: cf8
-    - put: cf
-      params:
-        command: halfpipe-promote
-        manifestPath: git/.integration_test/manifest-cf8.yml
-        testDomain: springernature.app
-        cliVersion: cf8
-  ensure:
-    put: cf
-    params:
-      command: halfpipe-cleanup
-      cliVersion: cf8
-      manifestPath: git/.integration_test/manifest-cf8.yml
-
-- name: check_cf
-  plan:
-    - get: git
-      passed:
-        - test_resource_cf6_3
-        - test_resource_cf7_3
-        - test_resource_cf8_3
-    - get: docker-registry-image-dev
-      passed:
-        - test_resource_cf6_3
-        - test_resource_cf7_3
-        - test_resource_cf8_3
-      trigger: true
-    - config:
-        image_resource:
-          source:
-            registry_mirror:
-              host: eu-mirror.gcr.io
-            repository: cloudfoundry/cli
-          type: registry-image
-        params:
-          CF_API: ((cloudfoundry.api-snpaas))
-          CF_ORG: engineering-enablement
-          CF_PASSWORD: ((cloudfoundry.password-snpaas))
-          CF_SPACE: integration_test
-          CF_USERNAME: ((cloudfoundry.username-snpaas))
-        platform: linux
-        run:
-          args:
-            - -c
-            - |
-              cf login -a $CF_API -u $CF_USERNAME -p $CF_PASSWORD -o $CF_ORG -s $CF_SPACE
-              cf apps > /tmp/apps
-
-              echo Checking for integration-test-app-cf6 and integration-test-app-cf6-OLD
-              cat /tmp/apps | egrep '^integration-test-app-cf6\s+'
-              cf env integration-test-app-cf6 | grep test_resource_cf6_3
-              cat /tmp/apps | grep integration-test-app-cf6-OLD
-              cf env integration-test-app-cf6-OLD | grep test_resource_cf6_2
-
-              echo Checking for integration-test-app-cf7 and integration-test-app-cf7-OLD
-              cat /tmp/apps | egrep '^integration-test-app-cf7\s+'
-              cf env integration-test-app-cf7 | grep test_resource_cf7_3
-              cat /tmp/apps | grep integration-test-app-cf7-OLD
-              cf env integration-test-app-cf7-OLD | grep test_resource_cf7_2
-
-              echo Checking for integration-test-app-cf8 and integration-test-app-cf8-OLD
-              cat /tmp/apps | egrep '^integration-test-app-cf8\s+'
-              cf env integration-test-app-cf8 | grep test_resource_cf8_3
-              cat /tmp/apps | grep integration-test-app-cf8-OLD
-              cf env integration-test-app-cf8-OLD | grep test_resource_cf8_2
-          path: /bin/sh
-      task: check_cf_state
-      timeout: 1h
-  serial: true
-
-
-- name: push_resource
-  serial: true
-  plan:
-  - get: git
-    passed:
-    - check_cf
-    trigger: true
-  - put: docker-registry-image-stable
-    params:
-      build: git
-      tag_file: git/.docker-stable-tag
-      tag_as_latest: true
-  - put: docker-registry-image-stable-dockerhub
-    params:
-      build: git
-      tag_file: git/.docker-stable-tag
-      tag_as_latest: true
+      auth_backend: approle
+      auth_params:
+        role_id: ((platform/team-ro-app-role.vault_approle_id))
+        secret_id: ((platform/team-ro-app-role.vault_approle_secret_id))
+      lookup_templates:
+        - '{{.Secret}}'
+      path_prefix: gcp/impersonated-account/
+      url: ((platform/team-ro-app-role.vault_addr))
+    name: gcp
+    type: vault
