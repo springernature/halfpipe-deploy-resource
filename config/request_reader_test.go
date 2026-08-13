@@ -229,7 +229,8 @@ func TestReadRequest(t *testing.T) {
       "command":"halfpipe-push",
       "gitRefPath":"git/.git/ref",
       "manifestPath":"git/app/cf/manifest-qa.yml",
-      "testDomain":"springernature.app"
+      "testDomain":"springernature.app",
+      "eaid":"eaid1"
    }
 }`
 
@@ -248,7 +249,8 @@ func TestReadRequest(t *testing.T) {
       "gitRefPath":"git/.git/ref",
       "manifestPath":"git/app/cf/manifest-qa.yml",
       "testDomain":"springernature.app",
-	  "cliVersion": "cf6"
+	  "cliVersion": "cf6",
+      "eaid": "eaid"
    }
 }`
 		t.Run("fails to read git ref file", func(t *testing.T) {
@@ -346,6 +348,7 @@ func TestReadRequest(t *testing.T) {
 					AppPath:          "/tmp/buildDir/git/app",
 					TestDomain:       "springernature.app",
 					CliVersion:       "cf6",
+					EAID:             "eaid",
 				},
 				Metadata: Metadata{
 					GitRef:     "ref",

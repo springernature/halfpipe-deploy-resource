@@ -104,6 +104,18 @@ func TestVerifyErrorsIfNotAllRequiredParamsFieldsForPushFilledOut(t *testing.T) 
 	}
 	assert.Equal(t, ParamsMissingError("gitRefPath"), missingGitRefPath.Verify(false))
 
+	missingEaid := Params{
+		Command:      PUSH,
+		CliVersion:   "cf6",
+		ManifestPath: "path",
+		TestDomain:   "test.com",
+		AppPath:      "path",
+		GitRefPath:   "path",
+		EAID:         "",
+	}
+
+	assert.Equal(t, ParamsMissingError("eaid"), missingEaid.Verify(false))
+
 	allesOk := Params{
 		Command:      PUSH,
 		CliVersion:   "cf6",
@@ -111,6 +123,7 @@ func TestVerifyErrorsIfNotAllRequiredParamsFieldsForPushFilledOut(t *testing.T) 
 		TestDomain:   "test.com",
 		AppPath:      "path",
 		GitRefPath:   "path",
+		EAID:         "eaid",
 	}
 	assert.Nil(t, allesOk.Verify(false))
 
@@ -120,6 +133,7 @@ func TestVerifyErrorsIfNotAllRequiredParamsFieldsForPushFilledOut(t *testing.T) 
 		ManifestPath: "path",
 		TestDomain:   "test.com",
 		AppPath:      "path",
+		EAID:         "eaid",
 	}
 	assert.Nil(t, allesOkWithAction.Verify(true))
 }
@@ -177,6 +191,7 @@ func TestPreStartCommandForPush(t *testing.T) {
 			AppPath:         "path",
 			GitRefPath:      "path",
 			PreStartCommand: "cf something good",
+			EAID:            "eaid",
 		}
 
 		assert.NoError(t, allesOk.Verify(false))
@@ -192,6 +207,7 @@ func TestVerifyItDoesntErrorIfAppPathIsEmptyButDockerSpecified(t *testing.T) {
 		GitRefPath:     "path",
 		DockerUsername: "asd",
 		DockerPassword: "asd",
+		EAID:           "eaid",
 	}
 	assert.Nil(t, allesOk.Verify(false))
 }

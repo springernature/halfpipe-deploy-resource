@@ -137,6 +137,14 @@ func (params Params) Verify(isActions bool) error {
 		if len(params.PreStartCommand) > 0 && !strings.HasPrefix(params.PreStartCommand, "cf ") {
 			return PreStartCommandError(params.PreStartCommand)
 		}
+
+		if params.EAID == "" {
+			return ParamsMissingError("eaid")
+		}
+	case ALL, ROLLING_DEPLOY:
+		if params.EAID == "" {
+			return ParamsMissingError("eaid")
+		}
 	case PROMOTE:
 		if params.TestDomain == "" {
 			return ParamsMissingError("testDomain")
